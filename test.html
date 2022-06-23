@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="icon" href="/sample/enemy.png">
+        <title>Gameify</title>
+        <style>
+            html {
+                background: #ddd;
+                color: black;
+                font-family: sans-serif;
+                height: 100%;
+                margin: 0;
+            }
+            body {
+                height: 100%;
+                margin: 0;
+            }
+            div {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+                width: 100%;
+                margin: 0;
+            }
+            canvas {
+                background: white;
+                max-width: 100%;
+                max-height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <canvas id="my-canvas">
+                Uh Oh! It seems like your browser doesn't support the HTML5 &lt;canvas&gt; feature.<br>
+                <b>Try the following:</b>
+                <ul>
+                    <li>Enable JavaScript for this page</li>
+                    <li>Please upgrade to the latest Firefox, Chrome, or Safari browser.</li>
+                </ul>
+            </canvas>
+            <p>This is a Gameify test game</p>
+        </div>
+        <script type="module" src="test.js"></script>
+    </body>
+</html>

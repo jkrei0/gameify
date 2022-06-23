@@ -1,0 +1,38 @@
+{
+    "source": {
+        "include": ["gameify"]
+    },
+
+    "opts": {
+        "encoding": "utf8",
+        "destination": "out/",
+        "recurse": true,
+        "template": "./node_modules/foodoc/template",
+        "theme_opts": {
+            "theme": "dark"
+        }
+    },
+    "templates": {
+      "includeDate": true,
+      "dateFormat": "Do MMM YYYY",
+      "systemName": "Gameify",
+      "systemSummary": "A game library for Javascript Games.",
+      "systemLogo": "",
+      "systemColor": "#1db38b",
+      "copyright": "Gameify Copyright © 2022 Jesse Kreider. FooDoc Copyright © 2016 The contributors to the JSDoc3 and FooDoc projects.",
+      "linenums": true,
+      "collapseSymbols": false,
+      "inverseNav": true,
+      "inlineNav": false,
+      "outputSourceFiles": true,
+      "outputSourcePath": false,
+      "disablePackagePath": true,
+      "methodHeadingReturns": true,
+      "showTableOfContents": true,
+      "showAccessFilter": false,
+      "sort": "linenum, longname, version, since",
+      "search": true,
+      "stylesheets": [],
+      "scripts": []
+    }
+}
