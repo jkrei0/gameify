@@ -516,7 +516,7 @@ export let gameify = {
      * 
      * // Start the game
      * myScreen.setScene(mainMenu);
-     * myScreen.startGame(30);
+     * myScreen.startGame();
      * @arg {gameify.Screen} screen - The Screen the Scene should draw to.
      */
     Scene: function (screen) {
@@ -667,14 +667,19 @@ export let gameify = {
             this.updateFunction = callback;
         }
 
-        /** Have the sprite face towards a point (keeping its speed). Note that if its current velocity is 0 this won't do anything.
+        /** Have the sprite face towards a point.
          * @param {gameify.Vector2d} pos - The point to face towards
+         * @param {Number} [speed] - How quickly the sprite should move towards the point. If speed isn't specified, it keeps the same speed.
          */
-        this.goTowards = (pos) => {
+        this.goTowards = (pos, speed) => {
             const magnitude = this.velocity.getMagnitude();
             this.velocity = pos.subtract(this.position).getNormalized();
             // keep the same magnitude
-            this.velocity = this.velocity.multiply(magnitude);
+            if (speed === undefined) {
+                this.velocity = this.velocity.multiply(magnitude);
+            } else {
+                this.velocity = this.velocity.multiply(speed);
+            }
         }
 
         let deltaWarned = false;

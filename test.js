@@ -5,7 +5,7 @@ import {gameify} from "./gameify/gameify.js"
 // Create a Screen that is 600 by 400 and centered
 let screen = new gameify.Screen(document.querySelector("#my-canvas"), 1200, 800);
 
-// do this if you're using pixel art
+// Do this if you're using pixel art:
 // screen.setSmoothImages(false);
 
 // Create a Scene
@@ -26,8 +26,8 @@ let monsters = [];
 let monsterImage = new gameify.Image("sample/enemy.png")
 // Same with the update funtion for them
 function monsterUpdate(delta, monster) {
-    // make the monster face the player. It keeps whatever speed it had.
-    monster.goTowards(player.position);
+    // make the monster face the player, and move at half the player's speed.
+    monster.goTowards(player.position, playerSpeed / 2);
 }
 
 // Scenes have two main functions: onUpdate and onDraw
@@ -72,8 +72,7 @@ level1.onUpdate((delta) => {
         let newMonster = new gameify.Sprite(player.position.x + 100, player.position.y + 100, monsterImage);
         newMonster.onUpdate(monsterUpdate);
         newMonster.scale = 0.2;
-        // set the monster speed to half the player speed
-        newMonster.velocity = gameify.vectors.i().multiply( playerSpeed / 2 );
+
         screen.add(newMonster);
 
         monsters.push(newMonster); // add it to the list of monsters
