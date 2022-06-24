@@ -4,14 +4,16 @@ import {gameify} from "./gameify/gameify.js"
 // Get the Canvas element
 // Create a Screen that is 600 by 400 and centered
 let screen = new gameify.Screen(document.querySelector("#my-canvas"), 1200, 800);
-screen.setSmoothImages(false);
+
+// do this if you're using pixel art
+// screen.setSmoothImages(false);
 
 // Create a Scene
 let level1 = new gameify.Scene(screen);
 
 // create the player and add it to the game
 let player = new gameify.Sprite(100, 100, new gameify.Image("sample/player.png"));
-let playerSpeed = 30;   // give the player a speed
+let playerSpeed = 100;   // give the player a speed
 player.scale = 0.2;     // scale the player down to a reasonable size
 screen.add(player);
 
@@ -24,7 +26,8 @@ let monsters = [];
 let monsterImage = new gameify.Image("sample/enemy.png")
 // Same with the update funtion for them
 function monsterUpdate(delta, monster) {
-    // ...
+    // make the monster face the player. It keeps whatever speed it had.
+    monster.goTowards(player.position);
 }
 
 level1.onUpdate((delta) => {
@@ -37,10 +40,10 @@ level1.onUpdate((delta) => {
     if (screen.keyboard.keyIsPressed("W")) {
         addedVelocity.y -= 1; 
     }
-    if (screen.keyboard.keyWasJustPressed("S")) {
+    if (screen.keyboard.keyIsPressed("S")) {
         addedVelocity.y += 1;
     }
-    if (screen.keyboard.keyWasJustPressed("D")) {
+    if (screen.keyboard.keyIsPressed("D")) {
         addedVelocity.x += 1;
     }
     if (screen.keyboard.keyIsPressed("A")) {
@@ -57,12 +60,19 @@ level1.onUpdate((delta) => {
 
     // Add it to the player's speed
     player.velocity = player.velocity.add(addedVelocity);
-
+    
+    // slow the player down
+    player.velocity = player.velocity.multiply(1/delta);
+    
     // Spawn monsters when the player presses Space
     if (screen.keyboard.keyWasJustPressed("Space")) {
         // create a new monster with the monsterImage and spawn it near the player
         let newMonster = new gameify.Sprite(player.position.x + 100, player.position.y + 100, monsterImage);
-        monster.onUpdate(monsterUpdate);
+        newMonster.onUpdate(monsterUpdate);
+        newMonster.scale = 0.2;
+        // set the monster speed to half the player speed
+        newMonster.velocity = gameify.vectors.i().multiply( playerSpeed / 2 );
+        screen.add(newMonster);
 
         monsters.push(newMonster); // add it to the list of monsters
     }
@@ -73,12 +83,6 @@ level1.onUpdate((delta) => {
     }
 
     player.update(delta);
-
-    // slow the player down
-    console.log(player.velocity.toString(),
-        player.velocity.getNormalized().multiply(playerSpeed * delta).toString(),
-        gameify.vectors.shortestOf(player.velocity.getNormalized().multiply(playerSpeed * delta), player.velocity));
-    //player.velocity = player.velocity.subtract(gameify.vectors.shortestOf(player.velocity.getNormalized().multiply(playerSpeed * delta), player.velocity));
 
 });
 level1.onDraw(() => {
@@ -94,4 +98,4 @@ level1.onDraw(() => {
 
 // Start the game
 screen.setScene(level1);
-screen.startGame(Number(prompt("Enter update speed:")));
+screen.startGame(0);
