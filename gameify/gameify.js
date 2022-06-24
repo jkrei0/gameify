@@ -85,17 +85,6 @@ export let gameify = {
             this.x = normalized.x;
             this.y = normalized.y;
         }
-        /** Returns
-         * @example let vectorA = new gameify.Vector2d(3, 2);
-         * let vectorB = new gameify.Vector2d(7, -3);
-         * let vectorC = vectorA.add(vectorB); // vectorC = <10, -1>
-         * @arg {gameify.Vector2d} vectorB - The vector to add
-         * @returns {gameify.Vector2d}
-         */
-        this.add = (vectorB) => {
-            if (!gameify.vectors.assertIsCompatibleVector(vectorB)) return;
-            return new gameify.Vector2d(this.x + vectorB.x, this.y + vectorB.y);
-        }
         /** Adds this vector and another one
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * let vectorB = new gameify.Vector2d(7, -3);
@@ -160,11 +149,11 @@ export let gameify = {
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * // Interpolate vectorA towards zero (using gameify.vectors.ZERO to avoid having to make a new vector)
          * let vectorB = vectorA.linearInterpolate(gameify.vectors.ZERO, 0.5); // vectorB = <1.5, 1>*/
-        ZERO: undefined,
+        ZERO: () => { return new gameify.Vector2d(0, 0); },
         /** The i vector <1, 0> for reference and calculation */
-        i: undefined,
+        i: () => { return new gameify.Vector2d(1, 0); },
         /** The j vector <0, 1> for reference and calculation */
-        j: undefined,
+        j: () => { return new gameify.Vector2d(0, 1); },
         /** Checks if a vector is compatible with operations in this one
          * @package
          */
@@ -483,31 +472,30 @@ export let gameify = {
 
         // Timestamp of the last update
         let lastUpdate = 0;
-        // lock updates so they don't happen too fast
-        let lock = false;
 
         /** Starts the game.
-         * @param {Number} updatesPerSecond - How many times the game should update per second.
+         * @param {Number} targetFps - Target updates (frames) per second.
         */
-        this.startGame = (updatesPerSecond) => {
+        this.startGame = (targetFps) => {
             if (this.currentScene == null) {
                 console.error(`You need to set a Scene before you can start the game. See ${gameify.getDocs("gameify.Scene")} for details`);
             }
-            lastUpdate = Date.now();
+            
+            lastUpdate = 0;
 
-            this.updateInterval = window.setInterval(() => {
-                if (lock) {
-                    console.debug("Update is locked. This is most likely because there was an error so your game stopped.");
-                    return;
+            const eachFrame = (time) => {
+                if (!lastUpdate) {
+                    lastUpdate = time;
                 }
-                lock = true;
-                const newupdate = Date.now();
-                const delta = newupdate - lastUpdate;
-                lastUpdate = newupdate;
-                this.currentScene.update(delta);
+                window.requestAnimationFrame(eachFrame);
+                const delta = time - lastUpdate;
+                lastUpdate = time;
+                // if delta is zero, pass one instead (bc of div-by-zero errors)
+                this.currentScene.update(delta || 1);
                 this.currentScene.draw();
-                lock = false;
-            }, 1000/updatesPerSecond);
+            }
+            window.requestAnimationFrame(eachFrame);
+
         }
     },
 
@@ -680,6 +668,16 @@ export let gameify = {
             this.updateFunction = callback;
         }
 
+        /** Have the sprite face towards a point (keeping its speed). Note that if its current velocity is 0 this won't do anything.
+         * @param {gameify.Vector2d} pos - The point to face towards
+         */
+        this.goTowards = (pos) => {
+            const magnitude = this.velocity.getMagnitude();
+            this.velocity = pos.subtract(this.position).getNormalized();
+            // keep the same magnitude
+            this.velocity = this.velocity.multiply(magnitude);
+        }
+
         let deltaWarned = false;
 
         /** Update the Sprite */
@@ -687,7 +685,7 @@ export let gameify = {
             if (delta === undefined) {
                 delta = 1000;
                 if (!deltaWarned) {
-                    console.warn(`You should include a delta argument with your update call, eg update(delta)
+                    console.warn(`You should include a delta argument with your update call, eg sprite.update(delta)
 This way speeds and physics are the same regardless of FPS or how good your computer is.`);
                     deltaWarned = true;
                 }
@@ -745,7 +743,3 @@ This way speeds and physics are the same regardless of FPS or how good your comp
         }
     }
 };
-
-gameify.vectors.ZERO = new gameify.Vector2d(0, 0);
-gameify.vectors.i = new gameify.Vector2d(1, 0);
-gameify.vectors.j = new gameify.Vector2d(0, 1);
