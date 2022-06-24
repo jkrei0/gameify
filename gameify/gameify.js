@@ -474,9 +474,8 @@ export let gameify = {
         let lastUpdate = 0;
 
         /** Starts the game.
-         * @param {Number} targetFps - Target updates (frames) per second.
         */
-        this.startGame = (targetFps) => {
+        this.startGame = () => {
             if (this.currentScene == null) {
                 console.error(`You need to set a Scene before you can start the game. See ${gameify.getDocs("gameify.Scene")} for details`);
             }

@@ -30,6 +30,8 @@ function monsterUpdate(delta, monster) {
     monster.goTowards(player.position);
 }
 
+// Scenes have two main functions: onUpdate and onDraw
+// One to update the scene objects, and the other to draw them
 level1.onUpdate((delta) => {
     // This code runs at a mostly constant speed to update the game
 
@@ -98,4 +100,4 @@ level1.onDraw(() => {
 
 // Start the game
 screen.setScene(level1);
-screen.startGame(0);
+screen.startGame();
