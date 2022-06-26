@@ -655,10 +655,10 @@ export let gameify = {
         }
 
         /** Add a Sprite to the Screen. This makes it so that sprite.draw(); draws to this screen.
-         * @param {gameify.Sprite} sprite - The sprite to add to the scene
+         * @param {gameify.Sprite | gameify.Tilemap} obj - The object to add to the screen
          */
-        this.add = (sprite) => {
-            sprite.setContext(this.getContext());
+        this.add = (obj) => {
+            obj.setContext(this.getContext());
         }
 
         /** The game's update interval
@@ -737,6 +737,7 @@ export let gameify = {
                 return;
             }
             this.parent.keyboard.clearJustPressed();
+            this.parent.mouse.clearRecentEvents();
             this.updateFunction(delta);
         }
 
@@ -778,7 +779,7 @@ export let gameify = {
         /** Run when the scene is set as inactive / replaced by another scene
          * @private
         */
-         this.onUnload = () => {
+        this.onUnload = () => {
             this.parent = null;
         }
     },
@@ -786,7 +787,7 @@ export let gameify = {
     /** Creates an image for use in sprites and other places. 
      * @constructor
      * @example let playerImage = new gameify.Image("images/player.png");
-     * @arg {String} path - The image filepath. (Can also be a dataURI)
+     * @arg {String} [path] - The image filepath. (Can also be a dataURI). If not specified, the image is created with no texture
     */
     Image: function (path) {
         /** If the image is loaded */
@@ -794,6 +795,81 @@ export let gameify = {
 
         this.loadFunction = undefined;
 
+        /** Set a function to be run when the image is loaded
+         * @param {function} callback - The function to be called when the image is loaded.
+         */
+        this.onLoad = (callback) => { this.loadFunction = callback; }
+
+        
+        this.cropData = { x: 0, y: 0, width: 0, height: 0 }
+
+        /** Crop the image 
+         * @param {Number} x - how much to crop of the left of the image
+         * @param {Number} y - how much to crop of the right of the image
+         * @param {Number} width - how wide the resulting image should be
+         * @param {Number} height - how tall the resulting image should be
+        */
+        this.crop = (x, y, width, height) => {
+            if (x === undefined || y === undefined || width === undefined || height === undefined) {
+                console.error("x, y, width and height must be specified");
+            }
+            this.cropData = { x: x, y: y, width: width, height: height };
+        }
+
+        /** Get the image crop. Returns an object with x, y, width, and height properties. */
+        this.getCrop = () => {
+            return JSON.parse(JSON.stringify(this.cropData));
+        }
+
+        this.texture = undefined;
+        if (path !== undefined) {
+            this.texture = document.createElement("img");
+            this.texture.src = path;
+            this.texture.onerror = () => {
+                console.error(`Your image "${path}" couldn't be loaded. Check the path, and make sure you don't have any typos.`)
+            }
+            this.texture.onload = () => {
+                console.info(`Loaded image "${path}"`)
+                this.loaded = true;
+    
+                // don't reset the crop if it was already specified.
+                if (!this.cropData.width) this.cropData.width = this.texture.width;
+                if (!this.cropData.height) this.cropData.height = this.texture.height;
+    
+                if (this.loadFunction) { this.loadFunction(); }
+            }
+        }
+    }, 
+
+    /** Creates a tileset from an image
+     * @constructor
+     * @example let myTileset = new gameify.Tileset("images/tileset.png");
+     * // Give the coordinates of a tile to retrieve it
+     * let grassTile = myTileset.getTile(3, 2);
+     * @arg {String} path - The image/tileset filepath
+     * @arg {Number} twidth - The width of each tile
+     * @arg {Number} theight - The height of each tile
+     */
+    Tileset: function (path, twidth, theight) {
+        this.path = path;
+        this.twidth = twidth;
+        this.theight = theight;
+
+        this.loaded = false;
+
+        /** Get a tile from it's coordinates. Returns a new Image object each time, so if you're getting the same tile a lot you might want to save it to a variable
+         * @param {Number} x - The x coordinate of the tile
+         * @param {Number} y - The y coordinate of the tile
+         * @returns {gameify.Image}
+         */
+        this.getTile = (x, y) => {
+            const tile = new gameify.Image();
+            tile.texture = this.texture;
+            tile.crop(x * this.twidth, y * this.theight, this.twidth, this.theight);
+            return tile;
+        }
+
+        this.loadFunction = undefined;
         /** Set a function to be run when the image is loaded
          * @param {function} callback - The function to be called when the image is loaded.
          */
@@ -807,9 +883,127 @@ export let gameify = {
         this.texture.onload = () => {
             console.info(`Loaded image "${path}"`)
             this.loaded = true;
+
             if (this.loadFunction) { this.loadFunction(); }
         }
-    }, 
+    },
+
+    /** Creates a map of rectangular tiles
+     * @example // ...
+     * // make a new tileset with 8x8 pixels
+     * let forestTileset = new gameify.Tileset("images/forest.png", 8, 8);
+     * // make a new tilemap with 16x16 tiles and no offset
+     * // anything that's not 16x16 will be scaled to match
+     * let forestMap = new gameify.Tilemap(16, 16, 0, 0);
+     * forsetMap.setTileset(forestTileset);
+     * 
+     * // make sure to add it to the screen
+     * myScreen.add(tileset);
+     * 
+     * forestScene.onDraw(() => {
+     *     // ...
+     *     // Draw the tilemap
+     *     forsetMap.draw();
+     * });
+     * @constructor
+     * @arg {Number} twidth - The width of the tiles
+     * @arg {Number} theight - The height of the tiles
+     * @arg {Number} offsetx - X offset of the tiles
+     * @arg {Number} offsety - Y offset of the tiles
+     */
+    Tilemap: function (twidth, theight, offsetx, offsety) {
+        this.twidth = twidth;
+        this.theight = theight;
+        this.offset = {
+            x: offsetx || 0,
+            y: offsety || 0
+        };
+
+        // placed is an object so there can be negative indexes
+        this.tiles = { placed: {} };
+
+        this.tileset = undefined;
+        /** What tileset to use. This tileset must include anything you want to use in this tilemap.
+         * @param {gameify.Tileset} set - The tileset
+        */
+        this.setTileset = (set) => {
+            this.tileset = set;
+        }
+
+        this.drawFunction = null;
+        /** Set the draw function for this tilemap
+        * @param {function} callback - The function to be called right before the tilemap is drawn
+        */
+        this.onDraw = (callback) => {
+            this.drawFunction = callback;
+        }
+
+        /** Place a tile on the tilemap */
+        this.place = (originx, originy, destx, desty) => {
+            if (!this.tileset) {
+                console.error("You can't place a tile before setting a tileset.");
+                return;
+            }
+
+            // "cache" tiles as to not create a new Image for every single placed tile.
+            if (!this.tiles[`${originx},${originy}`]) {
+                this.tiles[`${originx},${originy}`] = this.tileset.getTile(originx, originy);
+            }
+            if (!this.tiles.placed[destx]) {
+                // an object so there can be negative indexes
+                this.tiles.placed [destx] = {};
+            }
+
+            // add the tile to the list of placed tiles
+            this.tiles.placed[destx][desty] = this.tiles[`${originx},${originy}`];
+        }
+
+        this.draw = () => {
+            if (this.drawFunction) {
+                this.drawFunction();
+            }
+            if (!this.context) {
+                console.error(`You need to add this tilemap to a screen before you can draw it. See ${gameify.getDocs("gameify.Tilemap")} for more details`);
+                return;
+            }
+
+            for (const row in this.tiles.placed) {
+                for (const col in this.tiles.placed[row]) {
+                    const tile = this.tiles.placed[row][col];
+                    const crop = tile.getCrop();
+                    this.context.drawImage( tile.texture,
+                                            // source coordinates
+                                            crop.x,
+                                            crop.y,
+                                            crop.width,
+                                            crop.height,
+                                            // destination coordinates
+                                            this.offset.x + (row * this.twidth),
+                                            this.offset.y + (col * this.theight),
+                                            this.twidth,
+                                            this.theight );
+                }
+            }
+
+        }
+
+        this.enableMapBuilder = (screen) => {
+            console.warn("map builder is not available yet");
+        }
+
+        /** The Canvas context to draw to
+         * @private
+         */
+        this.context = null;
+
+        /** Set the Canvas context to draw to. This should be called whenever a tilemap is added to a Screen
+         * @private
+         */
+        this.setContext = (context) => {
+            this.context = context;
+        }
+        
+    },
 
     /** Creates a scene in the game. (Eg. a menu or level)
      * @constructor
@@ -845,9 +1039,11 @@ export let gameify = {
         this.velocity = new gameify.Vector2d(0, 0);
 
         /** The Sprite's image / texture
-         * @private
          */
         this.image = image;
+
+        /** The sprite's rotation, in degrees */
+        this.rotation = 0;
 
         /** Change the Sprite's image / texture
          * @param {gameify.Image} newImage - The image to change the sprite to
@@ -904,8 +1100,8 @@ This way speeds and physics are the same regardless of FPS or how good your comp
          */
         this.drawFunction = null;
 
-        /** Set the draw function for this scene
-         * @param {function} callback
+        /** Set the draw function for this sprite
+         * @param {function} callback - The function to be called right before the sprite is drawn
          */
         this.onDraw = (callback) => {
             this.drawFunction = callback;
@@ -923,11 +1119,33 @@ This way speeds and physics are the same regardless of FPS or how good your comp
                 console.error("You need to add this sprite to a screen before you can draw it. ");
                 return;
             }
+            const crop = this.image.getCrop();
+            const destWidth = crop.width * this.scale;
+            const destHeight = crop.height * this.scale;
+
+            // translate the canvas to draw rotated images
+            const transX = this.position.x + destWidth;
+            const transY = this.position.y + destHeight;
+            const transAngle = (this.rotation * Math.PI) / 180; // convert degrees to radians
+
+            this.context.translate(transX, transY);
+            this.context.rotate(transAngle);
+
             this.context.drawImage( this.image.texture,
-                                    this.position.x,
-                                    this.position.y,
-                                    this.image.texture.width * this.scale,
-                                    this.image.texture.height * this.scale );
+                                    // source coordinates
+                                    crop.x,
+                                    crop.y,
+                                    crop.width,
+                                    crop.height,
+                                    // Move over so it rotates around the center
+                                    -destWidth / 2,
+                                    -destHeight / 2,
+                                    destWidth,
+                                    destHeight );
+
+            // revert the transforms
+            this.context.rotate(-transAngle);
+            this.context.translate(-transX, -transY);
         }
 
         /** The Canvas context to draw to
@@ -935,7 +1153,7 @@ This way speeds and physics are the same regardless of FPS or how good your comp
          */
         this.context = null;
 
-        /** Set the Canvas context to draw to. This should be called whenever a sprite is added to a Scene
+        /** Set the Canvas context to draw to. This should be called whenever a sprite is added to a Screen
          * @private
          */
         this.setContext = (context) => {

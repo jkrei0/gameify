@@ -11,11 +11,20 @@ let screen = new gameify.Screen(document.querySelector("#my-canvas"), 1200, 800)
 // Create a Scene
 let level1 = new gameify.Scene(screen);
 
+// load the scribble dungeon art
+let dungeonTileset = new gameify.Tileset("sample/tilesheet.png", 64, 64);
+
 // create the player and add it to the game
 let player = new gameify.Sprite(100, 100, new gameify.Image("sample/player.png"));
 let playerSpeed = 100;   // give the player a speed
-player.scale = 0.2;     // scale the player down to a reasonable size
+player.scale = 0.17;     // scale the player down to a reasonable size
 screen.add(player);
+
+let dungeonMap = new gameify.Tilemap(64, 64, 0, 0);
+screen.add(dungeonMap);
+dungeonMap.setTileset(dungeonTileset);
+
+
 
 // Make a list of monsters on the screen
 let monsters = [];
@@ -91,6 +100,8 @@ level1.onDraw(() => {
     screen.clear(); // clear the screen each frame (Curious as to why? Delete this and see)
     
     // draw things in back-to-front order
+    dungeonMap.draw();
+
     for (let monster of monsters) {
         monster.draw();
     }
