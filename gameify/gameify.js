@@ -247,7 +247,7 @@ export let gameify = {
         this.onKeyDown = (event) => {
             let key = event.code;
             // If the key is already in the array, don't add it again.
-            // This is normal, the OS
+            // This is normal, the OS might fire the keydown event repeatedly for held keys
             if (this.pressedKeys.indexOf(key) >= 0) {
                 return;
             }
@@ -278,7 +278,7 @@ export let gameify = {
          * @example // see if the right arrow is pressed
          * if (myGame.keyboard.keyIsPressed("Right")) {
          *     // set the player motion
-         *     player.motion.x = 5;
+         *     player.velocity.x = 5;
          * }
         */
         this.keyIsPressed = (key) => {
@@ -287,7 +287,7 @@ export let gameify = {
 
         /** Check if a key was just pressed and let up
          * @arg {String} key - What key do you want to check
-         * @returns {Boolean} if the key is pressed down
+         * @returns {Boolean} if the key was just pressed
          * @example // See if the player pressed the Escape key.
          * if (myScreen.keyboard.keyWasJustPressed("Escape")) {
          *     myScreen.setScene(mainMenu);
@@ -297,7 +297,7 @@ export let gameify = {
             for (const i in this.justPressedKeys) {
                 let jpk = this.justPressedKeys[i];
                 if (jpk[1] == key || jpk[2] == key) {
-                    this.justPressedKeys[i][0] == 99999;
+                    this.justPressedKeys[i][0] = 99999;
                     return true;
                 }
             }
@@ -346,6 +346,196 @@ export let gameify = {
         this.destruct = () => {
             this.captureScope.removeEventListener("keydown", this.onkeyDown);
             this.captureScope.removeEventListener("keyup", this.onKeyUp);
+        }
+        /** Changes the scope that the KeyboardInputManager looks at
+         * @arg {HTMLElement} scope - What parts of the screen the KeyboardEventManager looks for.
+        */
+        this.setCaptureScope = (scope) => {
+            this.destruct();
+            this.captureScope = scope;
+            this.setup();
+        }
+    },
+
+    /** Manages mouse events. One is created automatically for every screen, you can access it as shown in the example.
+     * @constructor
+     * @example // make a new screen and scene
+     * let myScreen = new gameify.Screen(document.querySelector("#my-canvas"), 600, 400);
+     * let myScene = new gameify.Scene(myScreen);
+     * myScene.onUpdate(() => {
+     *     if (myScreen.mouse.buttonIsPressed()) {
+     *         myScreen.setScene(pause_menu);
+     *     }
+     * });
+     * @arg {HTMLElement} scope - What parts of the screen the MouseEventManager looks at.
+     */
+    MouseEventManager: function (captureScope) {
+        /** The element that input events are captured from
+         * @private
+         */
+        this.captureScope = captureScope;
+
+        // A list of the keys that are currently pressed
+        this.pressedButtons = [];
+        // A list of keys that were just pressed. Cleared after a few updates or at the end of an update in which it's queried for.
+        this.eventsJustHappened = [];
+        // Current mouse position
+        this.cursorPosition = {x: 0, y: 0};
+
+        /** Returns the name of the button given the number. <br> 0 = left, 1 = middle (wheel), 2 = right
+         * @param {Number} button - The numerical button to get the name of
+         * @private
+         */
+        this.getButtonName = (button) => {
+            switch (button) {
+                case 0: return "left";
+                case 1: return "middle";
+                case 2: return "right";
+                default: console.error("Invalid mouse button");
+            }
+        }
+
+        /** Get the x and y position of the mouse cursor
+         * @example 
+         * if (myScreen.getMousePos().x < 50) {
+         *     // do something
+         * }
+         * @returns {Object} {x, y}
+        */
+        this.getMousePos = () => {
+            // copy values, because we don't want to return a reference.
+            return {x: this.cursorPosition.x, y: this.cursorPosition.y};
+        }
+
+        /** Called when a mouse button is pressed down
+         * @private
+         */
+        this.onMouseDown = (event) => {
+            // prevent right clicks
+            if (event.button === 2) {
+                event.preventDefault();
+            }
+            this.pressedButtons.push(event.button);
+            this.pressedButtons.push(this.getButtonName(event.button));
+        }
+
+        /** Called when a key is released
+         * @private
+         */
+        this.onMouseUp = (event) => {
+            event.preventDefault();
+            let button = event.button;
+            // Remove the keys from the pressedkeys array
+            this.pressedButtons.splice(this.pressedButtons.indexOf(button), 2);
+
+            // Add keys to just pressed list
+            this.eventsJustHappened.push([0, button, this.getButtonName(button)]);
+        }
+
+        this.onMouseMove = (event) => {
+            this.cursorPosition.x = event.offsetX;
+            this.cursorPosition.y = event.offsetY;
+            this.eventsJustHappened.push([0, "mousemove", "move"]);
+        }
+
+        /** Called when the mouse leaves the canvas
+         * @private
+         */
+        this.onMouseOut = (event) => {
+            this.pressedButtons = [];
+            this.eventsJustHappened.push([0, "mouseout", "leave"]);
+        }
+
+        /** Called when the mouse wheel is moved 
+         * @private
+         */
+        this.onMouseWheel = (event) => {
+            if (event.deltaY > 0) {
+                this.eventsJustHappened.push([0, "wheeldown", "wheel"]);
+            } else {
+                this.eventsJustHappened.push([0, "wheelup", "wheel"]);
+            }
+        }
+
+        /** Check if a button is currently pressed down
+         * @arg {String} button - The button you want to check
+         * @returns {Boolean} if the button is pressed
+         * @example // see if the left button is pressed
+         * if (myGame.mouse.buttonIsPressed("left")) {
+         *     // do something
+         * }
+        */
+        this.buttonIsPressed = (button) => {
+            return (this.pressedButtons.indexOf(button) >= 0);
+        }
+
+        /** Check if a mouse event just happened (eg a button press or scroll)
+         * @arg {String} event - The event you want to check
+         * @returns {Boolean} if the event just happened
+         * @example // See if the player clicked.
+         * if (myScreen.mouse.eventJustHappened("click")) {
+         *     // do something
+         * }
+        */
+        this.eventJustHappened = (event) => {
+            for (const i in this.eventsJustHappened) {
+                let evt = this.eventsJustHappened[i];
+                if (evt[1] == event || evt[2] == event) {
+                    this.eventsJustHappened[i][0] = 99999;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // How long before "just pressed" keys are removed from the eventsJustHappened list (in frames)
+        this.clearEventTimeout = 1;
+
+        /** Sets how long before "just pressed" keys are removed from the just pressed list.
+         * By default, keys are removed from the list after one frame.
+         * @arg {Number} timeout - How many frames/updates keys should be considered "just pressed"
+         */
+        this.setRecentEventTimeout = (timeout) => {
+            if (timeout < 1) {
+                console.warn(`Setting the timeout to 0 or less means events will NEVER be considered "just happened", meaning eventJustHappened will always return false`);
+                return;
+            }
+            this.clearEventTimeout = timeout;
+        }
+
+        /** Removes stale keys from the just pressed list.
+         * @private
+         */
+        this.clearRecentEvents = () => {
+            for (const i in this.eventsJustHappened) {
+                if (this.eventsJustHappened[i][0] >= this.eventsJustHappened) {
+                    this.eventsJustHappened.splice(i, 1);
+                } else {
+                    this.eventsJustHappened[i][0] += 1;
+                }
+            }
+        }
+
+        /** Sets up the event manager.
+         * @package
+        */
+        this.setup = () => {
+            this.captureScope.setAttribute("tabindex", 1);
+            this.captureScope.addEventListener("mousedown", this.onMouseDown);
+            this.captureScope.addEventListener("mouseup", this.onMouseUp);
+            this.captureScope.addEventListener("mouseout", this.onMouseOut);
+            this.captureScope.addEventListener("mousemove", this.onMouseMove);
+            this.captureScope.addEventListener("wheel", this.onMouseWheel);
+        }
+        /** Destructs the event manager (clears events) 
+         * @package
+        */
+        this.destruct = () => {
+            this.captureScope.removeEventListener("mousedown", this.onMouseDown);
+            this.captureScope.removeEventListener("mouseup", this.onMouseUp);
+            this.captureScope.removeEventListener("mouseout", this.onMouseOut);
+            this.captureScope.addEventListener("mousemove", this.onMouseMove);
+            this.captureScope.addEventListener("wheel", this.onMouseWheel);
         }
         /** Changes the scope that the KeyboardInputManager looks at
          * @arg {HTMLElement} scope - What parts of the screen the KeyboardEventManager looks for.
@@ -406,6 +596,12 @@ export let gameify = {
          */
         this.keyboard = new gameify.KeyboardEventManager(this.element.parentElement);
         this.keyboard.setup();
+
+        /** Mouse events for the Screen. Used to what mouse buttons are pressed, and other mouse events (eg scroll)
+         * @type {gameify.MouseEventManager}
+         */
+        this.mouse = new gameify.MouseEventManager(this.element.parentElement);
+        this.mouse.setup();
 
         /** Get the Screen's canvas context 
          * @private
@@ -747,3 +943,79 @@ This way speeds and physics are the same regardless of FPS or how good your comp
         }
     }
 };
+
+/** This is a mostly complete list of mouse and keyboard input events supported by gameify. Most event names are case-sensitive
+ * @example // ----------------
+ * //  Mouse Buttons
+ * // ----------------
+ * if (myScreen.mouse.buttonIsPressed( BUTTON_NAME )) {
+ *     // do something
+ * }
+ * // Valid buttons are:
+ * 0    "left"
+ * 2    "right"
+ * 1    "middle"
+ * @example // ----------------
+ * //  Mouse Events
+ * // ----------------
+ * if (myScreen.mouse.eventJustHappened( EVENT_NAME )) {
+ *     // do something
+ * }
+ * // Valid events are:
+ * 0    "left"
+ * 2    "right"
+ * 1    "middle"
+ * "leave"  "mouseout"
+ * "move"   "movemove"
+ * "wheelup"
+ * "wheeldown"
+ * "wheel"
+ * @example // ----------------
+ * //  Keyboard Buttons
+ * // ----------------
+ * if (myScreen.keyboard.keyIsPressed( KEY_NAME )) {
+ *     // do something
+ * }
+ * // Valid keys are: (On a standard US English keyboard)
+ * // Letter keys
+ * "A"  "KeyA"
+ * // through
+ * "Z"  "KeyZ"
+ * 
+ * // Other keys
+ * "Backquote"  "Minus"  "Equal"  "BracketLeft"
+ * "BracketRight"  "Backslash"  "Semicolon"  "Quote"
+ * "Period"  "Comma"  "Slash"
+ * 
+ * // Numbers
+ * "0"  "Digit0"  "Numpad0"
+ * // through
+ * "9"  "Digit9"  "Numpad9"
+ * // You can check if a key is upper or lowercase by checking for the Shift key
+ * 
+ * // Arrow keys
+ * "Up"     "ArrowUp"
+ * "Down"   "ArrowDown"
+ * "Left"   "ArrowLeft"
+ * "Right"  "ArrowRight"
+ * 
+ * // Special keys
+ * "Shift"      "ShiftLeft"     "ShiftRight"
+ * "Control"    "ControlLeft"   "ControlRight"
+ * "Alt"        "AltLeft"       "AltRight"
+ * "OS"         "OSLeft"        "OSRight"
+ * "Enter"  "NumpadEnter"   "Backspace" "CapsLock"
+ * "Tab"    "PageUp"        "PageDown"  "Home"
+ * "End"    "Delete"        "Insert"
+ * 
+ * // Function keys
+ * "F1"
+ * // through
+ * "F15" // some keyboards only have F1-F12
+ * 
+ * // Numpad keys
+ * "NumpadDivide"   "NumpadMultiply"  "NumpadSubtract"
+ * "NumpadAdd"      "NumpadDecimal"
+ */
+// This is an empty object, that only exists for the documentation.
+export let inputEventsTables = {};
