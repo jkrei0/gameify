@@ -16,7 +16,6 @@ export let gameify = {
      */
     getDocs: function (concept, permalink) {
         let docsPath = "localhost:8080/out/";
-        concept = concept.replace("gameify.", "");
         switch (concept) {
             default:
                 return `${docsPath + concept}.html#${permalink ? permalink : ""}`;
