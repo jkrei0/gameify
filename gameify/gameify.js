@@ -987,8 +987,47 @@ export let gameify = {
             this.drawFunction = callback;
         }
 
-        /** Place a tile on the tilemap */
-        this.place = (originx, originy, destx, desty) => {
+        /** Convert screen coordinates to map coordinates 
+         * @param {Number | Object} screenx - The screen x coordinate OR an object containing both x any y coordinates
+         * @param {Number} [screeny] - The screen y coordinate
+         * @returns {Object} {x, y}
+         */
+        this.screenToMap = (screenx, screeny) => {
+            // loose comparison because we don't want any null values
+            if (screenx.x != undefined && screenx.y != undefined) {
+                screeny = screenx.y;
+                screenx = screenx.x;
+            }
+            return {
+                x: Math.floor((screenx - this.offset.x) / this.twidth),
+                y: Math.floor((screeny - this.offset.y) / this.theight)
+            }
+        }
+        /** Convert map coordinates to screen coordinates
+         * @param {Number | Object} mapx - The map x coordinate OR an object containing both x and y coordinates
+         * @param {Number} [mapy] - The map y coordinate
+         * @returns {Object} {x, y}
+         */
+        this.mapToScreen = (mapx, mapy) => {
+            // loose comparison because we don't want any null values
+            if (mapx.x != undefined && mapy.y != undefined) {
+                mapy = mapx.y;
+                mapx = mapx.x;
+            }
+            return {
+                x: (mapx + this.offset.x) * this.twidth,
+                y: (mapy + this.offset.y) * this.theight
+            }
+        }
+
+        /** Place a tile on the tilemap
+         * @param {Number} originx - The x position of the tile on the tilesheet
+         * @param {Number} originy - The y position of the tile on the tilesheet
+         * @param {Number} destx - The x position to place the tile
+         * @param {Number} desty - The y position to place the tile
+         * @param {Number} [rotation=0] - Tile rotation, in degrees
+         */
+        this.place = (originx, originy, destx, desty, rotation) => {
             if (!this.tileset) {
                 console.error("You can't place a tile before setting a tileset.");
                 return;
@@ -1000,11 +1039,39 @@ export let gameify = {
             }
             if (!this.tiles.placed[destx]) {
                 // an object so there can be negative indexes
-                this.tiles.placed [destx] = {};
+                this.tiles.placed[destx] = {};
             }
 
             // add the tile to the list of placed tiles
-            this.tiles.placed[destx][desty] = this.tiles[`${originx},${originy}`];
+            this.tiles.placed[destx][desty] = {
+                image: this.tiles[`${originx},${originy}`],
+                source: {
+                    x: originx,
+                    y: originy
+                },
+                rotation: rotation || 0
+            };
+        }
+
+        /** Get the tile (if it exists) placed at a certain position
+         * @param {Number} x - X coordinate of the tile
+         * @param {Number} y - Y coordinate of the tile
+         */
+        this.get = (x, y) => {
+            if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
+                return this.tiles.placed[x][y];
+
+            } else return undefined;
+        }
+
+        /** Remove a tile from the tilemap
+         * @param {Number} x - The x coord of the tile to remove
+         * @param {Number} y - The y coord of the tile to remove
+         */
+        this.remove = (x, y) => {
+            if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
+                delete this.tiles.placed[x][y];
+            }
         }
 
         this.draw = () => {
@@ -1036,8 +1103,171 @@ export let gameify = {
 
         }
 
+        /** Enable the map builder tool. This allows you to easily edit tilesets.<br>
+         * Controls are: Click to place, Right-click to delete, Middle-click to pick, Scroll and Ctrl+Scroll to switch tile, Shift+Scroll to rotate the tile.<br>
+         * Once you're finished, press Enter and copy the message in the console
+         * @param {gameify.Screen} screen - The screen to show the map builder on. For best results, use the one you've already added it to.
+         */
         this.enableMapBuilder = (screen) => {
-            console.warn("map builder is not available yet");
+            let mainScene = new gameify.Scene(screen);
+            mainScene.lock("The Tilemap builder is currently enabled.");
+
+            let selectedTile = {
+                x: 0, y: 0,
+                rotation: 0
+            };
+
+            let textureImage = new gameify.Image(this.tileset.texture.src);
+
+            mainScene.onUpdate(() => {
+                if (screen.mouse.buttonIsPressed("left")) {
+                    const pos = this.screenToMap(screen.mouse.getPosition());
+                    this.place(selectedTile.x, selectedTile.y, pos.x, pos.y, selectedTile.rotation);
+
+                } else if (screen.mouse.buttonIsPressed("right")) {
+                    const pos = this.screenToMap(screen.mouse.getPosition());
+                    this.remove(pos.x, pos.y);
+
+                } else if (screen.mouse.buttonIsPressed("middle")) {
+                    const pos = this.screenToMap(screen.mouse.getPosition());
+                    const tile = this.get(pos.x, pos.y);
+                    if (tile) {
+                        selectedTile.x = tile.source.x;
+                        selectedTile.y = tile.source.y;
+                        selectedTile.rotation = tile.rotation;
+                    }
+                }
+
+                if (screen.keyboard.keyWasJustPressed("Enter")) {
+                    this.exportMapData();
+                    mainScene.unlock();
+                }
+
+                if (screen.mouse.eventJustHappened("wheeldown")) {
+                    if (screen.keyboard.keyIsPressed("Shift")) {
+                        selectedTile.rotation += 45;
+                        return;
+                    } else if (screen.keyboard.keyIsPressed("Control")) {
+                        selectedTile.y += 1;
+                        // go to the next row if it's at the end
+                        if (selectedTile.y * this.theight >= this.tileset.texture.height) {
+                            selectedTile.y = 0;
+                            selectedTile.x += 1;
+                            // loop to the beginning
+                            if (selectedTile.x * this.twidth >= this.tileset.texture.width) {
+                                selectedTile.x = 0;
+                            }
+                        }
+                        return;
+                    }
+                    selectedTile.x += 1;
+                    // go to the next row if it's at the end
+                    if (selectedTile.x * this.twidth >= this.tileset.texture.width) {
+                        selectedTile.x = 0;
+                        selectedTile.y += 1;
+                        // loop to the beginning
+                        if (selectedTile.y * this.theight >= this.tileset.texture.height) {
+                            selectedTile.y = 0;
+                        }
+                    }
+
+                } else if (screen.mouse.eventJustHappened("wheelup")) {
+                    if (screen.keyboard.keyIsPressed("Shift")) {
+                        selectedTile.rotation -= 45;
+                        return;
+                    } else if (screen.keyboard.keyIsPressed("Control")) {
+                        selectedTile.y -= 1;
+                        // go to the previous row if it's at the beginning
+                        if (selectedTile.y < 0) {
+                            selectedTile.y = Math.floor(this.tileset.texture.height / this.theight) - 1;
+                            selectedTile.x -= 1;
+                            // loop to the end
+                            if (selectedTile.x < 0) {
+                                selectedTile.x = Math.floor(this.tileset.texture.width / this.twidth) - 1;
+                            }
+                        }
+                        return;
+                    }
+                    selectedTile.x -= 1;
+                    // go to the previous row if it's at the beginning
+                    if (selectedTile.x < 0) {
+                        selectedTile.x = Math.floor(this.tileset.texture.width / this.twidth) - 1;
+                        selectedTile.y -= 1;
+                        // loop to the end
+                        if (selectedTile.y < 0) {
+                            selectedTile.y = Math.floor(this.tileset.texture.height / this.theight) - 1;
+                        }
+                    }
+                }
+            });
+            mainScene.onDraw(() => {
+                screen.clear();
+
+                this.draw();
+
+                const pos = this.screenToMap(screen.mouse.getPosition());
+
+                const previewImage = this.tileset.getTile(selectedTile.x, selectedTile.y);
+                const crop = previewImage.getCrop();
+                // draw the preview transulcent
+                this.context.globalAlpha = 0.5;
+
+                previewImage.draw(this.context,
+                                  this.offset.x + (pos.x * this.twidth),
+                                  this.offset.y + (pos.y * this.twidth),
+                                  this.twidth, this.theight,
+                                  selectedTile.rotation );
+
+                textureImage.draw( this.context, 0, 0,
+                textureImage.texture.width / this.tileset.twidth * 25,
+                textureImage.texture.height / this.tileset.theight * 25 );
+
+                this.context.globalAlpha = 1;
+
+                // highlight the hovered square
+                const padding = 2;
+                this.context.beginPath();
+                this.context.rect(pos.x * this.twidth - padding + this.offset.x,
+                                  pos.y * this.theight - padding + this.offset.y,
+                                  this.twidth + (padding*2),
+                                  this.theight + (padding*2));
+                // for the "minimap"
+                this.context.rect(selectedTile.x * 25, selectedTile.y * 25, 25, 25);
+                this.context.stroke();
+            });
+
+            console.log(this.context === screen.element.getContext("2d"));
+
+            screen.setScene(mainScene);
+
+            return mainScene;
+        }
+
+        this.exportMapData = () => {
+            let output = [];
+            for (const col in this.tiles.placed) {
+                for (const row in this.tiles.placed[col]) {
+                    const tile = this.tiles.placed[col][row];
+                    // use as little text as possible, this will be saved to a JSON string
+                    // Because this will be repeated possibly hundreds of times
+                    output.push({
+                        s: [tile.source.x, tile.source.y],
+                        p: [col, row],
+                        r: tile.rotation
+                    });
+                }
+            }
+            console.log(JSON.stringify(output));
+            return output;
+        }
+
+        /** Load data saved from the map builder<br>
+         * @param {Object} data - The map data to load
+         */
+        this.loadMapData = (data) => {
+            for (const tile of data) {
+                this.place(tile.s[0], tile.s[1], tile.p[0], tile.p[1], tile.r);
+            }
         }
 
         /** The Canvas context to draw to
