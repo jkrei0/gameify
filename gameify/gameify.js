@@ -1188,8 +1188,8 @@ This way speeds and physics are the same regardless of FPS or how good your comp
             const destHeight = crop.height * this.scale;
 
             // translate the canvas to draw rotated images
-            const transX = this.position.x + destWidth;
-            const transY = this.position.y + destHeight;
+            const transX = this.position.x + destWidth / 2;
+            const transY = this.position.y + destHeight / 2;
             const transAngle = (this.rotation * Math.PI) / 180; // convert degrees to radians
 
             this.context.translate(transX, transY);
