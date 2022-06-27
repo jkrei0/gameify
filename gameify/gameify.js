@@ -397,12 +397,12 @@ export let gameify = {
 
         /** Get the x and y position of the mouse cursor
          * @example 
-         * if (myScreen.getMousePos().x < 50) {
+         * if (myScreen.mouse.getPosition().x < 50) {
          *     // do something
          * }
          * @returns {Object} {x, y}
         */
-        this.getMousePos = () => {
+        this.getPosition = () => {
             // copy values, because we don't want to return a reference.
             return {x: this.cursorPosition.x, y: this.cursorPosition.y};
         }
@@ -411,10 +411,6 @@ export let gameify = {
          * @private
          */
         this.onMouseDown = (event) => {
-            // prevent right clicks
-            if (event.button === 2) {
-                event.preventDefault();
-            }
             this.pressedButtons.push(event.button);
             this.pressedButtons.push(this.getButtonName(event.button));
         }
@@ -450,6 +446,7 @@ export let gameify = {
          * @private
          */
         this.onMouseWheel = (event) => {
+            event.preventDefault();
             if (event.deltaY > 0) {
                 this.eventsJustHappened.push([0, "wheeldown", "wheel"]);
             } else {
@@ -508,7 +505,7 @@ export let gameify = {
          */
         this.clearRecentEvents = () => {
             for (const i in this.eventsJustHappened) {
-                if (this.eventsJustHappened[i][0] >= this.eventsJustHappened) {
+                if (this.eventsJustHappened[i][0] >= this.clearEventTimeout) {
                     this.eventsJustHappened.splice(i, 1);
                 } else {
                     this.eventsJustHappened[i][0] += 1;
@@ -534,8 +531,8 @@ export let gameify = {
             this.captureScope.removeEventListener("mousedown", this.onMouseDown);
             this.captureScope.removeEventListener("mouseup", this.onMouseUp);
             this.captureScope.removeEventListener("mouseout", this.onMouseOut);
-            this.captureScope.addEventListener("mousemove", this.onMouseMove);
-            this.captureScope.addEventListener("wheel", this.onMouseWheel);
+            this.captureScope.removeEventListener("mousemove", this.onMouseMove);
+            this.captureScope.removeEventListener("wheel", this.onMouseWheel);
         }
         /** Changes the scope that the KeyboardInputManager looks at
          * @arg {HTMLElement} scope - What parts of the screen the KeyboardEventManager looks for.
@@ -649,6 +646,10 @@ export let gameify = {
          * @param {gameify.Scene} scene - The scene to set the game to.
          */
         this.setScene = (scene) => {
+            if (this.currentScene && this.currentScene.locked) {
+                console.warn("The current scene is locked and cannot be changed: " + this.currentScene.locked);
+                return;
+            }
             if (this.currentScene) this.currentScene.onUnload();
             this.currentScene = scene;
             this.currentScene.onLoad(this);
@@ -741,6 +742,18 @@ export let gameify = {
             this.updateFunction(delta);
         }
 
+        this.locked = false;
+        /** Lock the scene, meaning you cannot switch to another scene until it is unlocked with scene.unlock()
+         * @param {String} [text] - A helpful message to display when you try to switch scenes
+         */
+        this.lock = (text) => {
+            this.locked = text || "Unlock it to change the scene";
+        }
+        /** Unlock the scene, meaning you can now switch to another scene. Scenes are unlocked by default */
+        this.unlock = () => {
+            this.locked = false;
+        }
+
         /** The user-set draw function
          * @private
          */
@@ -819,6 +832,39 @@ export let gameify = {
         /** Get the image crop. Returns an object with x, y, width, and height properties. */
         this.getCrop = () => {
             return JSON.parse(JSON.stringify(this.cropData));
+        }
+
+        /** Draw the image to a context
+         * @param {CanvasRenderingContext2D} context - The canvas context to draw to
+         * @param {Number} x - The x coordinate to draw at
+         * @param {Number} y - The y coordinate to draw at
+         * @param {Number} w - Width
+         * @param {Number} h - Height
+         * @param {Number} r - Rotation, in degrees
+         */
+        this.draw = (context, x, y, w, h, r) => {
+            // translate the canvas to draw rotated images
+            const transX = x + w / 2;
+            const transY = y + h / 2;
+            const transAngle = (r * Math.PI) / 180; // convert degrees to radians
+
+            context.translate(transX, transY);
+            context.rotate(transAngle);
+
+            context.drawImage( this.texture,
+                               // source coordinates
+                               this.cropData.x,
+                               this.cropData.y,
+                               this.cropData.width,
+                               this.cropData.height,
+                               // destination coordinates
+                               -w / 2,
+                               -h / 2,
+                               w,
+                               h );
+
+            context.rotate(-transAngle);
+            context.translate(-transX, -transY);
         }
 
         this.texture = undefined;
@@ -911,6 +957,10 @@ export let gameify = {
      * @arg {Number} offsetx - X offset of the tiles
      * @arg {Number} offsety - Y offset of the tiles
      */
+    // Dev's Note: There are a LOT of places in loops where row and col are reversed
+    // this.tiles.placed[x][y] means that looping through this.tiles.placed
+    // actually loops through each column, and I was dumb and got this backwards.
+    // Some are correct, because I realised it -- but be careful
     Tilemap: function (twidth, theight, offsetx, offsety) {
         this.twidth = twidth;
         this.theight = theight;
@@ -1059,9 +1109,9 @@ export let gameify = {
             this.updateFunction = callback;
         }
 
-        /** Have the sprite face towards a point.
-         * @param {gameify.Vector2d} pos - The point to face towards
-         * @param {Number} [speed] - How quickly the sprite should move towards the point. If speed isn't specified, it keeps the same speed.
+        /** Have the sprite move towards a point.
+         * @param {gameify.Vector2d} pos - The point to move towards
+         * @param {Number} [speed] - How quickly the sprite should move towards the point. If speed isn't specified, it keeps its current speed.
          */
         this.goTowards = (pos, speed) => {
             const magnitude = this.velocity.getMagnitude();
@@ -1071,6 +1121,20 @@ export let gameify = {
                 this.velocity = this.velocity.multiply(magnitude);
             } else {
                 this.velocity = this.velocity.multiply(speed);
+            }
+        }
+
+        /** Have the sprite rotate to face towards a point
+         * @param {gameify.Vector2d} point -  The point to face towards
+         * @param {Number} [offset] -  Rotational offset, in degrees
+        */
+        this.faceTowards = (point, offset) => {
+            const rise = this.position.y - point.y;
+            const run = this.position.x - point.x;
+                                            // convert to degrees  // add the offset
+            this.rotation = (Math.atan(rise / run) * 180/Math.PI) + (offset || 0);
+            if (run < 0) {
+                this.rotation -= 180;
             }
         }
 
