@@ -220,7 +220,7 @@ export let gameify = {
                 case 0: return "left";
                 case 1: return "middle";
                 case 2: return "right";
-                default: console.error("Invalid mouse button");
+                default: throw new Error(`Invalid mouse button ${button}`);
             }
         }
 
@@ -386,10 +386,10 @@ export let gameify = {
     Screen: function (element, width, height) {
         // Error if not given the correct parameters
         if (!element) {
-            console.error(`You need to specify a canvas element to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
+            throw new Error(`You need to specify a canvas element to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
         }
         if (!width || !height) {
-            console.error(`You need to specify a width and height to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
+            throw new Error(`You need to specify a width and height to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
         }
 
         /** The HTML5 Canvas element the Screen is attached to 
@@ -503,7 +503,7 @@ export let gameify = {
         */
         this.startGame = () => {
             if (this.currentScene == null) {
-                console.error(`You need to set a Scene before you can start the game. See ${gameify.getDocs("gameify.Scene")} for details`);
+                throw new Error(`You need to set a Scene before you can start the game. See ${gameify.getDocs("gameify.Scene")} for details`);
             }
             
             lastUpdate = 0;
@@ -563,8 +563,7 @@ export let gameify = {
          */
         this.update = (delta) => {
             if (this.updateFunction == null) {
-                console.error(`You need to specify an update function for this Scene. See ${gameify.getDocs("gameify.Scene")} for details`);
-                return;
+                throw new Error(`You need to specify an update function for this Scene. See ${gameify.getDocs("gameify.Scene")} for details`);
             }
             this.parent.keyboard.clearJustPressed();
             this.parent.mouse.clearRecentEvents();
@@ -599,8 +598,7 @@ export let gameify = {
          */
         this.draw = () => {
             if (this.drawFunction == null) {
-                console.error(`You need to specify a draw function for your Scene. See ${gameify.getDocs("gameify.Scene")} for details`);
-                return;
+                throw new Error(`You need to specify a draw function for your Scene. See ${gameify.getDocs("gameify.Scene")} for details`);
             }
             this.drawFunction();
         }
@@ -653,7 +651,7 @@ export let gameify = {
         */
         this.crop = (x, y, width, height) => {
             if (x === undefined || y === undefined || width === undefined || height === undefined) {
-                console.error("x, y, width and height must be specified");
+                throw new Error("x, y, width and height must be specified");
             }
             this.cropData = { x: x, y: y, width: width, height: height };
         }
@@ -701,7 +699,7 @@ export let gameify = {
             this.texture = document.createElement("img");
             this.texture.src = path;
             this.texture.onerror = () => {
-                console.error(`Your image "${path}" couldn't be loaded. Check the path, and make sure you don't have any typos.`)
+                throw new Error(`Your image "${path}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
             }
             this.texture.onload = () => {
                 console.info(`Loaded image "${path}"`)
@@ -753,7 +751,7 @@ export let gameify = {
         this.texture = document.createElement("img");
         this.texture.src = path;
         this.texture.onerror = () => {
-            console.error(`Your image "${path}" couldn't be loaded. Check the path, and make sure you don't have any typos.`)
+            throw new Error(`Your image "${path}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
         }
         this.texture.onload = () => {
             console.info(`Loaded image "${path}"`)
@@ -859,8 +857,7 @@ export let gameify = {
          */
         this.place = (originx, originy, destx, desty, rotation) => {
             if (!this.tileset) {
-                console.error("You can't place a tile before setting a tileset.");
-                return;
+                throw new Error("You can't place a tile before setting a tileset.");
             }
 
             // "cache" tiles as to not create a new Image for every single placed tile.
@@ -909,8 +906,7 @@ export let gameify = {
                 this.drawFunction();
             }
             if (!this.context) {
-                console.error(`You need to add this tilemap to a screen before you can draw it. See ${gameify.getDocs("gameify.Tilemap")} for more details`);
-                return;
+                throw new Error(`You need to add this tilemap to a screen before you can draw it. See ${gameify.getDocs("gameify.Tilemap")} for more details`);
             }
 
             for (const row in this.tiles.placed) {
@@ -1232,8 +1228,7 @@ This way speeds and physics are the same regardless of FPS or how good your comp
                 this.drawFunction();
             }
             if (!this.context) {
-                console.error("You need to add this sprite to a screen before you can draw it. ");
-                return;
+                throw new Error("You need to add this sprite to a screen before you can draw it.");
             }
             const crop = this.image.getCrop();
             const destWidth = crop.width * this.scale;

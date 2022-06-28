@@ -42,7 +42,7 @@ export let vectors = {
             this.x = parseInt(x.match(/(\d|\.)+(?=,)/));
             this.y = parseInt(x.match(/(\d|\.)+(?=>)/));
         } else if (typeof(x) !== "number" && typeof(y) !== "number") {
-            console.error(`You can use either two numbers, a formatted string, or an existing Vector2d to create a Vector2d. See ${gameify.getDocs("gameify.Vector2d")} for more details`);
+            throw new Error(`You can use either two numbers, a formatted string, or an existing Vector2d to create a Vector2d. See ${gameify.getDocs("gameify.Vector2d")} for more details`);
         }
 
         /** Returns a copy of the vector
