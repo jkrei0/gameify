@@ -1279,6 +1279,7 @@ This way speeds and physics are the same regardless of FPS or how good your comp
 };
 
 /** This is a mostly complete list of mouse and keyboard input events supported by gameify. Most event names are case-sensitive
+ * @global
  * @example // ----------------
  * //  Mouse Buttons
  * // ----------------
