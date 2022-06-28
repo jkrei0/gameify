@@ -916,18 +916,11 @@ export let gameify = {
             for (const row in this.tiles.placed) {
                 for (const col in this.tiles.placed[row]) {
                     const tile = this.tiles.placed[row][col];
-                    const crop = tile.getCrop();
-                    this.context.drawImage( tile.texture,
-                                            // source coordinates
-                                            crop.x,
-                                            crop.y,
-                                            crop.width,
-                                            crop.height,
-                                            // destination coordinates
-                                            this.offset.x + (row * this.twidth),
-                                            this.offset.y + (col * this.theight),
-                                            this.twidth,
-                                            this.theight );
+
+                    tile.image.draw(this.context,
+                                    row * this.twidth + this.offset.x, col * this.theight + this.offset.y,
+                                    this.twidth, this.theight,
+                                    tile.rotation );
                 }
             }
 
