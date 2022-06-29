@@ -6,7 +6,7 @@
  * import { gameify } from "./gameify/gameify.js"
  * let myVector = new gameify.Vector2d(0, 0);
  * @example // Import just vectors
- * import { vectors } from "gameify/vectors.js"
+ * import { vectors } from "./gameify/vectors.js"
  * let myVector = new vectors.Vector2d(0, 0);
  * @global
  */
