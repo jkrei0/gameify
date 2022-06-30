@@ -513,12 +513,13 @@ export let gameify = {
                 if (!lastUpdate) {
                     lastUpdate = time;
                 }
-                window.requestAnimationFrame(eachFrame);
                 const delta = time - lastUpdate;
                 lastUpdate = time;
                 // if delta is zero, pass one instead (bc of div-by-zero errors)
                 this.currentScene.update(delta || 1);
                 this.currentScene.draw();
+                
+                window.requestAnimationFrame(eachFrame);
             }
             window.requestAnimationFrame(eachFrame);
 
