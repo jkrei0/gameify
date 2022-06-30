@@ -28,6 +28,8 @@ export let gameify = {
     Vector2d: vectors.Vector2d,
     vectors: vectors.vectors,
 
+    shapes: shapes,
+
     /** Manages keyboard events. One is created automatically for every screen, you can access it as shown in the example.
      * @constructor
      * @example // make a new screen and scene
