@@ -1,10 +1,11 @@
+import { vectors } from "./vector.js"
 
 /** Sprite class for use in gameify. Usually you'll access this through the gameify object.
  * @example // Use sprites via gameify
  * // This is the most common way
  * import { gameify } from "./gameify/gameify.js"
  * let playerSprite = new gameify.Sprite(0, 0, "player.png");
- * @example // Import just vectors
+ * @example // Import just sprites
  * import { sprites } from "./gameify/sprite.js"
  * let playerSprite = new sprites.Sprite(0, 0);
  * @global
@@ -37,12 +38,12 @@ export let sprites = {
         /** The position of the Sprite on the screen
          * @type {gameify.Vector2d}
          */
-        this.position = new gameify.Vector2d(x, y);
+        this.position = new vectors.Vector2d(x, y);
 
         /** The velocity of the Sprite
          * @type {gameify.Vector2d}
          */
-        this.velocity = new gameify.Vector2d(0, 0);
+        this.velocity = new vectors.Vector2d(0, 0);
 
         /** The Sprite's image / texture
          */
@@ -50,6 +51,18 @@ export let sprites = {
 
         /** The sprite's rotation, in degrees */
         this.rotation = 0;
+
+        /** The sprite's shape, for collision, etc. Use setShape to set the shape
+         * @type {shapes.Shape}
+         */
+        this.shape = undefined;
+
+        /** Set a shape for collisions
+         * @param {gameify.shapes.Shape} shape
+         */
+        this.setShape = (shape) => {
+            this.shape = shape;
+        }
 
         /** Change the Sprite's image / texture
          * @param {gameify.Image} newImage - The image to change the sprite to
@@ -110,6 +123,11 @@ This way speeds and physics are the same regardless of FPS or how good your comp
             // make the velocity dependant on the update speed
             this.position = this.position.add(this.velocity.multiply(delta/1000));
 
+            if (this.shape) {
+                this.shape.position.x = this.position.x;
+                this.shape.position.y = this.position.y;
+            }
+
             if (this.updateFunction) {
                 this.updateFunction(delta, this);
             }
@@ -138,33 +156,18 @@ This way speeds and physics are the same regardless of FPS or how good your comp
             if (!this.context) {
                 throw new Error("You need to add this sprite to a screen before you can draw it.");
             }
+
             const crop = this.image.getCrop();
-            const destWidth = crop.width * this.scale;
-            const destHeight = crop.height * this.scale;
 
-            // translate the canvas to draw rotated images
-            const transX = this.position.x + destWidth / 2;
-            const transY = this.position.y + destHeight / 2;
-            const transAngle = (this.rotation * Math.PI) / 180; // convert degrees to radians
+            this.image.draw( this.context,
+                             this.position.x, this.position.y,
+                             crop.width * this.scale,
+                             crop.height * this.scale,
+                             this.rotation );
 
-            this.context.translate(transX, transY);
-            this.context.rotate(transAngle);
-
-            this.context.drawImage( this.image.texture,
-                                    // source coordinates
-                                    crop.x,
-                                    crop.y,
-                                    crop.width,
-                                    crop.height,
-                                    // Move over so it rotates around the center
-                                    -destWidth / 2,
-                                    -destHeight / 2,
-                                    destWidth,
-                                    destHeight );
-
-            // revert the transforms
-            this.context.rotate(-transAngle);
-            this.context.translate(-transX, -transY);
+            // if (this.shape) {
+            //     this.shape.draw(this.context);
+            // }
         }
 
         /** The Canvas context to draw to
