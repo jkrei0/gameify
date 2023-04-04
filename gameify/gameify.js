@@ -511,7 +511,7 @@ export let gameify = {
             
             lastUpdate = 0;
 
-            const eachFrame = (time) => {
+            const eachFrame = async (time) => {
                 if (!lastUpdate) {
                     lastUpdate = time;
                 }
@@ -645,7 +645,7 @@ export let gameify = {
         this.onLoad = (callback) => { this.loadFunction = callback; }
 
         
-        this.cropData = { x: 0, y: 0, width: 0, height: 0 }
+        this.cropData = { x: 0, y: 0, width: 0, height: 0, cropped: false };
 
         /** Crop the image 
          * @param {Number} x - how much to crop of the left of the image
@@ -657,7 +657,12 @@ export let gameify = {
             if (x === undefined || y === undefined || width === undefined || height === undefined) {
                 throw new Error("x, y, width and height must be specified");
             }
-            this.cropData = { x: x, y: y, width: width, height: height };
+            this.cropData = { x: x, y: y, width: width, height: height, cropped: true };
+        }
+
+        /** Remove crop from the image */
+        this.uncrop = () => {
+            this.cropData.cropped = false;
         }
 
         /** Get the image crop. Returns an object with x, y, width, and height properties. */
@@ -674,28 +679,61 @@ export let gameify = {
          * @param {Number} r - Rotation, in degrees
          */
         this.draw = (context, x, y, w, h, r) => {
-            // translate the canvas to draw rotated images
-            const transX = x + w / 2;
-            const transY = y + h / 2;
-            const transAngle = (r * Math.PI) / 180; // convert degrees to radians
 
-            context.translate(transX, transY);
-            context.rotate(transAngle);
+            if (r) {
+                // translate the canvas to draw rotated images
+                const transX = x + w / 2;
+                const transY = y + h / 2;
+                const transAngle = (r * Math.PI) / 180; // convert degrees to radians
 
-            context.drawImage( this.texture,
-                               // source coordinates
-                               this.cropData.x,
-                               this.cropData.y,
-                               this.cropData.width,
-                               this.cropData.height,
-                               // destination coordinates
-                               -w / 2,
-                               -h / 2,
-                               w,
-                               h );
+                context.translate(transX, transY);
+                context.rotate(transAngle);
 
-            context.rotate(-transAngle);
-            context.translate(-transX, -transY);
+                if (this.cropData.cropped) {
+                    context.drawImage( this.texture,
+                                    // source coordinates
+                                    this.cropData.x,
+                                    this.cropData.y,
+                                    this.cropData.width,
+                                    this.cropData.height,
+                                    // destination coordinates
+                                    -w / 2,
+                                    -h / 2,
+                                    w,
+                                    h );
+
+                } else {
+                    context.drawImage( this.texture,
+                                    // omit source coordinates when not cropping
+                                    -w / 2,
+                                    -h / 2,
+                                    w,
+                                    h );
+
+                }
+
+                context.rotate(-transAngle);
+                context.translate(-transX, -transY);
+
+            } else {
+                if (this.cropData.cropped) {
+                    context.drawImage( this.texture,
+                        // source coordinates
+                        this.cropData.x,
+                        this.cropData.y,
+                        this.cropData.width,
+                        this.cropData.height,
+                        // destination
+                        x, y, w, h );
+
+                } else {
+                    context.drawImage( this.texture,
+                        // omit source coordinates when not cropping
+                        x, y, w, h );
+
+                }
+
+            }
         }
 
         this.texture = undefined;
