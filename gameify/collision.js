@@ -2,14 +2,22 @@ import { vectors } from "./vector.js"
 
 "use strict"
 
-/** Shapes and collision detection for use in gameify
+/** Shapes and collision detection for use in gameify. Usually you'll access this through the gameify object.
+ * @example // Use sprites via gameify
+ * // This is the most common way
+ * import { gameify } from "./gameify/gameify.js"
+ * let myCircle = new gameify.shapes.Circle(0, 0, 5);
+ * @example // Import just shapes
+ * import { shapes } from "./gameify/collision.js"
+ * let myCircle = new shapes.Circle(0, 0, 5);
  * @global
  */
 export let shapes = {
     /** A generic shape. The base for all other shapes.
      * @constructor
      * @package
-     * @param {String} type - The shape type
+     * @alias gameify.shapes.Shape
+     * @param {string} type - The shape type
      */
     Shape: function (type) {
         /** A string represeting the type of shape */
@@ -20,33 +28,40 @@ export let shapes = {
          */
         this.position = vectors.vectors.ZERO();
 
+        /** The point that the shape rotates around, relative to its position
+         * @type {gameify.Vector2d}
+         */
+        this.rotationPoint = vectors.vectors.ZERO();
+
+        /** The rotation of the shape, in degrees, rotated around the shape's rotation point */
+        this.rotation = 0;
+
+        /** Rotate the shape around its rotationPoint
+         * @param {number} rotation - The (absolute) rotation in degrees
+         *//**
+         * Rotate the shape around a given point (also sets the rotationPoint)
+         * @param {number} rotation - The (absolute) rotation in degrees
+         * @param {number} x - The x position, relative to the shape's position, to rotate around
+         * @param {number} y - The y position, relative to the shape's position, to rotate around
+         *//**
+         * Rotate the shape around a given point (also sets the rotationPoint)
+         * @param {number} rotation - The (absolute) rotation in degrees
+         * @param {gameify.Vector2d} point - The point (relative to the shape's position) to rotate around
+         */
+        this.setRotation = (rotation, x, y) => {
+            let rotationVector = this.rotationPoint;
+            if (x !== undefined && y === undefined) {
+                // 3rd overload, x is a vector
+            }
+            // TODO shape rotation
+        }
+
         /** Check if this shape collides with another shape
          * @virtual
-         * @param {shapes.Shape} obj - 
+         * @param {shapes.Shape} obj - The object to check for collision
          */
         this.collidesWith = (obj) => {
             throw new Error("shape.collidesWith must be implemented by each specific shape type");
-        }
-
-        /** The sprite this shape is following
-         * @private
-         */
-        this.followedSprite = undefined;
-        
-        /** Make the shape follow the position of a sprite. This should be done automatically if you attach it via the sprite
-         * @param {gameify.Sprite} sprite - The sprite to follow
-         * @package
-         */
-        this.followSprite = (sprite) => {
-            this.followedSprite = sprite;
-        }
-
-        /** Update the shape. This should be done automatically if you attach it via the sprite
-         * @package
-         */
-        this.update = () => {
-            this.position.x = this.followedSprite.position.x;
-            this.position.y = this.followedSprite.position.y;
         }
 
         /** Draw a hitbox for debugging
@@ -59,7 +74,11 @@ export let shapes = {
     },
     /** A circle shape
      * @constructor
-     * @extends shapes.Shape
+     * @alias gameify.shapes.Circle
+     * @extends gameify.shapes.Shape
+     * @param {number} x - The x position
+     * @param {number} y - The y position
+     * @param {number} radius - The circle radius
      */
     Circle: function (x, y, radius) {
         shapes.Shape.call(this, "Circle");
@@ -95,7 +114,6 @@ export let shapes = {
                          this.position.y + this.centerOffset.y,
                          this.radius, 0, 2 * Math.PI );
             context.stroke();
-
         }
 
     }
