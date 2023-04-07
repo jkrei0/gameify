@@ -17,9 +17,11 @@ let dungeonTileset = new gameify.Tileset("sample/tilesheet.png", 64, 64);
 // create the player and add it to the game
 let player = new gameify.Sprite(0, 0, dungeonTileset.getTile(6, 8));
 let playerSpeed = 150;   // give the player a speed
+player.setShape(new gameify.shapes.Circle(32, 32, 22));
 screen.add(player);
 
-let playerWeapon = new gameify.Sprite(0, 0, dungeonTileset.getTile(0, 9));
+const playerWeaponImage = dungeonTileset.getTile(0, 9);
+let playerWeapon = new gameify.Sprite(0, 0, playerWeaponImage);
 let playerAttack = 0;
 screen.add(playerWeapon);
 
@@ -151,6 +153,9 @@ level1.onDraw(() => {
 
 // Start the game
 screen.setScene(level1);
-screen.startGame();
+
 screen.element.click();
 screen.element.focus();
+
+console.log('Starting game');
+screen.startGame();
