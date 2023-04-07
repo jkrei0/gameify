@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="engine.css">
+        <link rel="icon" href="/sample/enemy.png">
+        <title>Gameify Engine</title>
+    </head>
+    <body>
+        
+        <div class="top">
+            <button id="visual-button">Visual</button>
+            <button id="code-button">Code</button>
+            <button id="play-button">Run Game</button>
+        </div>
+
+        <div class="container" id="main">
+            <div class="sidebar">
+                <h3>Objects</h3>
+                <div class="list" id="node-list">
+                    <span class="list-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                        No Objects
+                    </span>
+                </div>
+                <h3>Code</h3>
+                <div class="list" id="editor-list"><!--Populated by code--></div>
+            </div>
+
+            <div class="window editor visible">
+
+                <div id="ace-editor">// No file opened!</div>
+
+            </div>
+
+            <div class="window visual">
+                <canvas id="visual-editor"></canvas>
+                <div class="console">
+                    <h3>Editor</h3>
+                    <div id="visual-output" class="output-container">
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="window preview">
+                <iframe id="game-frame"></iframe>
+                <div class="console">
+                    <h3>Console</h3>
+                    <div id="console-output" class="output-container">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.16.0/ace.js" type="text/javascript" charset="utf-8"></script>
+        <script src="engine.js" type="module"></script>
+
+    </body>
+</html>

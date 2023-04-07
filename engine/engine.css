@@ -1,0 +1,298 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,700;1,400;1,700&family=Roboto+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+* {
+  box-sizing: border-box;
+}
+
+body, html {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+
+.window:not(.visible) {
+  display: none;
+}
+
+.window {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+}
+.window > * {
+  width: 100%;
+  flex-grow: 1;
+  border: none;
+}
+.window .console {
+  font-family: "Roboto Mono";
+  flex-grow: 0;
+  flex-shrink: 1;
+  background: #282a36;
+  color: white;
+  box-shadow: 0 0 8px #335;
+}
+.window .console h3 {
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 5px 10px;
+  margin: 0;
+}
+.window .console .output-container {
+  height: 200px;
+  overflow: auto;
+}
+.window .console .log-item {
+  font-size: 0.95em;
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.window .console .log-item:nth-child(odd) {
+  background: #3a3d4f;
+}
+.window .console .log-item .short {
+  display: inline-block;
+  opacity: 0.8;
+  font-size: 0.9em;
+  min-width: 50px;
+  margin-right: 10px;
+}
+.window .console .log-item .source {
+  margin-left: auto;
+  font-size: 0.9em;
+  opacity: 0.8;
+  padding: 2px;
+  font-weight: normal;
+}
+.window .console .log-item .message {
+  max-width: 70%;
+}
+.window .console .log-item.info .message {
+  color: #bbf;
+}
+.window .console .log-item.warn .message {
+  color: #ff8;
+}
+.window .console .log-item.error {
+  font-weight: bold;
+  color: #fff;
+  background: #844;
+}
+.window .console .log-item.error:nth-child(odd) {
+  background: #a55;
+}
+
+.editor {
+  flex-grow: 1;
+}
+
+.top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  gap: 5px;
+  background: #335;
+}
+.top button {
+  background: #448;
+  font-family: Poppins;
+  font-size: 1em;
+  border: none;
+  padding: 3px 20px;
+  color: white;
+  cursor: pointer;
+  transition: 0.1s;
+}
+.top button:hover {
+  background: #648;
+}
+
+.sidebar {
+  padding: 5px;
+  min-width: 320px;
+  height: 100%;
+  max-height: calc(100vh - 41px);
+  overflow-y: scroll;
+  font-family: Poppins, sans-serif;
+  color: white;
+  background: #335;
+}
+.sidebar h3 {
+  margin: 0;
+  padding: 10px;
+  font-size: 1.25rem;
+}
+
+.list .list-item {
+  all: unset;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 2px 10px;
+  background: #448;
+  font-size: 1rem;
+  cursor: default;
+  margin-bottom: 4px;
+  transition: 0.1s;
+}
+.list .list-item:is(button, span) {
+  padding: 5px 10px;
+  font-size: 1em;
+  margin-bottom: 0;
+}
+.list .list-item:is(button, span):not(:last-of-type) {
+  border-bottom: 2px solid #335;
+}
+.list .list-item:is(button, span):is(button) {
+  cursor: pointer;
+}
+.list .list-item > :is(button, input, select) {
+  margin-right: 5px;
+  color: white;
+  background: #282a36;
+  border: none;
+  padding: 5px 15px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: 0.1s;
+}
+.list .list-item > :is(button, input, select):hover {
+  background: #3a3d4f;
+}
+.list .list-item > :is(button, input, select):is(input, select) {
+  max-width: 140px;
+  padding: 5px;
+}
+.list .list-item > :is(button, input, select)[type=text] {
+  cursor: text;
+}
+.list .list-item > :is(button, input, select)[type=number] {
+  max-width: 70px;
+}
+.list .list-item > :is(button, input, select):first-child {
+  margin-left: auto;
+}
+.list .list-item .x-value-label {
+  margin-left: auto;
+}
+.list .list-item .x-value-label::before,
+.list .list-item .y-value-label::before {
+  content: "x";
+  width: 20px;
+  height: 20px;
+  color: #e88;
+  background: #282a36;
+  padding: 3px 7px;
+}
+.list .list-item .y-value-label::before {
+  content: "y";
+  color: #8d8;
+}
+.list .list-item:is(details) {
+  padding: 0px;
+}
+.list .list-item svg {
+  color: #ebe;
+  height: 1em;
+  margin-left: 3px;
+  margin-right: 12px;
+}
+.list .list-item.filename {
+  font-family: "Roboto Mono";
+}
+.list .list-item:is(span).property {
+  border-bottom: none;
+}
+.list .list-item.property:hover {
+  background: #668;
+}
+.list .list-item.small {
+  font-size: 0.9em;
+  padding-block: 2px;
+}
+.list .list-item[open], .list .list-item:hover {
+  background: #648;
+}
+.list .list-item .type {
+  opacity: 0.75;
+  margin-left: auto;
+}
+.list .list-item summary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+  transition: 0.1s;
+  padding: 5px 10px;
+}
+.list .list-item summary::-webkit-details-marker {
+  display: none;
+}
+.list .list-item .options label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 10px;
+  transition: 0.1s;
+}
+.list .list-item .options label input, .list .list-item .options label select {
+  padding: 0px 7px;
+  margin-inline: 3px;
+  max-width: 150px;
+  font-family: inherit;
+  font-size: 1rem;
+  background: #000;
+  color: black;
+  border: none;
+  border-radius: 4px;
+}
+.list .list-item .options label input:first-of-type, .list .list-item .options label select:first-of-type {
+  margin-left: 35px;
+}
+.list .list-item .options label input:hover, .list .list-item .options label select:hover {
+  background: #d8d8d8;
+}
+.list .list-item .options label input[type=text] {
+  width: 150px;
+}
+.list .list-item .options label input[type=number] {
+  max-width: 75px;
+}
+.list .list-item .options label input[type=checkbox] {
+  transform: scale(1.4);
+  accent-color: white;
+}
+.list .list-item .options label:hover {
+  background: #648;
+}
+.list .list-item *:not(input)::-moz-selection {
+  background: transparent;
+}
+.list .list-item *:not(input)::selection {
+  background: transparent;
+}
+.list .file-button-active {
+  background: #648;
+}/*# sourceMappingURL=engine.css.map */
