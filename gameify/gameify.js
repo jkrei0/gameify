@@ -457,16 +457,34 @@ export let gameify = {
          * @param {Number} width - The new width of the Screen
          */
         this.setWidth = (width) => {
+            this.width = width;
             this.element.style.width = width;
-            this.element.width = this.width;
+            this.element.width = width;
         }
 
         /** Changes the height of the Screen
          * @param {Number} height - The new height of the screen
          */
         this.setHeight = (height) => {
+            this.height = height;
             this.element.style.height = height;
-            this.element.height = this.height;
+            this.element.height = height;
+        }
+
+        /** Changes the size of the Screen
+         * @param {Number} width - The new width of the screen
+         * @param {Number} height - The new height of the screen
+         *//** Changes the size of the Screen
+         * @param {gameify.Vector2d} size - The new size of the screen
+         */
+        this.setSize = (width, height) => {
+            if (width.x != undefined && width.y != undefined) {
+                // Convert vector to 
+                height = width.y;
+                width = width.x;
+            }
+            this.setWidth(width);
+            this.setHeight(height);
         }
 
         /** The current game scene
@@ -858,8 +876,11 @@ export let gameify = {
         }
 
         /** Convert screen coordinates to map coordinates 
-         * @param {Number | Object} screenx - The screen x coordinate OR an object containing both x any y coordinates
+         * @param {Number} screenx - The screen x coordinate
          * @param {Number} [screeny] - The screen y coordinate
+         * @returns {Object} {x, y}
+         *//** Convert screen coordinates to map coordinates 
+         * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
          * @returns {Object} {x, y}
          */
         this.screenToMap = (screenx, screeny) => {
@@ -874,13 +895,16 @@ export let gameify = {
             }
         }
         /** Convert map coordinates to screen coordinates
-         * @param {Number | Object} mapx - The map x coordinate OR an object containing both x and y coordinates
+         * @param {Number} mapx - The map x coordinate
          * @param {Number} [mapy] - The map y coordinate
+         * @returns {Object} {x, y}
+         *//** Convert map coordinates to screen coordinates
+         * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
          * @returns {Object} {x, y}
          */
         this.mapToScreen = (mapx, mapy) => {
             // loose comparison because we don't want any null values
-            if (mapx.x != undefined && mapy.y != undefined) {
+            if (mapx.x != undefined && mapx.y != undefined) {
                 mapy = mapx.y;
                 mapx = mapx.x;
             }
