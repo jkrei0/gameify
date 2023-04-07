@@ -652,6 +652,10 @@ export let gameify = {
      * @arg {String} [path] - The image filepath. (Can also be a dataURI). If not specified, the image is created with no texture
     */
     Image: function (path) {
+
+        /** The image filepath. Modifying this will not do anything. */
+        this.path = path;
+
         /** If the image is loaded */
         this.loaded = false;
 
