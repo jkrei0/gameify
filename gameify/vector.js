@@ -21,8 +21,8 @@ export let vectors = {
      * let vectorB = new gameify.Vector2d("<4, 6>");
      * // A vector from another vector (copying it)
      * let vectorC = new gameify.Vector2d(vectorA)
-     * @arg {Number|gameify.Vector2d|String} x
-     * @arg {Number} [y]
+     * @arg {Number|gameify.Vector2d|String} x - x coordinate OR an existing vector
+     * @arg {Number} [y] - y coordinate
     */
     Vector2d: function (x, y) {
 
