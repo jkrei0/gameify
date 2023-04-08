@@ -584,7 +584,9 @@ export let gameify = {
          */
         this.onLoad = (callback) => { this.loadFunction = callback; }
 
-        
+        // If from a tileset, what and where (for serialization)
+        this.tileData = {};
+
         this.cropData = { x: 0, y: 0, width: 0, height: 0, cropped: false };
 
         /** Crop the image 
@@ -732,6 +734,10 @@ export let gameify = {
          */
         this.getTile = (x, y) => {
             const tile = new gameify.Image();
+            tile.tileData = {
+                tileset: this,
+                position: { x: x, y: y }
+            }
             tile.texture = this.texture;
             tile.crop(x * this.twidth, y * this.theight, this.twidth, this.theight);
             return tile;

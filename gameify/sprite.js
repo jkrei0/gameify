@@ -39,16 +39,36 @@ export let sprites = {
             // data - saved data
             // find - a function to find an object based on a saved name
             return (data, find) => {
-                const obj = new sprites.Sprite(data[0], data[1], data[2]);
-                if (data[3]) obj.setImage(find(data[3])); // Set image
-                if (data[4]) obj.setShape(find(data[4])); // Set shape
-                if (data[5]) find(data[5]).add(obj);      // Add to screen
+                const obj = new sprites.Sprite(data.position?.x || 0, data.position?.y || 0, undefined);
+                if (data.rotation) obj.rotation = data.rotation;    // Set rotation
+                if (data.image.parent) {
+                    console.log(data.image.parent);
+                    const set = find(data.image.parent);
+                    obj.setImage(set.getTile(data.image.position.x, data.image.position.y));
+                } else if (data.image) {
+                    obj.setImage(find(data.image.name)); // Set image
+                }
+                if (data.shape) obj.setShape(find(data.shape)); // Set shape
+                if (data.parent) find(data.parent).add(obj);    // Add to screen
                 return obj;
             }
         }
         // name - a function to generate a name for an object to be restored later
         this.serialize = (name) => {
-            return [this.position.x, this.position.y, this.rotation, name(this.image), name(this.shape), name(this.parent)];
+            return {
+                position: {
+                    x: this.position.x,
+                    y: this.position.y
+                },
+                rotation: this.rotation,
+                image: {
+                    name: name(this.image),
+                    parent: name(this.image.tileData?.tileset),
+                    position: this.image.tileData?.position
+                },
+                shape: name(this.shape),
+                parent: name(this.parent)
+            };
         }
 
         /** The position of the Sprite on the screen

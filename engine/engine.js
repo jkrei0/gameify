@@ -234,6 +234,16 @@ const populateObjectsList = () => {
             // Don't allow changing the name of locked items
             if (!obj.__engine_locked) details.appendChild(nameElem);
 
+            
+            const screens = [];
+            for (const scr in objects.Screen) { screens.push('Screen::' + scr); }
+            const scenes = [];
+            for (const scn in objects.Scene) { scenes.push('Scene::' + scn); }
+            const images = [];
+            for (const img in objects.Image) { images.push('Image::' + img); }
+            const tilesets = [];
+            for (const tst in objects.Tileset) { tilesets.push('Tileset::' + tst); }
+
             if (obj.__engine_locked) {
                 details.appendChild(labelItem(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
                         <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
@@ -251,6 +261,10 @@ const populateObjectsList = () => {
                     obj.offset.x = x;
                     obj.offset.y = y;
                 })[0]);
+                details.appendChild(selectItem('Tileset', tilesets, (v) => {
+                    obj.setTileset(objects[v.split('::')[0]][v.split('::')[1]]);
+                }, obj.tileset?.__engine_name)[0]);
+
             } else if (setName === 'Tileset') {
                 details.appendChild(inputItem('File', obj.path, 'text', (v) => {
                     obj.path = v;
@@ -264,20 +278,45 @@ const populateObjectsList = () => {
                     obj.path = v;
                 })[0]);
             } else if (setName === 'Sprite') {
-                const images = [];
-                for (const img in objects.Image) { images.push('Image::' + img); }
-
-                details.appendChild(selectItem('Image', images, (v) => {
-                    obj.setImage(objects.Image[v]);
+                details.appendChild(selectItem('Image', images.concat(tilesets), (v) => {
+                    if (v.split('::')[0] === 'Image') {
+                        obj.setImage(objects[v.split('::')[0]][v.split('::')[1]]);
+                    } else if (v.split('::')[0] === 'Tileset') {
+                        const tileset = objects[v.split('::')[0]][v.split('::')[1]];
+                        console.log(tileset, tileX.value, tileY.value, tileset.getTile(tileX.value, tileY.value))
+                        obj.setImage(tileset.getTile(tileX.value, tileY.value));
+                        // Nothing special about this format,
+                        // But that it identifies a derived image
+                        // The name after the :: has no special meaning
+                        obj.image.__engine_name = `Tileset/Image::${setName} ${objName}`;
+                    }
+                    updateTSPos();
                 }, obj.image?.__engine_name)[0]);
+
+                const [tileLabel, tileX, tileY] = twoInputItem('Tile',  [0, 0], 'number', (x, y) => {
+                    obj.setImage(obj.image.tileData.tileset.getTile(tileX.value, tileY.value));
+                });
+                const updateTSPos = () => {
+                    if (obj.image?.__engine_name?.startsWith('Tileset/Image::')) {
+                        tileLabel.style.display = '';
+                        tileX.value = obj.image.tileData.position.x;
+                        tileY.value = obj.image.tileData.position.y;
+                    } else {
+                        tileLabel.style.display = 'none';
+                    }
+                }
+                updateTSPos();
+                details.appendChild(tileLabel);
+
                 details.appendChild(twoInputItem('Position',  [obj.position.x, obj.position.y], 'number', (x, y) => {
                     obj.position.x = x;
                     obj.position.y = y;
                 })[0]);
-            } else if (setName === 'Screen') {
-                const scenes = [];
-                for (const scn in objects.Scene) { scenes.push('Scene::' + scn); }
+                details.appendChild(selectItem('Screen', screens, (v) => {
+                    obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
+                }, obj.parent?.__engine_name)[0]);
 
+            } else if (setName === 'Screen') {
                 details.appendChild(inputItem('Canvas', obj.element.id, 'text', (v) => {
                     obj.element = document.getElementById(obj.element.id);
                 })[0]);
@@ -289,11 +328,7 @@ const populateObjectsList = () => {
                 }, obj.currentScene?.__engine_name)[0]);
 
             } else if (setName === 'Scene') {
-                const screens = [];
-                for (const scr in objects.Screen) { screens.push('Screen::' + scr); }
-
                 details.appendChild(selectItem('Screen', screens, (v) => {
-                    console.log(v);
                     obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
                 }, obj.parent?.__engine_name)[0]);
             }
@@ -351,6 +386,8 @@ const populateObjectsList = () => {
             objects[type][name] = new gameify.Tilemap(64, 64, 0, 0);
         } else if (type === 'Sprite') {
             objects[type][name] = new gameify.Sprite(0, 0, undefined);
+            // Add the image to the default screen
+            Object.values(objects['Screen'])[0].add(objects[type][name]);
         } else if (type === 'Image') {
             objects[type][name] = new gameify.Image('path/to/image.png');
         } else if (type === 'Scene') {
