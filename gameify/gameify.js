@@ -806,12 +806,13 @@ export let gameify = {
                     obj.setTileset(find(data[3]));
                     obj.loadMapData(data[4]);
                 }
+                if (data[5]) find(data[5]).add(obj); // Add to Screen
                 return obj;
             }
         }
         // name - a function to generate a name for an object to be restored later
         this.serialize = (name) => {
-            return [this.twidth, this.theight, this.offset.x, name(this.tileset), this.exportMapData()];
+            return [this.twidth, this.theight, this.offset.x, name(this.tileset), this.exportMapData(), name(this.parent)];
         }
 
         this.twidth = twidth;
@@ -1127,11 +1128,17 @@ export let gameify = {
          */
         this.context = null;
 
-        /** Set the Canvas context to draw to. This should be called whenever a tilemap is added to a Screen
+        /** The parent screen (not used directly)
          * @private
          */
-        this.setContext = (context) => {
+        this.parent = null;
+
+        /** Set the Canvas context to draw to. This should be called whenever a sprite is added to a Screen
+         * @private
+         */
+        this.setContext = (context, parent) => {
             this.context = context;
+            this.parent = parent;
         }
         
     },

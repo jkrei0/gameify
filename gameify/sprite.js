@@ -41,12 +41,14 @@ export let sprites = {
             return (data, find) => {
                 const obj = new sprites.Sprite(data.position?.x || 0, data.position?.y || 0, undefined);
                 if (data.rotation) obj.rotation = data.rotation;    // Set rotation
+                if (data.scale) obj.scale = data.scale;             // Set scale
                 if (data.image.parent) {
+                    // Set image from tileset
                     console.log(data.image.parent);
                     const set = find(data.image.parent);
                     obj.setImage(set.getTile(data.image.position.x, data.image.position.y));
                 } else if (data.image) {
-                    obj.setImage(find(data.image.name)); // Set image
+                    obj.setImage(find(data.image.name));        // Set image
                 }
                 if (data.shape) obj.setShape(find(data.shape)); // Set shape
                 if (data.parent) find(data.parent).add(obj);    // Add to screen
@@ -60,6 +62,7 @@ export let sprites = {
                     x: this.position.x,
                     y: this.position.y
                 },
+                scale: this.scale,
                 rotation: this.rotation,
                 image: {
                     name: name(this.image),
