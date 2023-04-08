@@ -193,11 +193,12 @@ export let gameify = {
      * });
      * @arg {HTMLElement} scope - What parts of the screen the MouseEventManager looks at.
      */
-    MouseEventManager: function (captureScope) {
+    MouseEventManager: function (captureScope, canvasElement) {
         /** The element that input events are captured from
          * @private
          */
         this.captureScope = captureScope;
+        this.canvasElement = canvasElement;
 
         // A list of the keys that are currently pressed
         this.pressedButtons = [];
@@ -253,8 +254,9 @@ export let gameify = {
         }
 
         this.onMouseMove = (event) => {
-            this.cursorPosition.x = event.offsetX;
-            this.cursorPosition.y = event.offsetY;
+            const widthRatio =  this.canvasElement.width / this.canvasElement.getBoundingClientRect().width;
+            this.cursorPosition.x = event.offsetX * widthRatio;
+            this.cursorPosition.y = event.offsetY * widthRatio;
             this.eventsJustHappened.push([0, "mousemove", "move"]);
         }
 
@@ -441,7 +443,7 @@ export let gameify = {
         /** Mouse events for the Screen. Used to what mouse buttons are pressed, and other mouse events (eg scroll)
          * @type {gameify.MouseEventManager}
          */
-        this.mouse = new gameify.MouseEventManager(this.element.parentElement);
+        this.mouse = new gameify.MouseEventManager(this.element.parentElement, this.element);
         this.mouse.setup();
 
         /** Get the Screen's canvas context 
