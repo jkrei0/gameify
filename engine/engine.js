@@ -528,8 +528,6 @@ gameFrame.addEventListener('load', () => {
         }
     }
 
-    console.log('Handlers set');
-
     win.__s_objects = serializeObjectsList();
     console.log('Serialized data: ', win.__s_objects);
 
