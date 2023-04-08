@@ -493,6 +493,13 @@ export let gameify = {
             this.setHeight(height);
         }
 
+        /** Get the width and height of the screen
+         * @returns {gameify.Vector2d} A vector representing the size of the screen
+         */
+        this.getSize = () => {
+            return new vectors.Vector2d(this.width, this.height);
+        }
+
         /** The current game scene
          * @private
          */
@@ -948,7 +955,7 @@ export let gameify = {
 
         /** Enable the map builder tool. This allows you to easily edit tilesets.<br>
          * Controls are: Click to place, Right-click to delete, Middle-click to pick, Scroll and Ctrl+Scroll to switch tile, Shift+Scroll to rotate the tile.<br>
-         * Once you're finished, press Enter and copy the message in the console
+         * Once you're finished, call <code>tilemap.exportMapData()</code> to export the map.
          * @param {gameify.Screen} screen - The screen to show the map builder on. For best results, use the one you've already added it to.
          */
         this.enableMapBuilder = (screen) => {
@@ -1086,6 +1093,9 @@ export let gameify = {
             return mainScene;
         }
 
+        /** Export this tilemap's map data and layout (load with loadMapData)
+         * @returns {object} The map data as JSON
+         */
         this.exportMapData = () => {
             let output = [];
             for (const col in this.tiles.placed) {
@@ -1103,7 +1113,7 @@ export let gameify = {
             return output;
         }
 
-        /** Load data saved from the map builder<br>
+        /** Load saved map data (export using exportMapData)
          * @param {Object} data - The map data to load
          */
         this.loadMapData = (data) => {
