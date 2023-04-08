@@ -150,6 +150,7 @@ body, html {
   height: 100%;
   max-height: calc(100vh - 41px);
   overflow-y: scroll;
+  z-index: 1;
   font-family: Poppins, sans-serif;
   color: white;
   background: #335;

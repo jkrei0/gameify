@@ -182,7 +182,8 @@ $transition: 0.1s;
     min-width: 320px;
     height: 100%;
     max-height: calc(100vh - 41px);
-    overflow-y: scroll; 
+    overflow-y: scroll;
+    z-index: 1;
 
     font-family: Poppins, sans-serif;
     color: $text;
