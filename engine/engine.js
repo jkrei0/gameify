@@ -6,7 +6,7 @@ import {gameify} from '/gameify/gameify.js';
 const editorFileList = document.querySelector('#editor-list');
 
 const files = {
-    '_out.js': '',
+    //'_out.js': '',
     'main.js': '',
     'level.js': ''
 };
@@ -68,21 +68,16 @@ const showWindow = (t) => {
 
 /* Visual Editor and Tools */
 
-const editorCanvas = document.querySelector('#visual-editor');
-const editorScreen = new gameify.Screen(editorCanvas, 500, 100);
-const editorResize = () => {
-    editorCanvas.width = '';
-    editorCanvas.height = '';
-    const box = editorCanvas.getBoundingClientRect();
-    console.log(box);
-    editorScreen.setSize(box.width - 10, box.height - 10);
-}
-window.addEventListener('resize', () => {
-    editorResize();
-});
-editorResize();
-
 let objects = {
+    'None': {
+        // Leave empty
+    },
+    'Screen': {
+        'Screen': new gameify.Screen(document.querySelector('#game-canvas'), 1200, 800)
+    },
+    'Scene': {
+        'Main Scene': new gameify.Scene()
+    },
     'Tileset': {
         'Dungeon Tiles': new gameify.Tileset('/sample/tilesheet.png', 64, 64)
     },
@@ -90,13 +85,18 @@ let objects = {
         'Dungeon Map': new gameify.Tilemap(64, 64, 5, 5)
     },
     'Sprite': {
-        'Player': new gameify.Sprite(0, 0, undefined)
+        'Player': new gameify.Sprite(0, 0, {__engine_name: 'Image::Player Image'})
     },
     'Image': {
         'Player Image': new gameify.Image('/sample/tilesheet.png')
     }
 }
 
+/** A label and button
+ * @param {string} text - Label text
+ * @param {string} [btn] - Button text
+ * @param {Function} [call] - Button onclick callback
+ */
 const labelItem = (text, btn, call = ()=>{}) => {
     const label = document.createElement('span');
     label.classList.add('list-item');
@@ -105,9 +105,15 @@ const labelItem = (text, btn, call = ()=>{}) => {
     const button = document.createElement('button');
     button.innerHTML = btn;
     button.onclick = call;
-    label.append(button);
+    if (btn !== undefined) label.append(button);
     return label;
 }
+/** A label and input
+* @param {string} text - Label text
+* @param {string} [value=''] - Input value
+* @param {string} [type='text'] - Input type
+* @param {Function} [call] - Input onchange callback
+*/
 const inputItem = (text, value = '', type = 'text', call = ()=>{}) => {
     const label = document.createElement('span');
     label.classList.add('list-item');
@@ -146,15 +152,17 @@ const twoInputItem = (text, values = ['', ''], type = 'text', call = ()=>{}) => 
 
     return [label, input, input2];
 }
-const selectItem = (text, options, call = ()=>{}) => {
+const selectItem = (text, options, call = ()=>{}, selected) => {
     const label = document.createElement('span');
     label.classList.add('list-item');
     label.classList.add('property');
     label.innerHTML = text;
     const input = document.createElement('select');
     input.onchange = ()=>{ call(input.value); };
+
+    input.innerHTML += `<option value="None::None">- None -</option>`;
     for (const opt of options) {
-        input.innerHTML += `<option>${opt}</option>`;
+        input.innerHTML += `<option ${selected === opt ? 'selected' : ''}>${opt}</option>`;
     }
     label.append(input);
     return [label, input];
@@ -173,6 +181,8 @@ const populateObjectsList = () => {
         for (const objName in set) {
             const obj = set[objName];
 
+            obj.__engine_name = setName + '::' + objName;
+
             const details = document.createElement('details');
             details.classList.add('list-item');
             const summary = document.createElement('summary');
@@ -187,10 +197,15 @@ const populateObjectsList = () => {
                         <path fill-rule="evenodd" d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.502.502 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103zM10 1.91l-4-.8v12.98l4 .8V1.91zm1 12.98 4-.8V1.11l-4 .8v12.98zm-6-.8V1.11l-4 .8v12.98l4-.8z"/>
                     </svg>`;
 
-            } else if (setName === 'Sprite') {
+            } else if (setName === 'Scene') {
                 summary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-play-circle" viewBox="0 0 16 16">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                         <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
+                    </svg>`;
+
+            } else if (setName === 'Screen') {
+                summary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-display" viewBox="0 0 16 16">
+                        <path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/>
                     </svg>`;
 
             } else if (setName === 'Image') {
@@ -216,11 +231,17 @@ const populateObjectsList = () => {
                 delete set[objName];
                 populateObjectsList();
             });
-            details.appendChild(nameElem);
+            // Don't allow changing the name of locked items
+            if (!obj.__engine_locked) details.appendChild(nameElem);
 
-            console.log(objName, obj);
-
-            if (setName === 'Tilemap') {
+            if (obj.__engine_locked) {
+                details.appendChild(labelItem(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                        <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                        <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                    </svg>
+                    This object is locked
+                `));
+            } else if (setName === 'Tilemap') {
                 details.appendChild(labelItem('Edit map', 'Edit'));
                 details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
                     obj.twidth  = x;
@@ -244,15 +265,37 @@ const populateObjectsList = () => {
                 })[0]);
             } else if (setName === 'Sprite') {
                 const images = [];
-                for (const img in objects.Image) { images.push(img); }
+                for (const img in objects.Image) { images.push('Image::' + img); }
 
                 details.appendChild(selectItem('Image', images, (v) => {
                     obj.setImage(objects.Image[v]);
-                })[0]);
+                }, obj.image?.__engine_name)[0]);
                 details.appendChild(twoInputItem('Position',  [obj.position.x, obj.position.y], 'number', (x, y) => {
                     obj.position.x = x;
                     obj.position.y = y;
                 })[0]);
+            } else if (setName === 'Screen') {
+                const scenes = [];
+                for (const scn in objects.Scene) { scenes.push('Scene::' + scn); }
+
+                details.appendChild(inputItem('Canvas', obj.element.id, 'text', (v) => {
+                    obj.element = document.getElementById(obj.element.id);
+                })[0]);
+                details.appendChild(twoInputItem('Size',  [obj.width, obj.height], 'number', (x, y) => {
+                    obj.setSize(x, y);
+                })[0]);
+                details.appendChild(selectItem('Start Scene', scenes, (v) => {
+                    obj.setScene(objects[v.split('::')[0]][v.split('::')[1]]);
+                }, obj.currentScene?.__engine_name)[0]);
+
+            } else if (setName === 'Scene') {
+                const screens = [];
+                for (const scr in objects.Screen) { screens.push('Screen::' + scr); }
+
+                details.appendChild(selectItem('Screen', screens, (v) => {
+                    console.log(v);
+                    obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
+                }, obj.parent?.__engine_name)[0]);
             }
 
             /* Delete Button */
@@ -266,7 +309,8 @@ const populateObjectsList = () => {
                 delete set[objName];
                 populateObjectsList();
             }
-            details.appendChild(delButton);
+            // Don't allow deleting locked items
+            if (!obj.__engine_locked) details.appendChild(delButton);
 
             objList.appendChild(details);
         }
@@ -282,12 +326,12 @@ const populateObjectsList = () => {
         </svg>
         Add object
     `;
-    details.appendChild(summary);
+    details.appendChild(summary); 
 
     const rand = Math.floor(Math.random() * 1000);
     const [nameElem, selName] = inputItem('Name', 'New Object ' + rand, 'text');
     details.appendChild(nameElem);
-    const [typeElem, selType] = selectItem('Type', types, 'text');
+    const [typeElem, selType] = selectItem('Type', types, 'text', 'Sprite');
     details.appendChild(typeElem);
 
     const addButton = document.createElement('button');
@@ -309,8 +353,10 @@ const populateObjectsList = () => {
             objects[type][name] = new gameify.Sprite(0, 0, undefined);
         } else if (type === 'Image') {
             objects[type][name] = new gameify.Image('path/to/image.png');
+        } else if (type === 'Scene') {
+            objects[type][name] = new gameify.Scene(null);
         } else {
-            alert(`Cannot create ${type} object.`);
+            alert(`Cannot create new ${type} object.`);
         }
         console.log(type, name, objects[type][name]);
         populateObjectsList();
@@ -320,7 +366,6 @@ const populateObjectsList = () => {
     objList.appendChild(details);
 
 }
-populateObjectsList();
 
 const serializeObjectsList = () => {
     const out = {};
@@ -328,10 +373,52 @@ const serializeObjectsList = () => {
         const set = objects[type];
         out[type] = {}
         for (const name in set) {
-            out[type][name] = set[name].serialize();
+            const item = set[name];
+            if (item.serialize) {
+                out[type][name] = item.serialize((o) => {
+                    return o?.__engine_name;
+                });
+            } else {
+                console.warn(`Cannot save ${type}::${name}`);
+                out[type][name] = false;
+            }
         }
     }
+
+    return out;
 }
+const loadObjectsList = (data) => {
+    const loadObject = (query) => {
+        const type = query.split('::')[0];
+        const name = query.split('::')[1];
+        if (!objects[type]) objects[type] = {};
+        if (!objects[type][name]) {
+            objects[type][name] = gameify[type]('_deserialize')(data[type][name], loadObject);
+            objects[type][name].__engine_name = type + '::' + name;
+        }
+        return objects[type][name];
+    }
+
+    objects = {};
+    for (const type in data) {
+        if (!objects[type]) objects[type] = {};
+        for (const name in data[type]) {
+            if (data[type][name] === false || !gameify[type]) {
+                console.warn(`Cannot deserialize ${type}::${name}`);
+                continue;
+            }
+            // If an object was already loaded (because of another's dependency)
+            if (objects[type][name]) continue;
+
+            // Deserialize object
+            loadObject(type + '::' + name);
+        }
+    }
+    populateObjectsList();
+}
+
+const editorCanvas = document.querySelector('#game-canvas');
+const editorScreen = objects.Screen.Screen;
 
 const tileMapEditor = new gameify.Scene(editorScreen);
 editorScreen.setScene(tileMapEditor);
@@ -342,9 +429,10 @@ tileMapEditor.onUpdate(() => {
 tileMapEditor.onDraw(() => {
 
 });
-editorScreen.startGame();
 
 
+// Populate list after editor setup
+populateObjectsList();
 
 /* Game preview */
 
@@ -395,20 +483,18 @@ window.addEventListener('message', (event) => {
         consoleOut.innerHTML += `<span class="log-item ${event.data.logType}">
             <span class="short">${event.data.logType.toUpperCase()}</span>
             <span class="message">${message}</span>
-            <span class="source">${fileName} ${lineNumber}:${columnNumber}</span>
+            <span class="source">${fileName.replace(/.* injectedScript.*/, '(project script)')} ${lineNumber}:${columnNumber}</span>
         </span>`;
+        consoleOut.scrollTo(0, consoleOut.scrollHeight);
     }
 });
 gameFrame.addEventListener('load', () => {
-    console.log('Started! .. Compiling game');
 
     // Clear the console
     consoleOut.innerHTML = `<span class="log-item info"></span>`;
 
     // Set up log handlers
     const log = (t, args, q = {}, pe) => {
-        console.log('CAUGHT LOG', t, args);
-
         const error = pe || new Error().stack.split('\n')[2];
         const split = error.split(':');
 
@@ -416,7 +502,7 @@ gameFrame.addEventListener('load', () => {
             type: 'console',
             logType: t,
             payload: {
-                message: args.join(', '),
+                message: q ? args : args.map(a => JSON.stringify(a)).join(', '),
                 lineNumber: q.line || split[split.length - 2],
                 columnNumber: q.col || split[split.length - 1],
                 fileName: q.file || split[split.length - 3].replace(/.*?\/(engine\/)?/, '')
@@ -429,13 +515,12 @@ gameFrame.addEventListener('load', () => {
     win.console.debug = (...args) => { log('debug', args); }
     win.console.warn = (...args) => { log('warn', args); }
     win.console.error = (...args) => { 
-        if (args[0]._gameify_error === 'onerror') {
-            console.log(args, '\n\n::', args[0])
+        if (args[0] && args[0]._gameify_error === 'onerror') {
             const details = args[0].details
             // details = [message, file, line, col, error]
             log('error', [details[0]], {file: details[1].replace(/.*?:\d{4}\//, ''), line: details[2], col: details[3]});
 
-        } else if (args[0]._gameify_error === 'promise') {
+        } else if (args[0] && args[0]._gameify_error === 'promise') {
             const details = args[0].message;
             log('error', [details], {}, "::");
         } else {
@@ -443,7 +528,10 @@ gameFrame.addEventListener('load', () => {
         }
     }
 
-    console.log('handlers set');
+    console.log('Handlers set');
+
+    win.__s_objects = serializeObjectsList();
+    console.log('Serialized data: ', win.__s_objects);
 
     // Add scripts
     const html = win.document.querySelector('html');
@@ -452,7 +540,8 @@ gameFrame.addEventListener('load', () => {
     for (const file in files) {
         const script = document.createElement('script');
         script.type = 'module';
-        script.src = './' + file;
+        //script.src = './' + file;
+        script.innerHTML = files[file].getValue();
         win.document.body.appendChild(script);
     }
 });
@@ -461,7 +550,6 @@ gameFrame.addEventListener('load', () => {
 /* Tabs */
 
 document.querySelector('#play-button').addEventListener('click', () => {
-    console.log('loading');
     showWindow('preview');
     win.location.href = "/engine/project/;";
 });
@@ -470,4 +558,16 @@ document.querySelector('#code-button').addEventListener('click', () => {
 });
 document.querySelector('#visual-button').addEventListener('click', () => {
     showWindow('visual');
+});
+
+
+/* Save and load */
+
+document.querySelector('#save-button').addEventListener('click', () => {
+    const saved = serializeObjectsList();
+    localStorage.setItem('savedObjects', JSON.stringify(saved));
+});
+document.querySelector('#load-button').addEventListener('click', () => {
+    const loaded = localStorage.getItem('savedObjects');
+    loadObjectsList(JSON.parse(loaded));
 });

@@ -35,6 +35,21 @@ export let sprites = {
      * @arg {gameify.Image} image - The image the sprite should have.
      */
     Sprite: function (x, y, image) {
+        if (x === '_deserialize') {
+            // data - saved data
+            // find - a function to find an object based on a saved name
+            return (data, find) => {
+                const obj = new sprites.Sprite(data[0], data[1], data[2]);
+                if (data[3]) obj.setImage(find(data[3]));
+                if (data[4]) obj.setShape(find(data[4]));
+                return obj;
+            }
+        }
+        // name - a function to generate a name for an object to be restored later
+        this.serialize = (name) => {
+            return [this.position.x, this.position.y, this.rotation, name(this.image), name(this.shape)];
+        }
+
         /** The position of the Sprite on the screen
          * @type {gameify.Vector2d}
          */

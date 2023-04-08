@@ -37,6 +37,20 @@ body, html {
   flex-grow: 1;
   border: none;
 }
+.window .canvas-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  background: #ddd;
+}
+.window .canvas-container canvas {
+  position: relative;
+  background: white;
+  max-width: 100%;
+  max-height: 100%;
+}
 .window .console {
   font-family: "Roboto Mono";
   flex-grow: 0;
@@ -87,6 +101,9 @@ body, html {
 }
 .window .console .log-item.warn .message {
   color: #ff8;
+}
+.window .console .log-item.debug .message {
+  color: #8f8;
 }
 .window .console .log-item.error {
   font-weight: bold;
@@ -216,6 +233,9 @@ body, html {
   height: 1em;
   margin-left: 3px;
   margin-right: 12px;
+}
+.list .list-item:is(span) svg {
+  color: white;
 }
 .list .list-item.filename {
   font-family: "Roboto Mono";

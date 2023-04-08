@@ -28,6 +28,12 @@
                 </div>
                 <h3>Code</h3>
                 <div class="list" id="editor-list"><!--Populated by code--></div>
+
+                <h3>Save</h3>
+                <div class="list">
+                    <button class="list-item" id="save-button">Save</button>
+                    <button class="list-item" id="load-button">Load</button>
+                </div>
             </div>
 
             <div class="window editor visible">
@@ -37,7 +43,9 @@
             </div>
 
             <div class="window visual">
-                <canvas id="visual-editor"></canvas>
+                <div class="canvas-container">
+                    <canvas id="game-canvas"></canvas>
+                </div>
                 <div class="console">
                     <h3>Editor</h3>
                     <div id="visual-output" class="output-container">

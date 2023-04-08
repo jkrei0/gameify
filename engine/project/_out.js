@@ -7,20 +7,43 @@
 
 import {gameify} from '/gameify/gameify.js';
 
-let __globals = {
-    'Canvas': document.querySelector('#game-canvas')
-};
+/* Engine Objects */
+
+if (!window.__s_objects) console.error('Failed to load game objects');
+
+const __objects = {};
+
+const deserializeObject = () => {
+
+}
 
 /** Access an object from the engine
  * @param {string} name - The name of the object to access
  */
 export const $get = (name) => {
-    return __globals[name];
+    if (!__objects[name]) {
+        const type = name.split('::')[0];
+        const oName = name.split('::')[1];
+        if (window.__s_objects[type] && window.__s_objects[type][oName]) {
+            if (window.__s_objects[type][oName] === false) {
+                console.warn(`Cannot deserialize ${type}::${oName}`);
+                return undefined;
+            }
+            // Deserialize object (call constructor, then call deserializer with data and $get)
+            __objects[type + '::' + oName] = gameify[type]('_deserialize')(window.__s_objects[type][oName], $get);
+            console.debug(`Loaded ${name}`);
+
+        } else {
+            console.warn(`Object '${name}' not found.`);
+            return undefined;
+        }
+    }
+
+    return __objects[name];
 };
 
-__globals.Screen = new gameify.Screen($get('Canvas'), 1200, 800);
 
-__globals.MainScene = new gameify.Scene($get('Screen'));
+/* Error handling */
 
 window.onerror = (...args) => {
     console.error({
@@ -36,12 +59,14 @@ window.addEventListener('unhandledrejection', function(event) {
     });
 });
 
+/* Start the game */
+
 console.info('Engine loaded');
 
 setTimeout(() => {
     // Start the game
     console.info('Game started');
-    $get('Screen').startGame();
+    $get('Screen::Screen').startGame();
 }, 200);
 
 export default $get;

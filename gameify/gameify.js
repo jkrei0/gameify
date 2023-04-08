@@ -387,6 +387,21 @@ export let gameify = {
      * @arg {number} height - The height of the Screen
      */
     Screen: function (element, width, height) {
+        if (element === '_deserialize') {
+            // data - saved data
+            // find - a function to find an object based on a saved name
+            return (data, find) => {
+                const obj = new gameify.Screen(document.getElementById(data[0]), data[1], data[2]);
+                if (data[3]) obj.setScene(find(data[3]));
+                return obj;
+            }
+        }
+        // name - a function to generate a name for an object to be restored later
+        this.serialize = (name) => {
+            console.log(this.currentScene, name(this.currentScene));
+            return [this.element.id, this.width, this.height, name(this.currentScene)];
+        }
+
         // Error if not given the correct parameters
         if (!element) {
             throw new Error(`You need to specify a canvas element to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
@@ -568,6 +583,20 @@ export let gameify = {
      * @arg {gameify.Screen} screen - The Screen the Scene should draw to.
      */
     Scene: function (screen) {
+        if (screen === '_deserialize') {
+            // data - saved data
+            // find - a function to find an object based on a saved name
+            return (data, find) => {
+                const obj = new gameify.Scene();
+                if (data[1]) obj.lock(data[1]);
+                return obj;
+            }
+        }
+        // name - a function to generate a name for an object to be restored later
+        this.serialize = (name) => {
+            return [this.locked];
+        }
+
         /** The user-set update function
          * @private
          */
@@ -652,6 +681,18 @@ export let gameify = {
      * @arg {String} [path] - The image filepath. (Can also be a dataURI). If not specified, the image is created with no texture
     */
     Image: function (path) {
+        if (path === '_deserialize') {
+            // data - saved data
+            // find - a function to find an object based on a saved name
+            return (data, find) => {
+                const obj = new gameify.Image(data[0]);
+                return obj;
+            }
+        }
+        // name - a function to generate a name for an object to be restored later
+        this.serialize = (name) => {
+            return [this.path];
+        }
 
         /** The image filepath. Modifying this will not do anything. */
         this.path = path;
@@ -788,6 +829,19 @@ export let gameify = {
      * @arg {Number} theight - The height of each tile
      */
     Tileset: function (path, twidth, theight) {
+        if (path === '_deserialize') {
+            // data - saved data
+            // find - a function to find an object based on a saved name
+            return (data, find) => {
+                const obj = new gameify.Tileset(...data);
+                return obj;
+            }
+        }
+        // name - a function to generate a name for an object to be restored later
+        this.serialize = (name) => {
+            return [this.path, this.twidth, this.theight];
+        }
+
         this.path = path;
         this.twidth = twidth;
         this.theight = theight;
@@ -853,6 +907,23 @@ export let gameify = {
     // actually loops through each column, and I was dumb and got this backwards.
     // Some are correct, because I realised it -- but be careful
     Tilemap: function (twidth, theight, offsetx, offsety) {
+        if (twidth === '_deserialize') {
+            // data - saved data
+            // find - a function to find an object based on a saved name
+            return (data, find) => {
+                const obj = new gameify.Tilemap(data[0], data[1], data[2].x, data[2].y);
+                if (data[3]) {
+                    obj.setTileset(find(data[3]));
+                    obj.loadMapData(data[4]);
+                }
+                return obj;
+            }
+        }
+        // name - a function to generate a name for an object to be restored later
+        this.serialize = (name) => {
+            return [this.twidth, this.theight, this.offset.x, name(this.tileset), this.exportMapData()];
+        }
+
         this.twidth = twidth;
         this.theight = theight;
         this.offset = {
