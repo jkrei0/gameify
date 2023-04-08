@@ -53,11 +53,15 @@ for (const file in files) {
 /* Misc Internal Utils */
 
 const visualLog = (message, type = 'info', source = 'editor') => {
-    document.querySelector('#visual-output').innerHTML += `<span class="log-item ${type}">
+    if (type === 'error') showWindow('visual');
+
+    const visualEl = document.querySelector('#visual-output');
+    visualEl.innerHTML += `<span class="log-item ${type}">
             <span class="short">${type.toUpperCase()}</span>
             <span class="message">${message}</span>
             <span class="source">${source}</span>
         </span>`;
+    visualEl.scrollTo(0, visualEl.scrollHeight);
 }
 const showWindow = (t) => {
     document.querySelector(`.window.visible`).classList.remove('visible');
@@ -158,9 +162,14 @@ const selectItem = (text, options, call = ()=>{}, selected) => {
     label.classList.add('property');
     label.innerHTML = text;
     const input = document.createElement('select');
-    input.onchange = ()=>{ call(input.value); };
+    input.onchange = () => {
+        if (input.value !== 'None::None') {
+            input.querySelector('option[value="None::None"]').setAttribute('disabled', true);
+        }
+        call(input.value);
+    };
 
-    input.innerHTML += `<option value="None::None">- None -</option>`;
+    input.innerHTML += `<option value="None::None" ${selected ? 'disabled' : ''}>- None -</option>`;
     for (const opt of options) {
         input.innerHTML += `<option ${selected === opt ? 'selected' : ''}>${opt}</option>`;
     }
@@ -226,6 +235,11 @@ const populateObjectsList = () => {
             /* Property Items */
 
             const [nameElem, selName] = inputItem('Name', objName, 'text', (newName) => {
+                newName = newName.replaceAll('::', '_');
+                if (set[newName]) {
+                    visualLog(`Object with the name '${setName}::${newName}' already exists!`, 'error');
+                    return;
+                }
                 set[newName] = obj;
                 set[objName] = undefined;
                 delete set[objName];
@@ -252,7 +266,13 @@ const populateObjectsList = () => {
                     This object is locked
                 `));
             } else if (setName === 'Tilemap') {
-                details.appendChild(labelItem('Edit map', 'Edit'));
+                details.appendChild(labelItem('Edit map', 'Edit', () => {
+                    if (!obj.tileset) {
+                        visualLog('You need to add a tileset before you can edit the map', 'error', obj.__engine_name);
+                        return;
+                    }
+                    editTileMap(obj);
+                }));
                 details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
                     obj.twidth  = x;
                     obj.theight = y;
@@ -264,6 +284,10 @@ const populateObjectsList = () => {
                 details.appendChild(selectItem('Tileset', tilesets, (v) => {
                     obj.setTileset(objects[v.split('::')[0]][v.split('::')[1]]);
                 }, obj.tileset?.__engine_name)[0]);
+                details.appendChild(selectItem('Screen', screens, (v) => {
+                    // Screen.add(obj)
+                    objects[v.split('::')[0]][v.split('::')[1]].add(obj);
+                }, obj.parent?.__engine_name)[0]);
 
             } else if (setName === 'Tileset') {
                 details.appendChild(inputItem('File', obj.path, 'text', (v) => {
@@ -291,13 +315,13 @@ const populateObjectsList = () => {
                         obj.image.__engine_name = `Tileset/Image::${setName} ${objName}`;
                     }
                     updateTSPos();
-                }, obj.image?.__engine_name)[0]);
+                }, obj.image?.__engine_name || obj.image?.tileData.tileset?.__engine_name)[0]);
 
                 const [tileLabel, tileX, tileY] = twoInputItem('Tile',  [0, 0], 'number', (x, y) => {
                     obj.setImage(obj.image.tileData.tileset.getTile(tileX.value, tileY.value));
                 });
                 const updateTSPos = () => {
-                    if (obj.image?.__engine_name?.startsWith('Tileset/Image::')) {
+                    if (obj.image?.tileData?.tileset) {
                         tileLabel.style.display = '';
                         tileX.value = obj.image.tileData.position.x;
                         tileY.value = obj.image.tileData.position.y;
@@ -312,8 +336,12 @@ const populateObjectsList = () => {
                     obj.position.x = x;
                     obj.position.y = y;
                 })[0]);
+                details.appendChild(inputItem('Scale', obj.scale, 'number', (v) => {
+                    obj.scale = v;
+                })[0]);
                 details.appendChild(selectItem('Screen', screens, (v) => {
-                    obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
+                    // Screen.add(obj)
+                    objects[v.split('::')[0]][v.split('::')[1]].add(obj);
                 }, obj.parent?.__engine_name)[0]);
 
             } else if (setName === 'Screen') {
@@ -342,6 +370,7 @@ const populateObjectsList = () => {
             delButton.innerHTML = 'Delete';
             delButton.onclick = () => {
                 delete set[objName];
+                visualLog(`Deleted object '${setName}::${objName}'`, 'warn');
                 populateObjectsList();
             }
             // Don't allow deleting locked items
@@ -375,27 +404,34 @@ const populateObjectsList = () => {
     addButton.innerHTML = 'Add Object';
     addButton.onclick = () => {
         const type = selType.value;
-        const name = selName.value
+        const name = selName.value.replaceAll('::', '_');
         if (objects[type][name]) {
-            alert('Object with that name already exists!');
+            visualLog(`Object with the name '${type}::${name}' already exists!`, 'error');
         }
 
+        const addToScreen = () => {
+            // Add the image to the default screen
+            Object.values(objects['Screen'])[0].add(objects[type][name]);
+        }
+        
         if (type === 'Tileset') {
             objects[type][name] = new gameify.Tileset('path/to/image.png', 64, 64);
         } else if (type === 'Tilemap') {
             objects[type][name] = new gameify.Tilemap(64, 64, 0, 0);
+            addToScreen();
         } else if (type === 'Sprite') {
             objects[type][name] = new gameify.Sprite(0, 0, undefined);
-            // Add the image to the default screen
-            Object.values(objects['Screen'])[0].add(objects[type][name]);
+            addToScreen();
         } else if (type === 'Image') {
             objects[type][name] = new gameify.Image('path/to/image.png');
         } else if (type === 'Scene') {
             objects[type][name] = new gameify.Scene(null);
         } else {
-            alert(`Cannot create new ${type} object.`);
+            visualLog(`You may not create a new ${type} object from the visual editor.`, 'error');
+            return;
         }
-        console.log(type, name, objects[type][name]);
+
+        visualLog(`Created new object '${type}::${name}'`, 'log');
         populateObjectsList();
     }
     details.appendChild(addButton);
@@ -455,17 +491,34 @@ const loadObjectsList = (data) => {
 }
 
 const editorCanvas = document.querySelector('#game-canvas');
-const editorScreen = objects.Screen.Screen;
+const editorScreen = new gameify.Screen(editorCanvas, 1200, 800);
 
+let currentMap = undefined;
 const tileMapEditor = new gameify.Scene(editorScreen);
 editorScreen.setScene(tileMapEditor);
 
 tileMapEditor.onUpdate(() => {
-
+    const defaultScreen = Object.values(objects['Screen'])[0];
+    editorScreen.setSize(defaultScreen.getSize());
+    if (currentMap) currentMap.update();
 });
 tileMapEditor.onDraw(() => {
-
+    if (currentMap) currentMap.draw();
 });
+editorScreen.startGame();
+
+const editTileMap = (map) => {
+    visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
+    visualLog(`Click: Place tile
+        <br>Right-Click: Delete tile
+        <br>Middle-Click: Pick tile
+        <br>Scroll: Switch tile x
+        <br>Ctrl-Scroll: Switch tile y
+        <br>Shift-Scroll: Rotate tile`, 'info', 'tilemap editor');
+    showWindow('visual');
+    currentMap = map;
+    map.enableMapBuilder(editorScreen);
+}
 
 
 // Populate list after editor setup
@@ -613,6 +666,7 @@ document.querySelector('#save-button').addEventListener('click', () => {
     const saved = serializeObjectsList();
     localStorage.setItem('savedObjects:' + name, JSON.stringify(saved));
 
+    visualLog(`Saved as '${name + num}'`, 'debug');
     listSaves();
 });
 
@@ -643,6 +697,7 @@ const listSaves = () => {
             const loaded = localStorage.getItem('savedObjects:' + name);
             if (!loaded) return;
             loadObjectsList(JSON.parse(loaded));
+            visualLog(`Loaded save '${name}'`, 'debug');
         }
         button.innerText = name;
         const delButton = document.createElement('button');
@@ -654,6 +709,7 @@ const listSaves = () => {
             localStorage.setItem('saveNames', savedList.join(','))
             if (savedList.length < 1) localStorage.removeItem('saveNames');
 
+            visualLog(`Deleted save '${name}'`, 'warn');
             listSaves();
         }
         delButton.innerText = 'Delete';
