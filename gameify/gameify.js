@@ -278,6 +278,10 @@ export let gameify = {
             }
         }
 
+        this.onContextMenu = (event) => {
+            event.preventDefault();
+        }
+
         /** Check if a button is currently pressed down
          * @arg {String} button - The button you want to check
          * @returns {Boolean} if the button is pressed
@@ -347,6 +351,7 @@ export let gameify = {
             this.captureScope.addEventListener("mouseout", this.onMouseOut);
             this.captureScope.addEventListener("mousemove", this.onMouseMove);
             this.captureScope.addEventListener("wheel", this.onMouseWheel);
+            this.captureScope.addEventListener("contextmenu", this.onContextMenu);
         }
         /** Destructs the event manager (clears events) 
          * @package
@@ -357,6 +362,7 @@ export let gameify = {
             this.captureScope.removeEventListener("mouseout", this.onMouseOut);
             this.captureScope.removeEventListener("mousemove", this.onMouseMove);
             this.captureScope.removeEventListener("wheel", this.onMouseWheel);
+            this.captureScope.removeEventListener("contextmenu", this.onContextMenu);
         }
         /** Changes the scope that the KeyboardInputManager looks at
          * @arg {HTMLElement} scope - What parts of the screen the KeyboardEventManager looks for.
