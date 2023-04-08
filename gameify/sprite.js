@@ -40,14 +40,15 @@ export let sprites = {
             // find - a function to find an object based on a saved name
             return (data, find) => {
                 const obj = new sprites.Sprite(data[0], data[1], data[2]);
-                if (data[3]) obj.setImage(find(data[3]));
-                if (data[4]) obj.setShape(find(data[4]));
+                if (data[3]) obj.setImage(find(data[3])); // Set image
+                if (data[4]) obj.setShape(find(data[4])); // Set shape
+                if (data[5]) find(data[5]).add(obj);      // Add to screen
                 return obj;
             }
         }
         // name - a function to generate a name for an object to be restored later
         this.serialize = (name) => {
-            return [this.position.x, this.position.y, this.rotation, name(this.image), name(this.shape)];
+            return [this.position.x, this.position.y, this.rotation, name(this.image), name(this.shape), name(this.parent)];
         }
 
         /** The position of the Sprite on the screen
@@ -190,11 +191,17 @@ This way speeds and physics are the same regardless of FPS or how good your comp
          */
         this.context = null;
 
+        /** The parent screen (not used directly)
+         * @private
+         */
+        this.parent = null;
+
         /** Set the Canvas context to draw to. This should be called whenever a sprite is added to a Screen
          * @private
          */
-        this.setContext = (context) => {
+        this.setContext = (context, parent) => {
             this.context = context;
+            this.parent = parent;
         }
     }
 };

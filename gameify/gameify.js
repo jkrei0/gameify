@@ -515,7 +515,7 @@ export let gameify = {
          * @param {gameify.Sprite | gameify.Tilemap} obj - The object to add to the screen
          */
         this.add = (obj) => {
-            obj.setContext(this.getContext());
+            obj.setContext(this.getContext(), this);
         }
 
         /** The game's update interval
