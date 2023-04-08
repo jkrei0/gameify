@@ -562,10 +562,67 @@ document.querySelector('#visual-button').addEventListener('click', () => {
 /* Save and load */
 
 document.querySelector('#save-button').addEventListener('click', () => {
+    const savedList = localStorage.getItem('saveNames')?.split(',') || [];
+
+    let num = '';
+    const name = prompt('Name this save').replaceAll(',', '_') || 'Unnamed Save';
+    while (savedList.includes(name + num)) {
+        num = Number(num) + 1;
+    }
+    savedList.push(name + num);
+    localStorage.setItem('saveNames', savedList.join(','))
+
     const saved = serializeObjectsList();
-    localStorage.setItem('savedObjects', JSON.stringify(saved));
+    localStorage.setItem('savedObjects:' + name, JSON.stringify(saved));
+
+    listSaves();
 });
-document.querySelector('#load-button').addEventListener('click', () => {
-    const loaded = localStorage.getItem('savedObjects');
-    loadObjectsList(JSON.parse(loaded));
-});
+
+const listSaves = () => {
+    const listElem = document.querySelector('#load-save-list');
+    listElem.innerHTML = '';
+
+    const savedList = localStorage.getItem('saveNames')?.split(',');
+    console.log(savedList);
+    if (!savedList) {
+        const message = document.createElement('span');
+        message.classList.add('list-item');
+        message.innerText = 'No saves';
+        listElem.appendChild(message);
+
+        return;
+    }
+
+    for (const name of savedList) {
+        const button = document.createElement('button');
+        button.classList.add('list-item');
+
+        if (!localStorage.getItem('savedObjects:' + name)) {
+            button.setAttribute('title', 'This save is missing');
+            console.warn('Missing save');
+        }
+
+        button.onclick = () => {
+            const loaded = localStorage.getItem('savedObjects:' + name);
+            if (!loaded) return;
+            loadObjectsList(JSON.parse(loaded));
+        }
+        button.innerText = name;
+        const delButton = document.createElement('button');
+        delButton.onclick = () => {
+            localStorage.removeItem('savedObjects:' + name);
+
+            const savedList = localStorage.getItem('saveNames')?.split(',');
+            savedList.splice(savedList.indexOf(name), 1)
+            localStorage.setItem('saveNames', savedList.join(','))
+            if (savedList.length < 1) localStorage.removeItem('saveNames');
+
+            listSaves();
+        }
+        delButton.innerText = 'Delete';
+        button.appendChild(delButton);
+
+        listElem.appendChild(button);
+    }
+}
+listSaves();
