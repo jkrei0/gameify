@@ -566,11 +566,12 @@ gameFrame.addEventListener('load', () => {
     }
 
     win.__s_objects = serializeObjectsList();
-    console.log('Serialized data: ', win.__s_objects);
 
     // Add scripts
     const html = win.document.querySelector('html');
     html.innerHTML = genGameHtml();
+
+    console.info('GAME START (loading scripts)');
 
     for (const file in files) {
         const script = document.createElement('script');
@@ -620,7 +621,6 @@ const listSaves = () => {
     listElem.innerHTML = '';
 
     const savedList = localStorage.getItem('saveNames')?.split(',');
-    console.log(savedList);
     if (!savedList) {
         const message = document.createElement('span');
         message.classList.add('list-item');
