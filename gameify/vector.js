@@ -1,4 +1,4 @@
-
+import { docs } from './docs.js';
 
 /** Vectors for use in gameify. Usually you'll access these through the gameify object.
  * @example // Use vectors via gameify
@@ -42,7 +42,7 @@ export let vectors = {
             this.x = parseInt(x.match(/(\d|\.)+(?=,)/));
             this.y = parseInt(x.match(/(\d|\.)+(?=>)/));
         } else if (typeof(x) !== "number" && typeof(y) !== "number") {
-            throw new Error(`You can use either two numbers, a formatted string, or an existing Vector2d to create a Vector2d. See ${gameify.getDocs("gameify.Vector2d")} for more details`);
+            throw new Error(`You can use either two numbers, a formatted string, or an existing Vector2d to create a Vector2d. See ${docs.getDocs("gameify.Vector2d")} for more details`);
         }
 
         /** Returns a copy of the vector
@@ -160,7 +160,7 @@ export let vectors = {
         },
         assertIsCompatibleVector: (vector) => {
             if (typeof(vector.x) != "number" || typeof(vector.y) != "number") {
-                console.error(`The vector you're passing to this function is either broken or not a vector. See ${gameify.getDocs("gameify.Vector2d")} for help`);
+                console.error(`The vector you're passing to this function is either broken or not a vector. See ${docs.getDocs("gameify.Vector2d")} for help`);
                 return false;
             }
             return true;
