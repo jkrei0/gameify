@@ -1,53 +1,17 @@
 import {gameify} from '/gameify/gameify.js';
+import {game_template} from '/engine/project/_template.js';
 
 
 /* Code Editor */
 
 const editorFileList = document.querySelector('#editor-list');
 
-const files = {
-    //'_out.js': '',
-    'main.js': '',
-    'level.js': ''
-};
+let files = {};
 let current_file = undefined;
 
-var editor = ace.edit("ace-editor");
+const editor = ace.edit("ace-editor");
 editor.setTheme("ace/theme/dracula");
 editor.setOptions({fontSize: '16px'})
-
-for (const file in files) {
-    fetch('./project/' + file).then(res => {
-        return res.text()
-    }).then(data => {
-        files[file] = ace.createEditSession(data);
-        files[file].setMode("ace/mode/javascript");
-    });
-
-    const button = document.createElement('button');
-    button.classList.add('list-item');
-    button.classList.add('filename');
-    button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
-            <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6zM13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6z"/>
-        </svg>
-        ${file.split('.')[0]}
-        <span class="type">
-            ${file.replace(file.split('.')[0] + '.', '').toUpperCase()}
-        </span>`;
-
-    button.addEventListener('click', () => {
-        editor.setSession(files[file]);
-
-        const prev = document.querySelector('.file-button-active');
-        console.log(prev);
-        if (prev) prev.classList.remove('file-button-active');
-        button.classList.add('file-button-active');
-
-        showWindow('editor');
-    });
-    editorFileList.appendChild(button);
-}
-
 
 
 /* Misc Internal Utils */
@@ -589,7 +553,19 @@ const genGameHtml = (scripts = '') => {
 }
 
 const consoleOut = document.querySelector('#console-output');
+let numMessages = 0;
 window.addEventListener('message', (event) => {
+    numMessages += 1;
+    if (numMessages > 200) {
+        consoleOut.innerHTML = '';
+        numMessages = 0;
+        consoleOut.innerHTML += `<span class="log-item warn">
+            <span class="short">CLEAR</span>
+            <span class="message">Console items cleared - Too many logs</span>
+            <span class="source">engine</span>
+        </span>`;
+    }
+
     if (event.data && event.data.type === 'console') {
         const { message, lineNumber, columnNumber, fileName } = event.data.payload;
         consoleOut.innerHTML += `<span class="log-item ${event.data.logType}">
@@ -604,22 +580,40 @@ gameFrame.addEventListener('load', () => {
 
     // Clear the console
     consoleOut.innerHTML = `<span class="log-item info"></span>`;
+    numMessages = 0;
 
     // Set up log handlers
     const log = (t, args, q = {}, pe) => {
         const error = pe || new Error().stack.split('\n')[2];
         const split = error.split(':');
 
-        win.parent.postMessage({
-            type: 'console',
-            logType: t,
-            payload: {
-                message: q ? args : args.map(a => JSON.stringify(a)).join(', '),
-                lineNumber: q.line || split[split.length - 2],
-                columnNumber: q.col || split[split.length - 1],
-                fileName: q.file || split[split.length - 3].replace(/.*?\/(engine\/)?/, '')
-            }
-        }, '*');
+        let message = q ? args : args.map(a => JSON.stringify(a)).join(', ');
+
+        try {
+            win.parent.postMessage({
+                type: 'console',
+                logType: t,
+                payload: {
+                    message: message,
+                    lineNumber: q.line || split[split.length - 2],
+                    columnNumber: q.col || split[split.length - 1],
+                    fileName: q.file || split[split.length - 3].replace(/.*?\/(engine\/)?/, '')
+                }
+            }, '*');
+        
+        } catch (e) {
+            // Try to convert the logged object to a string
+            win.parent.postMessage({
+                type: 'console',
+                logType: t,
+                payload: {
+                    message: String(message),
+                    lineNumber: q.line || split[split.length - 2],
+                    columnNumber: q.col || split[split.length - 1],
+                    fileName: q.file || split[split.length - 3].replace(/.*?\/(engine\/)?/, '')
+                }
+            }, '*');
+        }
     };
 
     win.console.log = (...args) => { log('log', args); }
@@ -672,38 +666,117 @@ document.querySelector('#visual-button').addEventListener('click', () => {
 });
 
 
+let currentProjectFilename = '';
+
 /* Save and load */
 
-document.querySelector('#save-button').addEventListener('click', () => {
+const saveProject = () => {
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
-    let num = '';
-    const name = prompt('Name this save').replaceAll(',', '_') || 'Unnamed Save';
-    while (savedList.includes(name + num)) {
-        num = Number(num) + 1;
+    const name = prompt('Name this save', currentProjectFilename).replaceAll(',', '_') || 'Unnamed Save';
+    let overwrite = false;
+    if (savedList.includes(name)) {
+        if (!confirm(`Overwrite save '${name}'?`)) return;
+        overwrite = true;
     }
-    savedList.push(name + num);
+    // If overwriting, the name is already in the list
+    if (!overwrite) savedList.push(name);
     localStorage.setItem('saveNames', savedList.join(','))
 
-    const saved = serializeObjectsList();
+    const saved = {
+        objects: serializeObjectsList(),
+        files: {}
+    };
+    for (const file in files) {
+        saved.files[file] = files[file].getValue();
+    }
     localStorage.setItem('savedObjects:' + name, JSON.stringify(saved));
 
-    visualLog(`Saved as '${name + num}'`, 'debug');
+    visualLog(`Saved as '${name}'${overwrite ? ' (overwrote)' : ''}`, 'debug');
     listSaves();
+}
+document.querySelector('#save-button').addEventListener('click', saveProject);
+document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 's') {
+        // Prevent the Save dialog to open
+        e.preventDefault();
+        // Place your code here
+        saveProject();
+    }
 });
+
+document.querySelector('#download-button').addEventListener('click', () => {
+    const saved = {
+        objects: serializeObjectsList(),
+        files: {}
+    };
+    for (const file in files) {
+        saved.files[file] = files[file].getValue();
+    }
+
+    var link = document.createElement("a");
+    link.setAttribute('download', 'gameify_project.gpj');
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(saved)]));
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+});
+
+const openProject = (data) => {
+    // Clear the visual editor
+    editorScreen.getScene().unlock();
+    editorScreen.setScene(dummyScene);
+
+    // Clear the file list
+    files = {};
+    editorFileList.innerHTML = '';
+    
+    // Load new files
+    for (const file in data.files) {
+        files[file] = ace.createEditSession(data.files[file]);
+        files[file].setMode("ace/mode/javascript");
+        current_file = files[file];
+        editor.setSession(files[file]);
+
+        const button = document.createElement('button');
+        button.classList.add('list-item');
+        button.classList.add('filename');
+        button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
+                <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6zM13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6z"/>
+            </svg>
+            ${file.split('.')[0]}
+            <span class="type">
+                ${file.replace(file.split('.')[0] + '.', '').toUpperCase()}
+            </span>`;
+
+        button.addEventListener('click', () => {
+            editor.setSession(files[file]);
+
+            const prev = document.querySelector('.file-button-active');
+            console.log(prev);
+            if (prev) prev.classList.remove('file-button-active');
+            button.classList.add('file-button-active');
+
+            showWindow('editor');
+        });
+        editorFileList.appendChild(button);
+    }
+
+    // Load editor objects
+    loadObjectsList(data.objects);
+}
 
 const listSaves = () => {
     const listElem = document.querySelector('#load-save-list');
     listElem.innerHTML = '';
 
-    const savedList = localStorage.getItem('saveNames')?.split(',');
+    const savedList = localStorage.getItem('saveNames')?.split(',') || [];
     if (!savedList) {
         const message = document.createElement('span');
         message.classList.add('list-item');
         message.innerText = 'No saves';
         listElem.appendChild(message);
-
-        return;
     }
 
     for (const name of savedList) {
@@ -718,11 +791,8 @@ const listSaves = () => {
         button.onclick = () => {
             const loaded = localStorage.getItem('savedObjects:' + name);
             if (!loaded) return;
-            loadObjectsList(JSON.parse(loaded));
-
-            // Clear the visual editor
-            editorScreen.getScene().unlock();
-            editorScreen.setScene(dummyScene);
+            currentProjectFilename = name;
+            openProject(JSON.parse(loaded));
 
             visualLog(`Loaded save '${name}'`, 'debug');
         }
@@ -744,5 +814,28 @@ const listSaves = () => {
 
         listElem.appendChild(button);
     }
+
+    const label = document.createElement('span');
+    label.classList.add('list-item');
+    label.innerText = 'Upload';
+
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.onchange = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = (event) => {
+            const fileContents = event.target.result;
+            visualLog(`Loaded uploaded project '${file.name}'`, 'debug');
+            currentProjectFilename = file.name;
+            openProject(JSON.parse(fileContents));
+        };
+    }
+    label.appendChild(input);
+
+    listElem.appendChild(label);
 }
 listSaves();
+
+openProject(game_template);
