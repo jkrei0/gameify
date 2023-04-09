@@ -816,11 +816,13 @@ const listFiles = (data) => {
                 const temp = files[file];
                 delete files[file];
                 files[name] = temp;
+                visualLog(`Renamed file '${file}' to '${name}'`);
                 listFiles();
             },
             'Delete': () => { 
                 if (confirm('Delete ' + file + '?')) {
                     delete files[file];
+                    visualLog(`Deleted file '${file}'`);
                     listFiles();
                 }   
             }
@@ -859,6 +861,7 @@ const listFiles = (data) => {
         }
         files[name] = ace.createEditSession(`// ${name}\n`);
         files[name].setMode("ace/mode/javascript");
+        visualLog(`Created file '${name}'`);
         listFiles();
         // Make sure the new file is opened
         showWindow('editor');
@@ -953,6 +956,7 @@ const listSaves = () => {
                 localStorage.setItem('saveNames', savedList.join(','));
                 // Delete the old save
                 localStorage.removeItem('savedObjects:' + name);
+                visualLog(`Renamed save '${name}' to '${newName}'`);
                 listSaves();
             }
         }
