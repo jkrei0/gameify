@@ -25,6 +25,7 @@ $faded: #3a3d4f;
 
 $text: white;
 
+$font: Poppins, sans-serif;
 $monospace: 'Roboto Mono';
 
 $transition: 0.1s;
@@ -162,7 +163,7 @@ $transition: 0.1s;
 
     button {
         background: $secondary;
-        font-family: Poppins;
+        font-family: $font;
         font-size: 1em;
         border: none;
         padding: 3px 20px;
@@ -185,7 +186,7 @@ $transition: 0.1s;
     overflow-y: scroll;
     z-index: 1;
 
-    font-family: Poppins, sans-serif;
+    font-family: $font;
     color: $text;
     background: $background;
 
@@ -193,6 +194,23 @@ $transition: 0.1s;
         margin: 0;
         padding: 10px;
         font-size: 1.25rem;
+
+        button {
+            float: right;
+            border: none;
+            background: $secondary;
+            color: $text;
+            padding: 2px 10px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-family: $font;
+
+            transition: $transition;
+
+            &:hover {
+                background: $highlight;
+            }
+        }
     }
 }
 

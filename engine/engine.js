@@ -193,6 +193,10 @@ const populateObjectsList = () => {
             obj.__engine_name = setName + '::' + objName;
 
             const details = document.createElement('details');
+            if (obj.__engine_options_open) details.setAttribute('open', true);
+            details.addEventListener('toggle', () => {
+                obj.__engine_options_open = details.hasAttribute('open');
+            });
             details.classList.add('list-item');
             const summary = document.createElement('summary');
             /* Icons */
@@ -274,12 +278,12 @@ const populateObjectsList = () => {
                     editTileMap(obj);
                 }));
                 details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
-                    obj.twidth  = x;
-                    obj.theight = y;
+                    obj.twidth  = Number(x);
+                    obj.theight = Number(y);
                 })[0]);
                 details.appendChild(twoInputItem('Offset',  [obj.offset.x, obj.offset.y], 'number', (x, y) => {
-                    obj.offset.x = x;
-                    obj.offset.y = y;
+                    obj.offset.x = Number(x);
+                    obj.offset.y = Number(y);
                 })[0]);
                 details.appendChild(selectItem('Tileset', tilesets, (v) => {
                     obj.setTileset(objects[v.split('::')[0]][v.split('::')[1]]);
@@ -294,8 +298,8 @@ const populateObjectsList = () => {
                     obj.path = v;
                 })[0]);
                 details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
-                    obj.twidth  = x;
-                    obj.theight = y;
+                    obj.twidth  = Number(x);
+                    obj.theight = Number(y);
                 })[0]);
             } else if (setName === 'Image') {
                 details.appendChild(inputItem('File', obj.path, 'text', (v) => {
@@ -333,11 +337,11 @@ const populateObjectsList = () => {
                 details.appendChild(tileLabel);
 
                 details.appendChild(twoInputItem('Position',  [obj.position.x, obj.position.y], 'number', (x, y) => {
-                    obj.position.x = x;
-                    obj.position.y = y;
+                    obj.position.x = Number(x);
+                    obj.position.y = Number(y);
                 })[0]);
                 details.appendChild(inputItem('Scale', obj.scale, 'number', (v) => {
-                    obj.scale = v;
+                    obj.scale = Number(v);
                 })[0]);
                 details.appendChild(selectItem('Screen', screens, (v) => {
                     // Screen.add(obj)
@@ -494,16 +498,16 @@ const editorCanvas = document.querySelector('#game-canvas');
 const editorScreen = new gameify.Screen(editorCanvas, 1200, 800);
 
 let currentMap = undefined;
-const tileMapEditor = new gameify.Scene(editorScreen);
-editorScreen.setScene(tileMapEditor);
+const dummyScene = new gameify.Scene(editorScreen);
+editorScreen.setScene(dummyScene);
 
-tileMapEditor.onUpdate(() => {
+dummyScene.onUpdate(() => {
+    // Resize based on game screen size
     const defaultScreen = Object.values(objects['Screen'])[0];
     editorScreen.setSize(defaultScreen.getSize());
-    if (currentMap) currentMap.update();
 });
-tileMapEditor.onDraw(() => {
-    if (currentMap) currentMap.draw();
+dummyScene.onDraw(() => {
+    // ...
 });
 editorScreen.startGame();
 
@@ -517,12 +521,29 @@ const editTileMap = (map) => {
         <br>Shift-Scroll: Rotate tile`, 'info', 'tilemap editor');
     showWindow('visual');
     currentMap = map;
-    map.enableMapBuilder(editorScreen);
+
+    // Grab the scene and copy the update function
+    const scene = map.enableMapBuilder(editorScreen);
+    const update = scene.updateFunction;
+
+    let countdown = 0;
+    let prevOffset = {}
+    // Hijack the update function
+    scene.onUpdate((delta) => {
+        if (prevOffset !== map.offset) {
+            // Update the objects list when the offset is changed
+            prevOffset = map.offset;
+            populateObjectsList();
+        }
+        // call the regular update function
+        update(delta);
+    });
 }
 
 
 // Populate list after editor setup
 populateObjectsList();
+document.querySelector('#refresh-objects').addEventListener('click', populateObjectsList);
 
 /* Game preview */
 
