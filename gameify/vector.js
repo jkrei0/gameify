@@ -118,6 +118,17 @@ export let vectors = {
             // Linear interpolation is A * (1 - t) + B * t
             return new vectors.Vector2d(this.x + (vectorB.x - this.x) * t, this.y + (vectorB.y - this.y) * t);
         }
+        /** Truncates the x and y values to a certain precision
+         * @param {Number} precision - Values after the decimal to keep
+         * @returns {gameify.Vector2d} The vector with truncated values
+         */
+        this.truncated = (precision) => {
+            const amt = 10 ** precision;
+            return new vectors.Vector2d(
+                Math.floor(this.x * amt)/amt,
+                Math.floor(this.y * amt)/amt
+            );
+        }
 
         /** Returns a string representing the vector in the form <code>"&lt;x, y&gt;"</code>. Truncated to three decimal places.
          * @returns {String}
