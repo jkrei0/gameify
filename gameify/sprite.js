@@ -44,7 +44,6 @@ export let sprites = {
                 if (data.scale) obj.scale = data.scale;             // Set scale
                 if (data.image.parent) {
                     // Set image from tileset
-                    console.log(data.image.parent);
                     const set = find(data.image.parent);
                     obj.setImage(set.getTile(data.image.position.x, data.image.position.y));
                 } else if (data.image) {
