@@ -31,6 +31,35 @@ const showWindow = (t) => {
     document.querySelector(`.window.${t}`).classList.add('visible');
 };
 
+const openContextMenu = (menu, posX, posY) => {
+    const contextMenu = document.querySelector('.contextmenu');
+    contextMenu.innerHTML = '';
+    contextMenu.style.display = 'block';
+
+    if (posX !== undefined) contextMenu.style.left = posX + 'px';
+    if (posY !== undefined) contextMenu.style.top = posY + 'px';
+
+    for (const option in menu) {
+        const button = document.createElement('button');
+        button.classList.add('list-item');
+        button.innerHTML = option;
+        button.onclick = () => {
+            menu[option]();
+        };
+        contextMenu.appendChild(button);
+    }
+}
+window.addEventListener('contextmenu', (event) => {
+    if (event.target.__engine_menu) {
+        event.preventDefault();
+        openContextMenu(event.target.__engine_menu, event.clientX, event.clientY);
+    }
+});
+window.addEventListener('click', (event) => {
+    setTimeout(() => {
+        document.querySelector('.contextmenu').style.display = 'none';
+    }, 200);
+});
 
 
 /* Visual Editor and Tools */
@@ -766,8 +795,32 @@ const listFiles = (data) => {
             </svg>
             ${file.split('.')[0]}
             <span class="type">
-                ${file.replace(file.split('.')[0] + '.', '').toUpperCase()}
+                .${file.replace(file.split('.')[0] + '.', '').toUpperCase()}
             </span>`;
+
+        button.__engine_menu = {
+            'Open': () => {
+                button.click();
+            },
+            'Rename': () => {
+                let name = prompt('Enter a new name', file);
+                if (!name || name === file) return;
+                while (files[name]) {
+                    name = prompt('That file already exists! Enter a new name', file);
+                    if (!name || name === file) return;
+                }
+                const temp = files[file];
+                delete files[file];
+                files[name] = temp;
+                listFiles();
+            },
+            'Delete': () => { 
+                if (confirm('Delete ' + file + '?')) {
+                    delete files[file];
+                    listFiles();
+                }   
+            }
+        }
 
         button.addEventListener('click', () => {
             editor.setSession(files[file]);
@@ -795,8 +848,10 @@ const listFiles = (data) => {
         </svg> New file`;
     newFileButton.onclick = () => {
         let name = prompt('Enter a name', 'unnamed.js');
+        if (!name) return;
         while (files[name]) {
             name = prompt('That file already exists! Enter a name', 'unnamed.js');
+            if (!name) return;
         }
         files[name] = ace.createEditSession(`// ${name}\n`);
         files[name].setMode("ace/mode/javascript");
@@ -807,7 +862,7 @@ const listFiles = (data) => {
     }
     editorFileList.appendChild(newFileButton);
 }
-console.log(listFiles);
+
 const openProject = (data) => {
     // Clear the visual editor
     editorScreen.getScene().unlock();
@@ -850,7 +905,10 @@ const listSaves = () => {
         }
         button.innerText = name;
         const delButton = document.createElement('button');
-        delButton.onclick = () => {
+        delButton.onclick = (event) => {
+            event.stopPropagation();
+            if (!confirm(`Delete save ${name}?`)) { return; }
+
             localStorage.removeItem('savedObjects:' + name);
 
             const savedList = localStorage.getItem('saveNames')?.split(',');
@@ -865,6 +923,15 @@ const listSaves = () => {
         button.appendChild(delButton);
 
         listElem.appendChild(button);
+
+        button.__engine_menu = {
+            'Load': () => {
+                button.click();
+            },
+            'Delete': () => {
+                delButton.click();
+            }
+        }
     }
 
     const label = document.createElement('span');

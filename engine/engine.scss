@@ -237,8 +237,7 @@ $transition: 0.1s;
             padding: 5px 10px;
             font-family: $labeltext;
             font-size: 1.1em;
-            margin-bottom: 0;
-            border-bottom: 2px solid $background;
+            margin-bottom: 2px;
 
             &:is(button) {
                 cursor: pointer;
@@ -263,6 +262,10 @@ $transition: 0.1s;
             &:is(input, select) {
                 max-width: 140px;
                 padding: 5px;
+
+                &:focus {
+                    outline: 2px solid $text;
+                }
             }
 
             &[type=text] {
@@ -289,6 +292,9 @@ $transition: 0.1s;
             }
         }
 
+        &:focus-visible, *:focus-visible {
+            outline: 2px solid $text;
+        }
 
         .x-value-label {
             margin-left: auto;
@@ -339,7 +345,11 @@ $transition: 0.1s;
             padding-block: 2px;
         }
 
-        &[open], &:hover {
+        :is(&[open], &:hover) > summary {
+            background: $highlight;
+        }
+
+        &:not(details):hover {
             background: $highlight;
         }
 
@@ -419,4 +429,30 @@ $transition: 0.1s;
     .file-button-active {
         background: $highlight;
     }
+}
+
+.contextmenu {
+    position: fixed;
+    display: none;
+
+    padding: 2px;
+
+    color: $text;
+    font-family: $font;
+    background: $highlightsecondary;
+    box-shadow: 0 0 2px #0008;
+
+    button.list-item {
+        font-family: $font;
+        font-size: 0.95rem;
+        min-width: 120px;
+
+        margin: 0;
+
+        &:hover {
+            background: transparent;
+        }
+    }
+
+    z-index: 99;
 }

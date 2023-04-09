@@ -194,8 +194,7 @@ body, html {
   padding: 5px 10px;
   font-family: Lato, sans-serif;
   font-size: 1.1em;
-  margin-bottom: 0;
-  border-bottom: 2px solid #335;
+  margin-bottom: 2px;
 }
 .list .list-item:is(button, span, label):is(button) {
   cursor: pointer;
@@ -218,6 +217,9 @@ body, html {
   max-width: 140px;
   padding: 5px;
 }
+.list .list-item > :is(button, input, select):is(input, select):focus {
+  outline: 2px solid white;
+}
 .list .list-item > :is(button, input, select)[type=text] {
   cursor: text;
 }
@@ -238,6 +240,9 @@ body, html {
 }
 .list .list-item > :is(button, input, select):first-child {
   margin-left: auto;
+}
+.list .list-item:focus-visible, .list .list-item *:focus-visible {
+  outline: 2px solid white;
 }
 .list .list-item .x-value-label {
   margin-left: auto;
@@ -281,7 +286,10 @@ body, html {
   font-size: 0.9em;
   padding-block: 2px;
 }
-.list .list-item[open], .list .list-item:hover {
+:is(.list .list-item[open], .list .list-item:hover) > summary {
+  background: #648;
+}
+.list .list-item:not(details):hover {
   background: #648;
 }
 .list .list-item .type {
@@ -346,4 +354,24 @@ body, html {
 }
 .list .file-button-active {
   background: #648;
+}
+
+.contextmenu {
+  position: fixed;
+  display: none;
+  padding: 2px;
+  color: white;
+  font-family: Poppins, sans-serif;
+  background: #668;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5333333333);
+  z-index: 99;
+}
+.contextmenu button.list-item {
+  font-family: Poppins, sans-serif;
+  font-size: 0.95rem;
+  min-width: 120px;
+  margin: 0;
+}
+.contextmenu button.list-item:hover {
+  background: transparent;
 }/*# sourceMappingURL=engine.css.map */
