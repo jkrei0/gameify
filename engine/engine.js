@@ -827,7 +827,7 @@ const listSaves = () => {
         reader.readAsText(file);
         reader.onload = (event) => {
             const fileContents = event.target.result;
-            visualLog(`Loaded uploaded project '${file.name}'`, 'debug');
+            visualLog(`Loaded project file '${file.name}'`, 'debug');
             currentProjectFilename = file.name;
             openProject(JSON.parse(fileContents));
         };
