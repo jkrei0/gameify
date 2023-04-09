@@ -7,7 +7,6 @@ import {game_template} from '/engine/project/_template.js';
 const editorFileList = document.querySelector('#editor-list');
 
 let files = {};
-let current_file = undefined;
 
 const editor = ace.edit("ace-editor");
 editor.setTheme("ace/theme/dracula");
@@ -461,7 +460,6 @@ const loadObjectsList = (data) => {
 const editorCanvas = document.querySelector('#game-canvas');
 const editorScreen = new gameify.Screen(editorCanvas, 1200, 800);
 
-let currentMap = undefined;
 const dummyScene = new gameify.Scene(editorScreen);
 editorScreen.setScene(dummyScene);
 
@@ -485,7 +483,6 @@ const editTileMap = (map) => {
         <br>Ctrl-Scroll: Switch tile y
         <br>Shift-Scroll: Rotate tile`, 'info', 'tilemap editor');
     showWindow('visual');
-    currentMap = map;
 
     // Grab the scene and copy the update function
     const scene = map.enableMapBuilder(editorScreen);
@@ -723,21 +720,22 @@ document.querySelector('#download-button').addEventListener('click', () => {
 
 });
 
-const openProject = (data) => {
-    // Clear the visual editor
-    editorScreen.getScene().unlock();
-    editorScreen.setScene(dummyScene);
-
+const listFiles = (data) => {
+    let reloadEditors = true;
+    if (!data) {
+        data = files;
+        reloadEditors = false;
+    }
     // Clear the file list
-    files = {};
+    if (reloadEditors) files = {};
     editorFileList.innerHTML = '';
     
     // Load new files
-    for (const file in data.files) {
-        files[file] = ace.createEditSession(data.files[file]);
-        files[file].setMode("ace/mode/javascript");
-        current_file = files[file];
-        editor.setSession(files[file]);
+    for (const file in data) {
+        if (reloadEditors) {
+            files[file] = ace.createEditSession(data[file]);
+            files[file].setMode("ace/mode/javascript");
+        }
 
         const button = document.createElement('button');
         button.classList.add('list-item');
@@ -762,6 +760,39 @@ const openProject = (data) => {
         });
         editorFileList.appendChild(button);
     }
+    for (const file in data) {
+        editor.setSession(files[file]);
+        // Set the first file as current
+        break;
+    }
+
+    const newFileButton = document.createElement('button');
+    newFileButton.classList.add('list-item');
+    newFileButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-plus" viewBox="0 0 16 16">
+            <path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5z"/>
+            <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+        </svg> New file`;
+    newFileButton.onclick = () => {
+        let name = prompt('Enter a name', 'unnamed.js');
+        while (files[name]) {
+            name = prompt('That file already exists! Enter a name', 'unnamed.js');
+        }
+        files[name] = ace.createEditSession(`// ${name}\n`);
+        files[name].setMode("ace/mode/javascript");
+        listFiles();
+        // Make sure the new file is opened
+        showWindow('editor');
+        editor.setSession(files[name]);
+    }
+    editorFileList.appendChild(newFileButton);
+}
+console.log(listFiles);
+const openProject = (data) => {
+    // Clear the visual editor
+    editorScreen.getScene().unlock();
+    editorScreen.setScene(dummyScene);
+
+    listFiles(data.files);
 
     // Load editor objects
     loadObjectsList(data.objects);
@@ -838,4 +869,5 @@ const listSaves = () => {
 }
 listSaves();
 
+visualLog('Loaded template project', 'debug');
 openProject(game_template);
