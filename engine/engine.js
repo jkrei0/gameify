@@ -238,7 +238,8 @@ const populateObjectsList = () => {
                         visualLog('You need to add a tileset before you can edit the map', 'error', obj.__engine_name);
                         return;
                     }
-                    editTileMap(obj);
+                    if (obj.__engine_editing) stopEditTileMap(obj);
+                    else editTileMap(obj);
                 }));
                 details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
                     obj.twidth  = Number(x);
@@ -469,11 +470,21 @@ dummyScene.onUpdate(() => {
     editorScreen.setSize(defaultScreen.getSize());
 });
 dummyScene.onDraw(() => {
-    // ...
+    for (const type of ['Tilemap', 'Sprite']) {
+        for (const name in objects[type]) {
+            const obj = objects[type][name];
+            const ps = obj.getParent();
+            editorScreen.add(obj);
+            obj.draw();
+            ps.add(obj); // Set the screen back!
+        }
+    }
 });
 editorScreen.startGame();
 
 const editTileMap = (map) => {
+    map.__engine_editing = true;
+
     visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
     visualLog(`Click: Place tile
         <br>Right-Click: Delete tile
@@ -499,9 +510,19 @@ const editTileMap = (map) => {
         }
         // call the regular update function
         update(delta);
+        if (editorScreen.keyboard.keyIsPressed('Escape')) {
+            stopEditTileMap(map);
+        }
     });
 }
 
+const stopEditTileMap = (map) => {
+    // Clear the visual editor
+    editorScreen.getScene().unlock();
+    editorScreen.setScene(dummyScene);
+    map.__engine_editing = false;
+    visualLog('Stopped editing tilemap', 'log', 'tilemap editor');
+}
 
 // Populate list after editor setup
 populateObjectsList();
