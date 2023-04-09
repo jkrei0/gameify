@@ -43,7 +43,8 @@ const openContextMenu = (menu, posX, posY) => {
         const button = document.createElement('button');
         button.classList.add('list-item');
         button.innerHTML = option;
-        button.onclick = () => {
+        button.onclick = (event) => {
+            event.stopPropagation();
             menu[option]();
         };
         contextMenu.appendChild(button);
@@ -51,6 +52,7 @@ const openContextMenu = (menu, posX, posY) => {
 }
 window.addEventListener('contextmenu', (event) => {
     if (event.target.__engine_menu) {
+        event.stopPropagation();
         event.preventDefault();
         openContextMenu(event.target.__engine_menu, event.clientX, event.clientY);
     }
@@ -720,7 +722,7 @@ let currentProjectFilename = '';
 const saveProject = () => {
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
-    const name = prompt('Name this save', currentProjectFilename).replaceAll(',', '_') || 'Unnamed Save';
+    const name = prompt('Name this save', currentProjectFilename)?.replaceAll(',', '_') || 'Unnamed Save';
     let overwrite = false;
     if (savedList.includes(name)) {
         if (!confirm(`Overwrite save '${name}'?`)) return;
@@ -741,6 +743,8 @@ const saveProject = () => {
 
     visualLog(`Saved as '${name}'${overwrite ? ' (overwrote)' : ''}`, 'debug');
     listSaves();
+
+    return name;
 }
 document.querySelector('#save-button').addEventListener('click', saveProject);
 document.addEventListener('keydown', e => {
@@ -892,6 +896,7 @@ const listSaves = () => {
 
         if (!localStorage.getItem('savedObjects:' + name)) {
             button.setAttribute('title', 'This save is missing');
+            button.setAttribute('disabled', 'True');
             console.warn('Missing save');
         }
 
@@ -905,9 +910,10 @@ const listSaves = () => {
         }
         button.innerText = name;
         const delButton = document.createElement('button');
-        delButton.onclick = (event) => {
-            event.stopPropagation();
-            if (!confirm(`Delete save ${name}?`)) { return; }
+        delButton.onclick = (event, bypass) => {
+            event?.stopPropagation();
+            console.log(!bypass);
+            if (!bypass && !confirm(`Delete save ${name}?`)) { return; }
 
             localStorage.removeItem('savedObjects:' + name);
 
@@ -930,6 +936,24 @@ const listSaves = () => {
             },
             'Delete': () => {
                 delButton.click();
+            },
+            'Rename': () => {
+                let newName = prompt('Rename this save', name);
+                if (!newName) return;
+                if (localStorage.getItem('savedObjects:' + newName)) {
+                    if (!confirm(`Overwrite save ${newName}?`)) return;
+                }
+                // Copy the save over
+                localStorage.setItem(
+                    'savedObjects:' + newName,
+                    localStorage.getItem('savedObjects:' + name)
+                );
+                const savedList = localStorage.getItem('saveNames')?.split(',') || [];
+                savedList.splice(savedList.indexOf(name), 1, newName);
+                localStorage.setItem('saveNames', savedList.join(','));
+                // Delete the old save
+                localStorage.removeItem('savedObjects:' + name);
+                listSaves();
             }
         }
     }
