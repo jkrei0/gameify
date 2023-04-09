@@ -218,6 +218,13 @@ This way speeds and physics are the same regardless of FPS or how good your comp
          */
         this.parent = null;
 
+        /** Get the screen this sprite draws to
+         * @returns {gameify.Screen}
+         */
+        this.getParent = () => {
+            return this.parent;
+        }
+
         /** Set the Canvas context to draw to. This should be called whenever a sprite is added to a Screen
          * @private
          */

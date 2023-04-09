@@ -1163,6 +1163,13 @@ export let gameify = {
          */
         this.parent = null;
 
+        /** Get the screen this sprite draws to
+         * @returns {gameify.Screen}
+         */
+        this.getParent = () => {
+            return this.parent;
+        }
+
         /** Set the Canvas context to draw to. This should be called whenever a sprite is added to a Screen
          * @private
          */
