@@ -109,7 +109,7 @@ export let sprites = {
             this.image = newImage;
         }
 
-        /** Set the update function for this scene
+        /** Run a function when this sprite updates
          * @param {function} callback - The function to be run when the sprite updates. An optional argument can be included for a delta since the last update, and another for a reference to the sprite
          */
         this.onUpdate = (callback) => {
