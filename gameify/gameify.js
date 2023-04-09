@@ -225,11 +225,11 @@ export let gameify = {
          * if (myScreen.mouse.getPosition().x < 50) {
          *     // do something
          * }
-         * @returns {Object} {x, y}
+         * @returns {gameify.Vector2d} The mouse position on the Screen
         */
         this.getPosition = () => {
             // copy values, because we don't want to return a reference.
-            return {x: this.cursorPosition.x, y: this.cursorPosition.y};
+            return new vectors.Vector2d(this.cursorPosition.x, this.cursorPosition.y);
         }
 
         /** Called when a mouse button is pressed down
@@ -471,6 +471,7 @@ export let gameify = {
          * @param {Number} width - The new width of the Screen
          */
         this.setWidth = (width) => {
+            width = Number(width);
             this.width = width;
             this.element.style.width = width;
             this.element.width = width;
@@ -480,6 +481,7 @@ export let gameify = {
          * @param {Number} height - The new height of the screen
          */
         this.setHeight = (height) => {
+            height = Number(height);
             this.height = height;
             this.element.style.height = height;
             this.element.height = height;
@@ -737,8 +739,8 @@ export let gameify = {
         }
 
         this.path = path;
-        this.twidth = twidth;
-        this.theight = theight;
+        this.twidth = Number(twidth);
+        this.theight = Number(theight);
 
         this.loaded = false;
 
@@ -797,8 +799,8 @@ export let gameify = {
      * @constructor
      * @arg {Number} twidth - The width of the tiles
      * @arg {Number} theight - The height of the tiles
-     * @arg {Number} offsetx - X offset of the tiles
-     * @arg {Number} offsety - Y offset of the tiles
+     * @arg {Number} [offsetx=0] - X offset of the tiles
+     * @arg {Number} [offsety=0] - Y offset of the tiles
      */
     // Dev's Note: There are a LOT of places in loops where row and col are reversed
     // this.tiles.placed[x][y] means that looping through this.tiles.placed
@@ -820,15 +822,17 @@ export let gameify = {
         }
         // name - a function to generate a name for an object to be restored later
         this.serialize = (name) => {
-            return [this.twidth, this.theight, this.offset.x, name(this.tileset), this.exportMapData(), name(this.parent)];
+            return [this.twidth, this.theight, {x: this.offset.x, y: this.offset.y}, name(this.tileset), this.exportMapData(), name(this.parent)];
         }
 
-        this.twidth = twidth;
-        this.theight = theight;
-        this.offset = {
-            x: offsetx || 0,
-            y: offsety || 0
-        };
+        this.twidth = Number(twidth);
+        this.theight = Number(theight);
+
+        /** The tile offset (coordinates of tile <0, 0>). Used to translate the map
+         * @type {gameify.Vector2d}
+         */
+        this.offset = new vectors.Vector2d(offsetx || 0, offsety || 0);
+        console.log(this.offset);
 
         // placed is an object so there can be negative indexes
         this.tiles = { placed: {} };
@@ -852,10 +856,10 @@ export let gameify = {
         /** Convert screen coordinates to map coordinates 
          * @param {Number} screenx - The screen x coordinate
          * @param {Number} [screeny] - The screen y coordinate
-         * @returns {Object} {x, y}
+         * @returns {gameify.Vector2d} A vector representing the calculated position
          *//** Convert screen coordinates to map coordinates 
          * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
-         * @returns {Object} {x, y}
+         * @returns {gameify.Vector2d} A vector representing the calculated position
          */
         this.screenToMap = (screenx, screeny) => {
             // loose comparison because we don't want any null values
@@ -863,18 +867,18 @@ export let gameify = {
                 screeny = screenx.y;
                 screenx = screenx.x;
             }
-            return {
-                x: Math.floor((screenx - this.offset.x) / this.twidth),
-                y: Math.floor((screeny - this.offset.y) / this.theight)
-            }
+            return new vectors.Vector2d(
+                Math.floor((screenx - this.offset.x) / this.twidth),
+                Math.floor((screeny - this.offset.y) / this.theight)
+            );
         }
         /** Convert map coordinates to screen coordinates
          * @param {Number} mapx - The map x coordinate
          * @param {Number} [mapy] - The map y coordinate
-         * @returns {Object} {x, y}
+         * @returns {Object} {gameify.Vector2d} A vector representing the calculated position
          *//** Convert map coordinates to screen coordinates
          * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
-         * @returns {Object} {x, y}
+         * @returns {gameify.Vector2d} A vector representing the calculated position
          */
         this.mapToScreen = (mapx, mapy) => {
             // loose comparison because we don't want any null values
@@ -882,10 +886,10 @@ export let gameify = {
                 mapy = mapx.y;
                 mapx = mapx.x;
             }
-            return {
-                x: (mapx + this.offset.x) * this.twidth,
-                y: (mapy + this.offset.y) * this.theight
-            }
+            return new vectors.Vector2d(
+                (mapx + this.offset.x) * this.twidth,
+                (mapy + this.offset.y) * this.theight
+            );
         }
 
         /** Place a tile on the tilemap
@@ -978,6 +982,11 @@ export let gameify = {
 
             let textureImage = new gameify.Image(this.tileset.texture.src);
 
+            // Start position for movement
+            let dragging = false;
+            let originalOffset = this.offset.copy();
+            let dragStartPos = new vectors.Vector2d(0, 0);
+
             mainScene.onUpdate(() => {
                 if (screen.mouse.buttonIsPressed("left")) {
                     const pos = this.screenToMap(screen.mouse.getPosition());
@@ -987,14 +996,25 @@ export let gameify = {
                     const pos = this.screenToMap(screen.mouse.getPosition());
                     this.remove(pos.x, pos.y);
 
-                } else if (screen.mouse.buttonIsPressed("middle")) {
+                }
+                
+                if (screen.mouse.buttonIsPressed("middle")) {
                     const pos = this.screenToMap(screen.mouse.getPosition());
+                    if (!dragging) {
+                        originalOffset = this.offset.copy();
+                        dragStartPos = screen.mouse.getPosition();
+                    }
+                    dragging = true;
+                    this.offset = originalOffset.add(screen.mouse.getPosition().subtract(dragStartPos)).truncated(2);
+
                     const tile = this.get(pos.x, pos.y);
                     if (tile) {
                         selectedTile.x = tile.source.x;
                         selectedTile.y = tile.source.y;
                         selectedTile.rotation = tile.rotation;
                     }
+                } else {
+                    dragging = false;
                 }
 
                 if (screen.keyboard.keyWasJustPressed("Enter")) {
@@ -1072,8 +1092,8 @@ export let gameify = {
                 this.context.globalAlpha = 0.5;
 
                 previewImage.draw(this.context,
-                                  this.offset.x + (pos.x * this.twidth),
-                                  this.offset.y + (pos.y * this.twidth),
+                                  pos.x * this.twidth + this.offset.x,
+                                  pos.y * this.theight + this.offset.y,
                                   this.twidth, this.theight,
                                   selectedTile.rotation );
 
@@ -1090,6 +1110,7 @@ export let gameify = {
                                   pos.y * this.theight - padding + this.offset.y,
                                   this.twidth + (padding*2),
                                   this.theight + (padding*2));
+                console.log(this.twidth + (padding*2), this.twidth);
                 // for the "minimap"
                 this.context.rect(selectedTile.x * 25, selectedTile.y * 25, 25, 25);
                 this.context.stroke();
