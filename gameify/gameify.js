@@ -528,6 +528,11 @@ export let gameify = {
             this.currentScene.onLoad(this);
         }
 
+        /** Returns the game's active scene
+         * @returns {gameify.Scene} The active scene
+         */
+        this.getScene = () => { return this.currentScene; }
+
         /** Add a Sprite to the Screen. This makes it so that sprite.draw(); draws to this screen.
          * @param {gameify.Sprite | gameify.Tilemap} obj - The object to add to the screen
          */
@@ -832,7 +837,6 @@ export let gameify = {
          * @type {gameify.Vector2d}
          */
         this.offset = new vectors.Vector2d(offsetx || 0, offsety || 0);
-        console.log(this.offset);
 
         // placed is an object so there can be negative indexes
         this.tiles = { placed: {} };
@@ -1110,13 +1114,10 @@ export let gameify = {
                                   pos.y * this.theight - padding + this.offset.y,
                                   this.twidth + (padding*2),
                                   this.theight + (padding*2));
-                console.log(this.twidth + (padding*2), this.twidth);
                 // for the "minimap"
                 this.context.rect(selectedTile.x * 25, selectedTile.y * 25, 25, 25);
                 this.context.stroke();
             });
-
-            console.log(this.context === screen.element.getContext("2d"));
 
             screen.setScene(mainScene);
 
