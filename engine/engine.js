@@ -516,6 +516,7 @@ const editTileMap = (map) => {
     visualLog(`Click: Place tile
         <br>Right-Click: Delete tile
         <br>Middle-Click: Pick tile
+        <br>Middle-Drag: Translate/move map
         <br>Scroll: Switch tile x
         <br>Ctrl-Scroll: Switch tile y
         <br>Shift-Scroll: Rotate tile`, 'info', 'tilemap editor');
@@ -718,6 +719,11 @@ const listSaves = () => {
             const loaded = localStorage.getItem('savedObjects:' + name);
             if (!loaded) return;
             loadObjectsList(JSON.parse(loaded));
+
+            // Clear the visual editor
+            editorScreen.getScene().unlock();
+            editorScreen.setScene(dummyScene);
+
             visualLog(`Loaded save '${name}'`, 'debug');
         }
         button.innerText = name;
