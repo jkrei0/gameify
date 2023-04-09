@@ -60,7 +60,7 @@ window.addEventListener('contextmenu', (event) => {
 window.addEventListener('click', (event) => {
     setTimeout(() => {
         document.querySelector('.contextmenu').style.display = 'none';
-    }, 200);
+    }, 20);
 });
 
 
