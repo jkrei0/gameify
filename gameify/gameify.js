@@ -593,6 +593,20 @@ export let gameify = {
             return [this.path];
         }
 
+        /** Change and load a new image path. Reset's the image's crop
+         * @param {string} path - The new image path
+         */
+        this.changePath = (path) => {
+            this.path = path;
+            const ni = new gameify.Image(path);
+            ni.onLoad(() => {
+                this.texture = ni.texture;
+                this.cropData.width = this.texture.width;
+                this.cropData.height = this.texture.height;
+                if (this.loadFunction) { this.loadFunction(); }
+            });
+        }
+
         /** The image filepath. Modifying this will not do anything. */
         this.path = path;
 
