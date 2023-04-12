@@ -325,6 +325,11 @@ $transition: 0.1s;
             margin-right: 12px;
         }
 
+        img.preview {
+            max-height: 80px;
+            margin-left: auto;
+        }
+
         &:is(span) svg {
             color: $text;
         }

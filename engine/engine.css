@@ -270,6 +270,10 @@ body, html {
   margin-left: 3px;
   margin-right: 12px;
 }
+.list .list-item img.preview {
+  max-height: 80px;
+  margin-left: auto;
+}
 .list .list-item:is(span) svg {
   color: white;
 }
