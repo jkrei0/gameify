@@ -29,6 +29,10 @@ const visualLog = (message, type = 'info', source = 'editor') => {
 const showWindow = (t) => {
     document.querySelector(`.window.visible`).classList.remove('visible');
     document.querySelector(`.window.${t}`).classList.add('visible');
+
+    if (t === 'preview') {
+        totalMessages = 0;
+    }
 };
 
 const openContextMenu = (menu, posX, posY) => {
@@ -662,15 +666,29 @@ const genGameHtml = (scripts = '') => {
 
 const consoleOut = document.querySelector('#console-output');
 let numMessages = 0;
+let totalMessages = 0;
+const maxMessages = 1000
 window.addEventListener('message', (event) => {
     numMessages += 1;
+    totalMessages += 1;
+    if (totalMessages > maxMessages) {
+        return;
+    } else if (totalMessages === maxMessages) {
+        consoleOut.innerHTML += `<span class="log-item error">
+            <span class="short">OVERFLOW</span>
+            <span class="message">Output overflow - Print less logs</span>
+            <span class="source">console</span>
+        </span>`;
+        return;
+    }
+
     if (numMessages > 200) {
         consoleOut.innerHTML = '';
         numMessages = 0;
         consoleOut.innerHTML += `<span class="log-item warn">
             <span class="short">CLEAR</span>
             <span class="message">Console items cleared - Too many logs</span>
-            <span class="source">engine</span>
+            <span class="source">console</span>
         </span>`;
     }
 
