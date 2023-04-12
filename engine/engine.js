@@ -108,19 +108,28 @@ const labelItem = (text, btn, call = ()=>{}) => {
 }
 /** A label and input
 * @param {string} text - Label text
-* @param {string} [value=''] - Input value
+* @param {string} [value] - Input value
 * @param {string} [type='text'] - Input type
 * @param {Function} [call] - Input onchange callback
 */
-const inputItem = (text, value = '', type = 'text', call = ()=>{}) => {
+const inputItem = (text, value, type = 'text', call = ()=>{}) => {
     const label = document.createElement('span');
     label.classList.add('list-item');
     label.classList.add('property');
     label.innerHTML = text;
     const input = document.createElement('input');
     input.setAttribute('type', type);
-    input.value = value;
-    input.onchange = ()=>{ call(input.value); };
+    if (value !== undefined) input.value = value;
+    if (value !== undefined && type == 'checkbox') input.checked = value;
+    if (type === 'file') {
+        input.onchange = ()=>{ call(input.files); }
+    } else if (type === 'checkbox') {
+        input.onchange = ()=>{ call(input.checked); }
+    } else if (type === 'number') {
+        input.onchange = ()=>{ call(Number(input.checked)); }
+    } else {
+        input.onchange = ()=>{ call(input.value); }
+    }
     label.append(input);
     return [label, input];
 }
@@ -136,7 +145,8 @@ const twoInputItem = (text, values = ['', ''], type = 'text', call = ()=>{}) => 
     const input = document.createElement('input');
     input.setAttribute('type', type);
     input.value = values[0];
-    input.onchange = ()=>{ call(input.value, input2.value); };
+    if (type === 'number') input.onchange = ()=>{ call(Number(input.value), Number(input2.value)); };
+    else input.onchange = ()=>{ call(input.value, input2.value); };
     label.append(input);
 
     const yvl = document.createElement('span');
@@ -145,7 +155,8 @@ const twoInputItem = (text, values = ['', ''], type = 'text', call = ()=>{}) => 
     const input2 = document.createElement('input');
     input2.setAttribute('type', type);
     input2.value = values[1];
-    input2.onchange = ()=>{call(input.value, input2.value)};
+    if (type === 'number') input2.onchange = ()=>{ call(Number(input.value), Number(input2.value)); };
+    else input2.onchange = ()=>{ call(input.value, input2.value); };
     label.append(input2);
 
     return [label, input, input2];
@@ -169,6 +180,21 @@ const selectItem = (text, options, call = ()=>{}, selected) => {
     }
     label.append(input);
     return [label, input];
+}
+/** An image preview
+* @param {string} text - Label text
+* @param {string} source - Image source
+*/
+const imageItem = (text, source) => {
+    const label = document.createElement('span');
+    label.classList.add('list-item');
+    label.classList.add('property');
+    label.innerHTML = text;
+    const image = document.createElement('img');
+    image.classList.add('preview');
+    image.src = source;
+    label.append(image);
+    return [label, image];
 }
 
 const populateObjectsList = () => {
@@ -297,8 +323,42 @@ const populateObjectsList = () => {
                     obj.theight = Number(y);
                 })[0]);
             } else if (setName === 'Image') {
-                details.appendChild(inputItem('File', obj.path, 'text', (v) => {
-                    obj.path = v;
+                details.appendChild(inputItem('Path', obj.path, 'text', (v) => {
+                    // just make a new image, so it loads the file
+                    obj.changePath(v);
+                    populateObjectsList();
+                })[0]);
+                details.appendChild(inputItem('Upload', undefined, 'file', (files) => {
+                    const file = files[0];
+                    const reader = new FileReader();
+                    reader.addEventListener('load', () => {
+                        const dataUrl = reader.result;
+                        // just make a new image, so it loads the file
+                        obj.changePath(dataUrl);
+                        populateObjectsList();
+                    });
+                    reader.readAsDataURL(file);
+
+                })[0]);
+                details.appendChild(imageItem('Preview', obj.path)[0]);
+
+                details.appendChild(inputItem('Crop', obj.getCrop().cropped, 'checkbox', (v) => {
+                    console.log('Crop set', v)
+                    if (v === false) {
+                        obj.uncrop();
+                    } else if (v === true) {
+                        const pc = obj.getCrop();
+                        obj.crop(pc.x, pc.y, pc.width, pc.height);
+
+                    } else console.error('Checkbox value is', v);
+                })[0]);
+                details.appendChild(twoInputItem('Crop XY',  [obj.getCrop().x, obj.getCrop().y], 'number', (x, y) => {
+                    console.log('Crop XY', x, y);
+                    obj.crop(x, y, obj.getCrop().width || 0, obj.getCrop().height || 0);
+                })[0]);
+                details.appendChild(twoInputItem('Crop WH',  [obj.getCrop().width, obj.getCrop().height], 'number', (x, y) => {
+                    console.log('Crop WH', x, y);
+                    obj.crop(obj.getCrop().x || 0, obj.getCrop().y || 0, x, y);
                 })[0]);
             } else if (setName === 'Sprite') {
                 details.appendChild(selectItem('Image', images.concat(tilesets), (v) => {
@@ -306,7 +366,6 @@ const populateObjectsList = () => {
                         obj.setImage(objects[v.split('::')[0]][v.split('::')[1]]);
                     } else if (v.split('::')[0] === 'Tileset') {
                         const tileset = objects[v.split('::')[0]][v.split('::')[1]];
-                        console.log(tileset, tileX.value, tileY.value, tileset.getTile(tileX.value, tileY.value))
                         obj.setImage(tileset.getTile(tileX.value, tileY.value));
                         // Nothing special about this format,
                         // But that it identifies a derived image
