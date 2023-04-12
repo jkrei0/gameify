@@ -585,12 +585,13 @@ export let gameify = {
             // find - a function to find an object based on a saved name
             return (data, find) => {
                 const obj = new gameify.Image(data[0]);
+                obj.cropData = data[1];
                 return obj;
             }
         }
         // name - a function to generate a name for an object to be restored later
         this.serialize = (name) => {
-            return [this.path];
+            return [this.path, this.getCrop()];
         }
 
         /** Change and load a new image path. Reset's the image's crop
