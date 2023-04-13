@@ -763,11 +763,15 @@ gameFrame.addEventListener('load', () => {
 });
 
 
+const runGame = () => {
+    showWindow('preview');
+    win.location.href = "/engine/project/;";
+}
+
 /* Tabs */
 
 document.querySelector('#play-button').addEventListener('click', () => {
-    showWindow('preview');
-    win.location.href = "/engine/project/;";
+    runGame();
 });
 document.querySelector('#code-button').addEventListener('click', () => {
     showWindow('editor');
@@ -784,7 +788,11 @@ let currentProjectFilename = undefined;
 const saveProject = (asName) => {
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
-    const name = asName || prompt('Name this save', currentProjectFilename)?.replaceAll(',', '_') || 'Unnamed Save';
+    const name = asName || prompt('Name this save', currentProjectFilename)?.replaceAll(',', '_');
+    if (!name) {
+        return;
+    }
+
     let overwrite = false;
     if (savedList.includes(name) && name !== currentProjectFilename) {
         if (!confirm(`Overwrite save '${name}'?`)) return;
