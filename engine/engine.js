@@ -792,19 +792,22 @@ document.querySelector('#visual-button').addEventListener('click', () => {
 });
 
 
-let currentProjectFilename = '';
+let currentProjectFilename = undefined;
 
 /* Save and load */
 
-const saveProject = () => {
+const saveProject = (asName) => {
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
-    const name = prompt('Name this save', currentProjectFilename)?.replaceAll(',', '_') || 'Unnamed Save';
+    const name = asName || prompt('Name this save', currentProjectFilename)?.replaceAll(',', '_') || 'Unnamed Save';
     let overwrite = false;
-    if (savedList.includes(name)) {
+    if (savedList.includes(name) && name !== currentProjectFilename) {
         if (!confirm(`Overwrite save '${name}'?`)) return;
         overwrite = true;
+    } else if (savedList.includes(name)) {
+        overwrite = true;
     }
+
     // If overwriting, the name is already in the list
     if (!overwrite) savedList.push(name);
     localStorage.setItem('saveNames', savedList.join(','))
@@ -821,9 +824,11 @@ const saveProject = () => {
     visualLog(`Saved as '${name}'${overwrite ? ' (overwrote)' : ''}`, 'debug');
     listSaves();
 
+    currentProjectFilename = name;
+
     return name;
 }
-document.querySelector('#save-button').addEventListener('click', saveProject);
+document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
 document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 's') {
         // Prevent the Save dialog to open
@@ -992,7 +997,6 @@ const listSaves = () => {
         const delButton = document.createElement('button');
         delButton.onclick = (event, bypass) => {
             event?.stopPropagation();
-            console.log(!bypass);
             if (!bypass && !confirm(`Delete save ${name}?`)) { return; }
 
             localStorage.removeItem('savedObjects:' + name);
@@ -1011,6 +1015,9 @@ const listSaves = () => {
         listElem.appendChild(button);
 
         button.__engine_menu = {
+            'Save': () => {
+                saveProject(name);
+            },
             'Load': () => {
                 button.click();
             },
