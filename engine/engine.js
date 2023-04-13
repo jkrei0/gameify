@@ -824,10 +824,36 @@ const saveProject = (asName) => {
 document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
 document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 's') {
-        // Prevent the Save dialog to open
+        // Ctrl + S
+        // Save project
         e.preventDefault();
-        // Place your code here
-        saveProject();
+        saveProject(currentProjectFilename);
+    } else if (e.ctrlKey && e.key === 'S') {
+        // Ctrl + Shift + S
+        // Screenshot canvas and download
+        var link = document.createElement("a");
+        link.setAttribute('download', 'screenshot.png');
+        link.href = win.document.querySelector('canvas').toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        e.preventDefault();
+    } else if (e.ctrlKey && !e.shiftKey && e.key === 'Enter') {
+        // Ctrl + Enter
+        // Run game
+        runGame();
+        e.preventDefault();
+    } else if (e.ctrlKey && e.key === 'C') {
+        // Ctrl + Shift + C
+        // Open code editor
+        showWindow('editor');
+        e.preventDefault();
+    } else if (e.ctrlKey && e.key === 'V') {
+        // Ctrl + Shift + V
+        // Open visual editor
+        showWindow('visual');
+        e.preventDefault();
     }
 });
 
