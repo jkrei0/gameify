@@ -130,7 +130,7 @@ const inputItem = (text, value, type = 'text', call = ()=>{}) => {
     } else if (type === 'checkbox') {
         input.onchange = ()=>{ call(input.checked); }
     } else if (type === 'number') {
-        input.onchange = ()=>{ call(Number(input.checked)); }
+        input.onchange = ()=>{ call(Number(input.value)); }
     } else {
         input.onchange = ()=>{ call(input.value); }
     }
