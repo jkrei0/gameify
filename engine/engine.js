@@ -627,32 +627,10 @@ document.querySelector('#refresh-objects').addEventListener('click', populateObj
 const gameFrame = document.querySelector('#game-frame');
 const win = gameFrame.contentWindow;
 
-const genGameHtml = (scripts = '') => {
+const genGameHtml = (scripts = '', styles = '') => {
     const html = `<head>
             <title>A Game</title>
-            
-            <style>
-                html, body {
-                    background: #ddd;
-                    height: 100%;
-                    margin: 0;
-                }
-                div {
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100%;
-                    width: 100%;
-                    margin: 0;
-                }
-                canvas {
-                    position: relative;
-                    background: white;
-                    max-width: 100%;
-                    max-height: 100%;
-                }
-            </style>
+            ${styles}
         </head>
         <body>
             <div>
@@ -769,11 +747,18 @@ gameFrame.addEventListener('load', () => {
     console.info('GAME START (loading scripts)');
 
     for (const file in files) {
-        const script = document.createElement('script');
-        script.type = 'module';
-        //script.src = './' + file;
-        script.innerHTML = files[file].getValue();
-        win.document.body.appendChild(script);
+        if (file.endsWith('.js')) {
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.innerHTML = files[file].getValue();
+            win.document.body.appendChild(script);
+
+        } else if (file.endsWith('.css')) {
+            const style = document.createElement('style');
+            style.innerHTML = files[file].getValue();
+            win.document.body.appendChild(style);
+
+        }
     }
 });
 
@@ -870,7 +855,8 @@ const listFiles = (data) => {
     for (const file in data) {
         if (reloadEditors) {
             files[file] = ace.createEditSession(data[file]);
-            files[file].setMode("ace/mode/javascript");
+            if (file.endsWith('.js')) files[file].setMode("ace/mode/javascript");
+            else if (file.endsWith('.css')) files[file].setMode("ace/mode/css");
         }
 
         const button = document.createElement('button');
