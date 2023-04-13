@@ -591,7 +591,6 @@ export let gameify = {
         }
         // name - a function to generate a name for an object to be restored later
         this.serialize = (name) => {
-            console.log(this.getCrop());
             return [this.path, this.getCrop()];
         }
 
