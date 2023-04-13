@@ -720,11 +720,15 @@ export let gameify = {
         if (path !== undefined) {
             this.texture = document.createElement("img");
             this.texture.src = path;
+            let pathName = path;
+            if (path.length > 50) {
+                pathName = path.slice(0, 40) + '...';
+            }
             this.texture.onerror = () => {
-                throw new Error(`Your image "${path}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
+                throw new Error(`Your image "${pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
             }
             this.texture.onload = () => {
-                console.info(`Loaded image "${path}"`)
+                console.info(`Loaded image "${pathName}"`)
                 this.loaded = true;
     
                 // don't reset the crop if it was already specified.
@@ -789,11 +793,15 @@ export let gameify = {
 
         this.texture = document.createElement("img");
         this.texture.src = path;
+        let pathName = path;
+        if (path.length > 50) {
+            pathName = path.slice(0, 40) + '...';
+        }
         this.texture.onerror = () => {
-            throw new Error(`Your image "${path}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
+            throw new Error(`Your image "${pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
         }
         this.texture.onload = () => {
-            console.info(`Loaded image "${path}"`)
+            console.info(`Loaded image "${pathName}"`)
             this.loaded = true;
 
             if (this.loadFunction) { this.loadFunction(); }
