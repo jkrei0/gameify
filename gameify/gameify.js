@@ -1,8 +1,9 @@
-import { shapes } from "./collision.js"
-import { docs } from "./docs.js"
-import { sprites } from "./sprite.js"
-import { scenes } from "./scene.js"
-import { vectors } from "./vector.js"
+import { shapes }   from "./collision.js"
+import { docs }     from "./docs.js"
+import { sprites }  from "./sprite.js"
+import { scenes }   from "./scene.js"
+import { vectors }  from "./vector.js"
+import { text }     from "./text.js"
 "use strict"
 
 console.log("Welcome to Gameify");
@@ -1204,7 +1205,9 @@ export let gameify = {
     },
 
     Sprite: sprites.Sprite,
-    Scene: scenes.Scene
+    Scene: scenes.Scene,
+    Text: text.Text,
+    TextStyle: text.TextStyle
 };
 
 /** This is a mostly complete list of mouse and keyboard input events supported by gameify. Most event names are case-sensitive
