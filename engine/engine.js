@@ -756,7 +756,7 @@ gameFrame.addEventListener('load', () => {
         } else if (file.endsWith('.css')) {
             const style = document.createElement('style');
             style.innerHTML = files[file].getValue();
-            win.document.body.appendChild(style);
+            win.document.head.appendChild(style);
 
         }
     }
