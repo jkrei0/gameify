@@ -38,7 +38,10 @@ $transition: 0.1s;
 }
 
 .window:not(.visible) {
-    display: none;
+    /* Don't actually set display:none; - It causes problems */
+    box-sizing: border-box;
+    overflow: hidden;
+    width: 0px !important;
 }
 .window {
     width: 100%;
