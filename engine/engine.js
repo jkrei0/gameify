@@ -602,6 +602,11 @@ const editTileMap = (map) => {
         <br>Shift-Scroll: Rotate tile`, 'info', 'tilemap editor');
     showWindow('visual');
 
+    // Clear cached tiles
+    const data = map.exportMapData();
+    map.clear();
+    map.loadMapData(data);
+
     // Grab the scene and copy the update function
     const scene = map.enableMapBuilder(editorScreen);
     const update = scene.updateFunction;
