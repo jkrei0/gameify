@@ -319,13 +319,26 @@ const populateObjectsList = () => {
                 }, obj.parent?.__engine_name)[0]);
 
             } else if (setName === 'Tileset') {
-                details.appendChild(inputItem('File', obj.path, 'text', (v) => {
-                    obj.path = v;
-                })[0]);
                 details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
                     obj.twidth  = Number(x);
                     obj.theight = Number(y);
                 })[0]);
+                details.appendChild(inputItem('File', obj.path, 'text', (v) => {
+                    obj.path = v;
+                })[0]);
+                details.appendChild(inputItem('Upload', undefined, 'file', (files) => {
+                    const file = files[0];
+                    const reader = new FileReader();
+                    reader.addEventListener('load', () => {
+                        const dataUrl = reader.result;
+                        // just make a new image, so it loads the file
+                        obj.changePath(dataUrl);
+                        populateObjectsList();
+                    });
+                    reader.readAsDataURL(file);
+
+                })[0]);
+                details.appendChild(imageItem('Preview', obj.path)[0]);
             } else if (setName === 'Image') {
                 details.appendChild(inputItem('Path', obj.path, 'text', (v) => {
                     // just make a new image, so it loads the file

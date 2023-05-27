@@ -785,6 +785,19 @@ export let gameify = {
             return tile;
         }
 
+        /** Change and load a new image path. Please note this does not clear
+         * tilemaps' cached data, and it might retain its the original image.
+         * @param {string} path - The new tileset image path
+         */
+        this.changePath = (path) => {
+            this.path = path;
+            const ni = new gameify.Tileset(path, this.twidth, this.theight);
+            ni.onLoad(() => {
+                this.texture = ni.texture;
+                if (this.loadFunction) { this.loadFunction(); }
+            });
+        }
+
         this.loadFunction = undefined;
         /** Set a function to be run when the image is loaded
          * @param {function} callback - The function to be called when the image is loaded.
@@ -864,6 +877,10 @@ export let gameify = {
 
         // placed is an object so there can be negative indexes
         this.tiles = { placed: {} };
+        /** Clear the tilemap. Removes all placed tiles and cached images */
+        this.clear = () => {
+            this.tiles = { placed: {} };
+        }
 
         this.tileset = undefined;
         /** What tileset to use. This tileset must include anything you want to use in this tilemap.
