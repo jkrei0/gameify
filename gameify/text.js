@@ -105,7 +105,7 @@ export let text = {
      * @alias gameify.Text
      * @constructor
      * @example // A text label
-     * let vectorA = new gameify.Text("Hello, World", 0, 0);
+     * let myText = new gameify.Text("Hello, World", 0, 0);
      * @arg {String} text - The text string to draw
      * @arg {Number} [x=0] - x coordinate of the top left of the text
      * @arg {Number} [y=0] - y coordinate of the top left of the text
