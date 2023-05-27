@@ -1295,7 +1295,7 @@ export let gameify = {
  * // Function keys
  * "F1"
  * // through
- * "F15" // some keyboards only have F1-F12
+ * "F15" // most keyboards only have F1-F12
  * 
  * // Numpad keys
  * "NumpadDivide"   "NumpadMultiply"  "NumpadSubtract"
