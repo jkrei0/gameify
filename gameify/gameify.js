@@ -990,6 +990,7 @@ export let gameify = {
             }
         }
 
+        /** Draw the tilemap to the screen */
         this.draw = () => {
             if (this.drawFunction) {
                 this.drawFunction();
