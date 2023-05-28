@@ -889,6 +889,12 @@ export let gameify = {
         this.setTileset = (set) => {
             this.tileset = set;
         }
+        /** Get the tilemap's tileset
+         * @returns {gameify.Tileset} The tileset
+         */
+        this.getTileset = () => {
+            return this.tileset;
+        }
 
         this.drawFunction = null;
         /** Set the draw function for this tilemap
