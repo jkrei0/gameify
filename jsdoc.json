@@ -21,7 +21,7 @@
       "systemColor": "#1db38b",
       "copyright": "Gameify Copyright © 2022 Jesse Kreider. FooDoc Copyright © 2016 The contributors to the JSDoc3 and FooDoc projects.",
       "linenums": true,
-      "collapseSymbols": false,
+      "collapseSymbols": true,
       "inverseNav": true,
       "inlineNav": false,
       "outputSourceFiles": true,
