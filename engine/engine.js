@@ -299,7 +299,7 @@ const populateObjectsList = () => {
                         visualLog('You need to add a tileset before you can edit the map', 'error', obj.__engine_name);
                         return;
                     }
-                    if (obj.__engine_editing) stopEditTileMap(obj);
+                    if (obj.__engine_editing) clearVisualEditor(obj);
                     else editTileMap(obj);
                 }));
                 details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
@@ -568,15 +568,15 @@ const loadObjectsList = (data) => {
 const editorCanvas = document.querySelector('#game-canvas');
 const editorScreen = new gameify.Screen(editorCanvas, 1200, 800);
 
-const dummyScene = new gameify.Scene(editorScreen);
-editorScreen.setScene(dummyScene);
+const previewScene = new gameify.Scene(editorScreen);
+editorScreen.setScene(previewScene);
 
-dummyScene.onUpdate(() => {
+previewScene.onUpdate(() => {
     // Resize based on game screen size
     const defaultScreen = Object.values(objects['Screen'])[0];
     editorScreen.setSize(defaultScreen.getSize());
 });
-dummyScene.onDraw(() => {
+previewScene.onDraw(() => {
     for (const type of ['Tilemap', 'Sprite']) {
         for (const name in objects[type]) {
             const obj = objects[type][name];
@@ -590,50 +590,126 @@ dummyScene.onDraw(() => {
 editorScreen.startGame();
 
 const editTileMap = (map) => {
-    map.__engine_editing = true;
-
-    visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
-    visualLog(`Click: Place tile
-        <br>Right-Click: Delete tile
-        <br>Middle-Click: Pick tile
-        <br>Middle-Drag: Translate/move map
-        <br>Scroll: Switch tile x
-        <br>Ctrl-Scroll: Switch tile y
-        <br>Shift-Scroll: Rotate tile`, 'info', 'tilemap editor');
+    clearVisualEditor();
     showWindow('visual');
+    visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
 
-    // Clear cached tiles
-    const data = map.exportMapData();
-    map.clear();
-    map.loadMapData(data);
+    const tileset = map.getTileset();
 
-    // Grab the scene and copy the update function
-    const scene = map.enableMapBuilder(editorScreen);
-    const update = scene.updateFunction;
+    const editScene = new gameify.Scene(editorScreen);
+    editorScreen.setScene(editScene);
 
-    let countdown = 0;
-    let prevOffset = {}
-    // Hijack the update function
-    scene.onUpdate((delta) => {
-        if (prevOffset !== map.offset) {
-            // Update the objects list when the offset is changed
-            prevOffset = map.offset;
-            populateObjectsList();
+    const controls = document.createElement('div');
+    controls.classList.add('visual-editor-controls');
+    const tileList = document.createElement('div');
+    tileList.classList.add('tile-list');
+
+    controls.innerHTML = `
+    <div class="legend">
+        <span><img src="images/mouse_left.svg">Place tiles</span>
+        <span><img src="images/mouse_right.svg">Delete tiles</span>
+        <span><img src="images/mouse_middle.svg">Pick tile</span>
+        <span><img src="images/arrows_scroll.svg">Rotate tile</span>
+    </div>
+    `;
+
+    controls.appendChild(tileList);
+    editorCanvas.parentElement.after(controls);
+
+    let selTile = {x: 0, y: 0, r: 0};
+    let dragStart = false;
+    let originalOffset = null;
+
+    for (let ty = 0; ty < tileset.texture.height/tileset.theight; ty++) {
+        for (let tx = 0; tx < tileset.texture.width/tileset.twidth; tx++) {
+            const tileCanvas = document.createElement('canvas');
+            tileCanvas.classList.add('tile');
+            tileCanvas.classList.add(`tile-${tx}-${ty}`);
+            if (tx === 0 && ty === 0) {
+                tileCanvas.classList.add('selected');
+            }
+            tileCanvas.width = 50;
+            tileCanvas.height = 50;
+            tileCanvas.onclick = () => {
+                tileList.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
+                tileCanvas.classList.add('selected');
+                selTile = {x: tx, y: ty, r: 0};
+            }
+            const tile = tileset.getTile(tx, ty);
+            tileList.appendChild(tileCanvas);
+
+            tile.draw(tileCanvas.getContext('2d'), 0, 0, 50, 50, 0);
         }
-        // call the regular update function
-        update(delta);
-        if (editorScreen.keyboard.keyIsPressed('Escape')) {
-            stopEditTileMap(map);
+        const rowBreak = document.createElement('span');
+        rowBreak.classList.add('row-break');
+        tileList.appendChild(rowBreak);
+    }
+
+    editScene.onUpdate(() => {
+        const position = map.screenToMap(editorScreen.mouse.getPosition());
+        if (editorScreen.mouse.buttonIsPressed("left")) {
+            map.place(selTile.x, selTile.y, position.x, position.y, selTile.r);
+
+        } else if (editorScreen.mouse.buttonIsPressed("right")) {
+            map.remove(position.x, position.y);
+
         }
+
+        if (editorScreen.mouse.buttonIsPressed("middle")) {
+            // Pick tile
+            const tile = map.get(position.x, position.y);
+            if (tile && !dragStart) {
+                selTile = tile.source;
+                selTile.r = tile.rotation;
+                // Update the tile list
+                tileList.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
+                tileList.querySelector(`.tile-${tile.source.x}-${tile.source.y}`).classList.add("selected");
+                tileList.querySelector(`.tile-${tile.source.x}-${tile.source.y}`).scrollIntoView();
+            }
+
+            // Drag map
+            const mousePos = editorScreen.mouse.getPosition();
+            if (!dragStart) {
+                dragStart = mousePos;
+                originalOffset = map.offset.copy();
+            }
+            map.offset = originalOffset.subtract(dragStart.subtract(mousePos));
+        } else {
+            dragStart = false;
+        }
+
+
+        if (editorScreen.mouse.eventJustHappened("wheelup")) {
+            selTile.r -= 45;
+        } else if (editorScreen.mouse.eventJustHappened("wheeldown")) {
+            selTile.r += 45;
+        }
+    });
+    editScene.onDraw(() => {
+        // Convert to map and back again to snap to map tiles
+        const position = map.mapToScreen(map.screenToMap(editorScreen.mouse.getPosition()));
+
+        const previewTile = map.getTileset().getTile(selTile.x, selTile.y);
+        
+        editorScreen.clear();
+        map.draw();
+
+        editorCanvas.getContext('2d').globalAlpha = 0.5;
+        previewTile.draw(editorCanvas.getContext('2d'),
+                        position.x, position.y,
+                        map.twidth, map.theight,
+                        selTile.r);
+        editorCanvas.getContext('2d').globalAlpha = 1;
     });
 }
 
-const stopEditTileMap = (map) => {
-    // Clear the visual editor
-    editorScreen.getScene().unlock();
-    editorScreen.setScene(dummyScene);
-    map.__engine_editing = false;
-    visualLog('Stopped editing tilemap', 'log', 'tilemap editor');
+const clearVisualEditor = () => {
+    visualLog(`Cleared tilemap editor`, 'info', 'tilemap editor');
+    const controls = document.querySelector('.visual-editor-controls');
+    if (controls) {
+        controls.remove();
+    }
+    editorScreen.setScene(previewScene);
 }
 
 // Populate list after editor setup
@@ -992,8 +1068,7 @@ const listFiles = (data) => {
 
 const openProject = (data) => {
     // Clear the visual editor
-    editorScreen.getScene().unlock();
-    editorScreen.setScene(dummyScene);
+    clearVisualEditor();
 
     listFiles(data.files);
 

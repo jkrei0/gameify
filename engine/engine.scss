@@ -19,6 +19,7 @@ body, html {
 $background: #335;
 $secondary: #448;
 $highlight: #648;
+$highlightbright: #ebe;
 $highlightsecondary: #668;
 $dark: #282a36;
 $faded: #3a3d4f;
@@ -286,7 +287,7 @@ $transition: 0.1s;
                     background: $dark;
                     padding: 5px 7px;
                     border: none;
-                    color: #ebe;
+                    color: $highlightbright;
                 }
             }
 
@@ -322,7 +323,7 @@ $transition: 0.1s;
         }
 
         svg {
-            color: #ebe;
+            color: $highlightbright;
             height: 1em;
             margin-left: 3px;
             margin-right: 12px;
@@ -463,4 +464,53 @@ $transition: 0.1s;
     }
 
     z-index: 99;
+}
+
+.visual-editor-controls {
+    flex-grow: 0;
+    padding: 5px;
+    padding-bottom: 10px;
+
+    background: $background;
+
+    .legend {
+        display: flex;
+        flex-direction: row;
+
+        span {
+            padding: 5px 10px;
+            font-family: $font;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            white-space: nowrap;
+            color: $text;
+            
+            svg, img {
+                height: 16px;
+                margin-right: 5px;
+            }
+        }
+    }
+
+    .tile-list {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 2px;
+        padding: 2px;
+        max-height: 100px;
+        overflow-y: scroll;
+
+        .tile.selected {
+            outline: 2px solid $highlightbright;
+        }
+        .tile:hover {
+            outline: 2px solid #bbf;
+        }
+        .row-break {
+            width: 100%;
+        }
+        
+    }
 }

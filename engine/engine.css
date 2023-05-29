@@ -381,4 +381,46 @@ body, html {
 }
 .contextmenu button.list-item:hover {
   background: transparent;
+}
+
+.visual-editor-controls {
+  flex-grow: 0;
+  padding: 5px;
+  padding-bottom: 10px;
+  background: #335;
+}
+.visual-editor-controls .legend {
+  display: flex;
+  flex-direction: row;
+}
+.visual-editor-controls .legend span {
+  padding: 5px 10px;
+  font-family: Poppins, sans-serif;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  color: white;
+}
+.visual-editor-controls .legend span svg, .visual-editor-controls .legend span img {
+  height: 16px;
+  margin-right: 5px;
+}
+.visual-editor-controls .tile-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  max-height: 100px;
+  overflow-y: scroll;
+}
+.visual-editor-controls .tile-list .tile.selected {
+  outline: 2px solid #ebe;
+}
+.visual-editor-controls .tile-list .tile:hover {
+  outline: 2px solid #bbf;
+}
+.visual-editor-controls .tile-list .row-break {
+  width: 100%;
 }/*# sourceMappingURL=engine.css.map */
