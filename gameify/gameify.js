@@ -804,6 +804,9 @@ export let gameify = {
          */
         this.onLoad = (callback) => { this.loadFunction = callback; }
 
+        /** The tileset's image/texture
+         * @package
+         */
         this.texture = document.createElement("img");
         this.texture.src = path;
         let pathName = path;
@@ -978,6 +981,7 @@ export let gameify = {
         /** Get the tile (if it exists) placed at a certain position
          * @param {Number} x - X coordinate of the tile
          * @param {Number} y - Y coordinate of the tile
+         * @return {Object} { image, source: {originX, originY}, rotation }
          */
         this.get = (x, y) => {
             if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
