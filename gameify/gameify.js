@@ -1022,9 +1022,11 @@ export let gameify = {
 
         }
 
-        /** Enable the map builder tool. This allows you to easily edit tilesets.<br>
+        /** <b>Deprecated.</b> Use the engine editor to build your tilemaps. This editor is no longer maintained.<br>
+         * Enable the map builder tool. This allows you to easily edit tilesets.<br>
          * Controls are: Click to place, Right-click to delete, Middle-click to pick, Scroll and Ctrl+Scroll to switch tile, Shift+Scroll to rotate the tile.<br>
          * Once you're finished, call <code>tilemap.exportMapData()</code> to export the map.
+         * @deprecated Use the engine editor to build and export your tilemaps. This editor is no longer maintained.
          * @param {gameify.Screen} screen - The screen to show the map builder on. For best results, use the one you've already added it to.
          */
         this.enableMapBuilder = (screen) => {
