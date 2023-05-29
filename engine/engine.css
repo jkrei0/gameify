@@ -48,7 +48,8 @@ body, html {
   justify-content: center;
   align-items: center;
   margin: 0;
-  height: 50%;
+  /* Base height, not actual height. */
+  height: 10%;
   background: #ddd;
 }
 .window .canvas-container canvas {
@@ -74,6 +75,9 @@ body, html {
 .window .console .output-container {
   height: 200px;
   overflow: auto;
+  resize: vertical;
+  max-height: 250px;
+  min-height: 75px;
 }
 .window .console .log-item {
   font-size: 0.95em;
@@ -392,6 +396,7 @@ body, html {
 .visual-editor-controls .legend {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
 }
 .visual-editor-controls .legend span {
   padding: 5px 10px;
@@ -412,7 +417,10 @@ body, html {
   flex-wrap: wrap;
   gap: 2px;
   padding: 2px;
-  max-height: 100px;
+  height: 100px;
+  resize: vertical;
+  max-height: 200px;
+  min-height: 75px;
   overflow-y: scroll;
 }
 .visual-editor-controls .tile-list .tile.selected {

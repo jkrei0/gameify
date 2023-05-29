@@ -69,7 +69,8 @@ $transition: 0.1s;
         justify-content: center;
         align-items: center;
         margin: 0;
-        height: 50%;
+        /* Base height, not actual height. */
+        height: 10%;
         background: #ddd;
 
         canvas {
@@ -98,6 +99,9 @@ $transition: 0.1s;
         .output-container {
             height: 200px;
             overflow: auto;
+            resize: vertical;
+            max-height: 250px;
+            min-height: 75px;
         }
 
         .log-item {
@@ -476,6 +480,7 @@ $transition: 0.1s;
     .legend {
         display: flex;
         flex-direction: row;
+        flex-wrap: wrap;
 
         span {
             padding: 5px 10px;
@@ -499,7 +504,10 @@ $transition: 0.1s;
         flex-wrap: wrap;
         gap: 2px;
         padding: 2px;
-        max-height: 100px;
+        height: 100px;
+        resize: vertical;
+        max-height: 200px;
+        min-height: 75px;
         overflow-y: scroll;
 
         .tile.selected {
