@@ -90,16 +90,31 @@ export let sprites = {
         /** The sprite's rotation, in degrees */
         this.rotation = 0;
 
-        /** The sprite's shape, for collision, etc. Use setShape to set the shape
+        /** The sprite's shape, for collision, etc.
          * @type {shapes.Shape}
          */
         this.shape = undefined;
 
+        /** The sprite's shape offset (to align it properly)
+         * @type {gameify.Vector2d}
+        */
+       this.shapeOffset = new vectors.Vector2d(0, 0);
+
         /** Set a shape for collisions
          * @param {gameify.shapes.Shape} shape
+         * @param {gameify.Vector2d} [offset] - The shape's offset (to align it properly)
+         *//** Set a shape for collisions
+         * @param {gameify.shapes.Shape} shape
+         * @param {Number} [offsetx] - The shape's offset x (to align it properly)
+         * @param {Number} [offsety] - The shape's offset y
          */
-        this.setShape = (shape) => {
+        this.setShape = (shape, x, y) => {
             this.shape = shape;
+            if (x !== undefined && y === undefined) {
+                this.shapeOffset = new vectors.Vector2d(x);
+            } else if (x !== undefined && y !== undefined) {
+                this.shapeOffset = new vectors.Vector2d(x, y);
+            } // else, no shape
         }
 
         /** Change the Sprite's image / texture
@@ -162,8 +177,7 @@ This way speeds and physics are the same regardless of FPS or how good your comp
             this.position = this.position.add(this.velocity.multiply(delta/1000));
 
             if (this.shape) {
-                this.shape.position.x = this.position.x;
-                this.shape.position.y = this.position.y;
+                this.shape.position = this.position.add(this.shapeOffset);
             }
 
             if (this.updateFunction) {
