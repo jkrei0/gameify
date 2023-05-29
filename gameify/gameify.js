@@ -941,8 +941,8 @@ export let gameify = {
                 mapx = mapx.x;
             }
             return new vectors.Vector2d(
-                (mapx + this.offset.x) * this.twidth,
-                (mapy + this.offset.y) * this.theight
+                (mapx * this.twidth) + this.offset.x,
+                (mapy * this.theight) + this.offset.y
             );
         }
 
