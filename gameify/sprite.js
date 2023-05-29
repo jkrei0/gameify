@@ -114,7 +114,7 @@ export let sprites = {
                 this.shapeOffset = new vectors.Vector2d(x);
             } else if (x !== undefined && y !== undefined) {
                 this.shapeOffset = new vectors.Vector2d(x, y);
-            } // else, no shape
+            } // else, no offset
         }
 
         /** Change the Sprite's image / texture
