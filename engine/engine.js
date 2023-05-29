@@ -50,6 +50,7 @@ const openContextMenu = (menu, posX, posY) => {
         button.onclick = (event) => {
             event.stopPropagation();
             menu[option]();
+            contextMenu.style.display = 'none';
         };
         contextMenu.appendChild(button);
     }
@@ -444,6 +445,7 @@ const populateObjectsList = () => {
             delButton.classList.add('small');
             delButton.innerHTML = 'Delete';
             delButton.onclick = () => {
+                if (!confirm('Delete ' + obj.__engine_name + '? You can\'t undo this!')) return;
                 delete set[objName];
                 visualLog(`Deleted object '${setName}::${objName}'`, 'warn');
                 populateObjectsList();
@@ -452,6 +454,18 @@ const populateObjectsList = () => {
             if (!obj.__engine_locked) details.appendChild(delButton);
 
             objList.appendChild(details);
+
+            summary.__engine_menu = {
+                'Copy Name': () => {
+                    navigator.clipboard.writeText(obj.__engine_name)
+                },
+                'Copy JavaScript': () => {
+                    navigator.clipboard.writeText(`$get('${obj.__engine_name}')`)
+                },
+                'Delete': () => {
+                    delButton.click();
+                }
+            }
         }
     }
 
