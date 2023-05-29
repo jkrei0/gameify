@@ -1188,7 +1188,7 @@ export let gameify = {
                     // Because this will be repeated possibly hundreds of times
                     output.push({
                         s: [tile.source.x, tile.source.y],
-                        p: [col, row],
+                        p: [Number(col), Number(row)],
                         r: tile.rotation
                     });
                 }
