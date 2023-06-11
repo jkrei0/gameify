@@ -50,6 +50,63 @@ export let vectors = {
         this.copy = () => {
             return new vectors.Vector2d(this.x, this.y);
         }
+
+        /** Calculate the distance between a this and another vector
+         * (From this vector's coordinates to the other vector's coordinates)
+         * @param {gameify.Vector2d} point - The start of the line segment
+         * @return {Number} The distance to the vector
+         *//** Calculate the distance between a this and a line segment
+         * (From this vector's coordinates to the closest point on the line segment)
+         * @param {gameify.Vector2d} segmentStart - The start of the line segment
+         * @param {gameify.Vector2d} segmentEnd - The end of the line segment (start/end order does not matter)
+         * @return {Number} The distance between this point and the line segment
+         */
+        this.distanceTo = (start, end) => {
+
+            if (end === undefined) {
+                // 1st overload, distance to point
+                return Math.sqrt((this.x - start.x)**2 + (this.y - start.y)**2)
+            }
+
+            // 2nd overload, distance to segment
+
+            const A = this.x - start.x
+            const B = this.y - start.y
+            const C = end.x - start.x
+            const D = end.y - start.y
+
+            const dot = A * C + B * D;
+            // line segment length squared
+            const lengthSquared = C**2 + D**2;
+            // 0 < param <= 1 --> Closest to line, not end points
+            // param < 0 --> Closest to start point
+            // param > 1 --> Closest to end point
+            let param = -1;
+            // Don't divide by zero!
+            // In case of zero-length, use param < 0 (measure from start point)
+            if (lengthSquared !== 0) {
+                param = dot / lengthSquared;
+            }
+            // Project the point onto the segment
+            let proj = new vectors.Vector2d(0, 0);
+
+            if (param < 0) {
+                // Project to start point
+                proj.x = start.x;
+                proj.y = start.y
+            } else if (param > 1) {
+                // Project to end point
+                proj.x = end.x;
+                proj.y = end.y;
+            } else {
+                // Project to segment
+                proj.x = start.x + param * C;
+                proj.y = start.y + param * D;
+            }
+            
+            // Distance from original point to projected point
+            return Math.sqrt((this.x - proj.x)**2 + (this.y - proj.y)**2);
+        }
         /** Returns the length (magnitude) of the vector. Equivalent to vector.getMagnitude */
         this.getDistance = () => {
             return Math.sqrt((this.x**2) + (this.y**2));
