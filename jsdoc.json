@@ -2,15 +2,20 @@
     "source": {
         "include": ["gameify"]
     },
-
+    "plugins": ["plugins/markdown"],
     "opts": {
         "encoding": "utf8",
         "destination": "out/",
         "recurse": true,
-        "template": "./node_modules/foodoc/template",
+        "readme": "./README.md",
+        "template": "./node_modules/clean-jsdoc-theme",
         "theme_opts": {
             "theme": "dark"
         }
+    },
+    "markdown": {
+        "hardwrap": false,
+        "idInHeadings": true
     },
     "templates": {
       "includeDate": true,
