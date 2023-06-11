@@ -555,6 +555,10 @@ const loadObjectsList = (data) => {
         const name = query.split('::')[1];
         if (!objects[type]) objects[type] = {};
         if (!objects[type][name]) {
+            if (!data[type][name]) {
+                console.warn('Cannot load ' + query + ' (object data is missing)');
+                return undefined;
+            }
             objects[type][name] = gameify[type]('_deserialize')(data[type][name], loadObject);
             objects[type][name].__engine_name = type + '::' + name;
         }

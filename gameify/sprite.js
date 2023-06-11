@@ -45,7 +45,13 @@ export let sprites = {
                 if (data.image.parent) {
                     // Set image from tileset
                     const set = find(data.image.parent);
-                    obj.setImage(set.getTile(data.image.position.x, data.image.position.y));
+                    if (!set) {
+                        // Timemap not found
+                        console.warn('Could load sprite image (tileset not found)');
+                    } else {
+                        // Found tilemap
+                        obj.setImage(set.getTile(data.image.position.x, data.image.position.y));
+                    }
                 } else if (data.image) {
                     obj.setImage(find(data.image.name));        // Set image
                 }
