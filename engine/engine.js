@@ -1179,6 +1179,7 @@ const listSaves = () => {
 
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
+    input.setAttribute('accept', '.gpj');
     input.onchange = (event) => {
         const file = event.target.files[0];
         const reader = new FileReader();
