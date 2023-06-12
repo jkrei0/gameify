@@ -482,9 +482,20 @@ $transition: 0.1s;
         flex-direction: row;
         flex-wrap: wrap;
 
-        span {
+        button {
+            cursor: pointer;
+
+            &:first-of-type {
+                margin-left: auto;
+            }
+        }
+
+        span, button {
+            border: none;
+            background: transparent;
             padding: 5px 10px;
             font-family: $font;
+            font-size: 15px;
             display: flex;
             flex-direction: row;
             align-items: center;

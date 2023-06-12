@@ -398,16 +398,25 @@ body, html {
   flex-direction: row;
   flex-wrap: wrap;
 }
-.visual-editor-controls .legend span {
+.visual-editor-controls .legend button {
+  cursor: pointer;
+}
+.visual-editor-controls .legend button:first-of-type {
+  margin-left: auto;
+}
+.visual-editor-controls .legend span, .visual-editor-controls .legend button {
+  border: none;
+  background: transparent;
   padding: 5px 10px;
   font-family: Poppins, sans-serif;
+  font-size: 15px;
   display: flex;
   flex-direction: row;
   align-items: center;
   white-space: nowrap;
   color: white;
 }
-.visual-editor-controls .legend span svg, .visual-editor-controls .legend span img {
+.visual-editor-controls .legend span svg, .visual-editor-controls .legend span img, .visual-editor-controls .legend button svg, .visual-editor-controls .legend button img {
   height: 16px;
   margin-right: 5px;
 }

@@ -628,8 +628,29 @@ const editTileMap = (map) => {
         <span><img src="images/mouse_right.svg">Delete tiles</span>
         <span><img src="images/mouse_middle.svg">Pick tile</span>
         <span><img src="images/arrows_scroll.svg">Rotate tile</span>
+        <button id="vi-zoom-out"><img src="images/zoom_out.svg">Smaller</button>
+        <button id="vi-zoom-in"><img src="images/zoom_in.svg">Larger</button>
     </div>
     `;
+
+    let tileCellSize = 50;
+
+    controls.querySelector('#vi-zoom-out').onclick = () => {
+        tileCellSize -= 10;
+        if (tileCellSize < 10) tileCellSize = 10;
+        tileList.querySelectorAll('.tile').forEach(tile => {
+            tile.style.width = tileCellSize + 'px';
+            tile.style.height = tileCellSize + 'px';
+        })
+    }
+    controls.querySelector('#vi-zoom-in').onclick = () => {
+        tileCellSize += 10;
+        if (tileCellSize > 80) tileCellSize = 80;
+        tileList.querySelectorAll('.tile').forEach(tile => {
+            tile.style.width = tileCellSize + 'px';
+            tile.style.height = tileCellSize + 'px';
+        })
+    }
 
     controls.appendChild(tileList);
     editorCanvas.parentElement.after(controls);
@@ -641,6 +662,7 @@ const editTileMap = (map) => {
     for (let ty = 0; ty < tileset.texture.height/tileset.theight; ty++) {
         for (let tx = 0; tx < tileset.texture.width/tileset.twidth; tx++) {
             const tileCanvas = document.createElement('canvas');
+            tileCanvas.setAttribute('title', `Tile ${tx}, ${ty}`)
             tileCanvas.classList.add('tile');
             tileCanvas.classList.add(`tile-${tx}-${ty}`);
             if (tx === 0 && ty === 0) {
