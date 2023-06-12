@@ -713,7 +713,7 @@ const editTileMap = (map) => {
                 dragStart = mousePos;
                 originalOffset = map.offset.copy();
             }
-            map.offset = originalOffset.subtract(dragStart.subtract(mousePos));
+            map.offset = originalOffset.subtract(dragStart.subtract(mousePos)).rounded();
         } else {
             dragStart = false;
         }

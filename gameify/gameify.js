@@ -1000,6 +1000,8 @@ export let gameify = {
             }
         }
 
+        let warnedNotIntegerCoordinates = false;
+
         /** Draw the tilemap to the screen */
         this.draw = () => {
             if (this.drawFunction) {
@@ -1007,6 +1009,15 @@ export let gameify = {
             }
             if (!this.context) {
                 throw new Error(`You need to add this tilemap to a screen before you can draw it. See ${gameify.getDocs("gameify.Tilemap")} for more details`);
+            }
+
+            if (!warnedNotIntegerCoordinates &&
+                ( Math.round(this.offset.x) !== this.offset.x
+                || Math.round(this.offset.y) !== this.offset.y)
+            ) {
+                warnedNotIntegerCoordinates = true;
+                console.warn(`Timemap offset is not an integer. This can cause images
+                    to contain artifacts (eg lines along the edge)`);
             }
 
             for (const row in this.tiles.placed) {
