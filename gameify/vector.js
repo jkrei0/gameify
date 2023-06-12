@@ -124,6 +124,12 @@ export let vectors = {
             }
             return new vectors.Vector2d(this.x / dist, this.y / dist);
         }
+        /** Returns a copy of the vector with both coordinates to the nearest integer
+         * @return {gameify.Vector2d}
+         */
+        this.rounded = () => {
+            return new vectors.Vector2d(Math.round(this.x), Math.round(this.y));
+        }
         /** Normalizes the vector (Sets the length equal to one while maintaining the direction)
          */
         this.normalize = () => {
