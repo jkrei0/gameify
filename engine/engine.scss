@@ -521,6 +521,11 @@ $transition: 0.1s;
         min-height: 75px;
         overflow-y: scroll;
 
+        .tile {
+            background: repeating-conic-gradient(#0000 0% 25%, #fff1 0% 50%)
+                50% / 80px 80px;
+        }
+
         .tile.selected {
             outline: 2px solid $highlightbright;
         }
