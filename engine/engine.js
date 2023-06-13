@@ -307,10 +307,6 @@ const populateObjectsList = () => {
                     obj.twidth  = Number(x);
                     obj.theight = Number(y);
                 })[0]);
-                details.appendChild(twoInputItem('Offset',  [obj.offset.x, obj.offset.y], 'number', (x, y) => {
-                    obj.offset.x = Number(x);
-                    obj.offset.y = Number(y);
-                })[0]);
                 details.appendChild(selectItem('Tileset', tilesets, (v) => {
                     obj.setTileset(objects[v.split('::')[0]][v.split('::')[1]]);
                 }, obj.tileset?.__engine_name)[0]);
@@ -734,12 +730,30 @@ const editTileMap = (map) => {
         editorScreen.clear();
         map.draw();
 
-        editorCanvas.getContext('2d').globalAlpha = 0.5;
-        previewTile.draw(editorCanvas.getContext('2d'),
+        const ctx = editorCanvas.getContext('2d');
+
+        ctx.globalAlpha = 0.25;
+        for (const mn in objects['Tilemap']) {
+            if (objects['Tilemap'][mn] === map) {
+                continue;
+            }
+
+            objects['Tilemap'][mn].offset = map.offset.copy();
+            objects['Tilemap'][mn].draw();
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.globalAlpha = 0.5;
+        previewTile.draw(ctx,
                         position.x, position.y,
                         map.twidth, map.theight,
                         selTile.r);
-        editorCanvas.getContext('2d').globalAlpha = 1;
+
+        ctx.globalAlpha = 1;
+        ctx.font = '26px sans-serif';
+        ctx.fillStyle = '#000';
+        ctx.fillText('Editing ' + map.__engine_name, 10, editorCanvas.height - 10);
+
     });
 }
 
@@ -748,6 +762,10 @@ const clearVisualEditor = () => {
     const controls = document.querySelector('.visual-editor-controls');
     if (controls) {
         controls.remove();
+    }
+    for (const mn in objects['Tilemap']) {
+        // Reset tilemap positions
+        objects['Tilemap'][mn].offset = gameify.vectors.ZERO();
     }
     editorScreen.setScene(previewScene);
 }
@@ -898,6 +916,7 @@ gameFrame.addEventListener('load', () => {
 
 
 const runGame = () => {
+    clearVisualEditor();
     showWindow('preview');
     win.location.href = "/engine/project/;";
 }
