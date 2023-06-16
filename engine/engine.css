@@ -319,6 +319,35 @@ body, html {
 .list .list-item summary::-webkit-details-marker {
   display: none;
 }
+.list .list-item summary button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: 0.2s;
+  margin-left: 2px;
+  margin-right: 12px;
+}
+.list .list-item summary button svg, .list .list-item summary button img {
+  margin: 0px;
+  transition: 0.2s;
+}
+.list .list-item summary button:hover :is(svg, img) {
+  color: white;
+}
+.list .list-item summary button.object-hidden svg, .list .list-item summary button.object-hidden img {
+  color: #335;
+}
+.list .list-item summary button.object-hidden::after {
+  content: "";
+  height: 120%;
+  width: 2px;
+  position: absolute;
+  background: #ebe;
+  left: 7px;
+  transform: rotate(45deg);
+}
 .list .list-item .options label {
   display: flex;
   align-items: center;

@@ -216,6 +216,7 @@ const populateObjectsList = () => {
             const obj = set[objName];
 
             obj.__engine_name = setName + '::' + objName;
+            if (obj.__engine_visible === undefined) obj.__engine_visible = true;
 
             const details = document.createElement('details');
             if (obj.__engine_options_open) details.setAttribute('open', true);
@@ -224,40 +225,68 @@ const populateObjectsList = () => {
             });
             details.classList.add('list-item');
             const summary = document.createElement('summary');
+
             /* Icons */
+            let icon = '';
             if (setName === 'Tileset') {
-                summary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-grid-3x3" viewBox="0 0 16 16">
+                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-grid-3x3" viewBox="0 0 16 16">
                         <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13zM1.5 1a.5.5 0 0 0-.5.5V5h4V1H1.5zM5 6H1v4h4V6zm1 4h4V6H6v4zm-1 1H1v3.5a.5.5 0 0 0 .5.5H5v-4zm1 0v4h4v-4H6zm5 0v4h3.5a.5.5 0 0 0 .5-.5V11h-4zm0-1h4V6h-4v4zm0-5h4V1.5a.5.5 0 0 0-.5-.5H11v4zm-1 0V1H6v4h4z"/>
                     </svg>`;
 
             } else if (setName === 'Tilemap') {
-                summary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-map" viewBox="0 0 16 16">
+                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-map" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.502.502 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103zM10 1.91l-4-.8v12.98l4 .8V1.91zm1 12.98 4-.8V1.11l-4 .8v12.98zm-6-.8V1.11l-4 .8v12.98l4-.8z"/>
                     </svg>`;
 
             } else if (setName === 'Scene') {
-                summary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-play-circle" viewBox="0 0 16 16">
+                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-play-circle" viewBox="0 0 16 16">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                         <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
                     </svg>`;
 
             } else if (setName === 'Screen') {
-                summary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-display" viewBox="0 0 16 16">
+                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-display" viewBox="0 0 16 16">
                         <path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/>
                     </svg>`;
 
             } else if (setName === 'Image') {
-                summary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
+                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
                         <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                         <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
                     </svg>`;
 
             } else {
-                summary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-box" viewBox="0 0 16 16">
+                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-box" viewBox="0 0 16 16">
                         <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
                     </svg>`;
             }
-            summary.innerHTML += `${objName} <span class="type">${setName}</span>`;
+
+            // Icon is a button that shows/hides the object
+            const visibilityButton = document.createElement('button');
+            if (obj.__engine_visible) {
+                visibilityButton.classList.add('object-visible');
+            } else {
+                visibilityButton.classList.add('object-hidden');
+            }
+            visibilityButton.innerHTML = icon;
+            visibilityButton.onclick = () => {
+                obj.__engine_visible = !obj.__engine_visible;
+
+                if (obj.__engine_visible) {
+                    visibilityButton.classList.remove('object-hidden');
+                    visibilityButton.classList.add('object-visible');
+                } else {
+                    visibilityButton.classList.remove('object-visible');
+                    visibilityButton.classList.add('object-hidden');
+                }
+            }
+            summary.appendChild(visibilityButton);
+            // Name and Type
+            summary.append(`${objName}`);
+            const typeSpan = document.createElement('span');
+            typeSpan.classList.add('type');
+            typeSpan.innerHTML = setName;
+            summary.appendChild(typeSpan);
             
             details.appendChild(summary);
 
@@ -734,7 +763,8 @@ const editTileMap = (map) => {
 
         ctx.globalAlpha = 0.25;
         for (const mn in objects['Tilemap']) {
-            if (objects['Tilemap'][mn] === map) {
+            if (objects['Tilemap'][mn] === map ||
+                objects['Tilemap'][mn].__engine_visible === false) {
                 continue;
             }
 

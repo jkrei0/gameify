@@ -384,6 +384,44 @@ $transition: 0.1s;
             &::-webkit-details-marker {
                 display: none;
             }
+
+            button {
+                all: unset;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+
+                transition: 0.2s;
+
+                margin-left: 2px;
+                margin-right: 12px;
+
+                svg, img {
+                    margin: 0px;
+                    transition: 0.2s;
+                }
+
+                &:hover :is(svg, img) {
+                    color: $text;
+                }
+
+                &.object-hidden {
+                    svg, img {
+                        color: $background;
+                    }
+                
+                    &::after {
+                        content: '';
+                        height: 120%;
+                        width: 2px;
+                        position: absolute;
+                        background: $highlightbright;
+                        left: 7px;
+                        transform: rotate(45deg);
+                    }
+                }
+            }
         }
 
         .options {
