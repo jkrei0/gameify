@@ -33,9 +33,19 @@ export let shapes = {
         /** Check if this shape collides with another shape
          * @virtual
          * @param {shapes.Shape} obj - The object to check for collision
+         * @return {Boolean}
          */
         this.collidesWith = (obj) => {
             throw new Error("shape.collidesWith must be implemented by each specific shape type");
+        }
+
+        /** Check if a point (Vector2d) is inside this shape
+         * @virtual
+         * @param {gameify.Vector2d} point - The point to check
+         * @return {Boolean}
+         */
+        this.contains = (point) => {
+            throw new Error("shape.contains must be implemented by each specific shape type");
         }
 
         /** The stroke color when this shape is drawn
@@ -79,6 +89,7 @@ export let shapes = {
         
         /** Check if this shape collides with another shape
          * @param {shapes.Shape} obj - The object to check for collision
+         * @return {Boolean}
          */
         this.collidesWith = (obj, recursion) => {
             if (obj.type === "Circle") {
@@ -92,6 +103,14 @@ export let shapes = {
                 // else see if the passed object can handle the request
                 return obj.collidesWith(this, /*recursion=*/true);
             }
+        }
+
+        /** Check if a point (Vector2d) is inside this shape
+         * @param {gameify.Vector2d} point - The point to check
+         * @return {Boolean}
+         */
+        this.contains = (point) => {
+            return this.position.distanceTo(point) < this.radius;
         }
 
         /** Draw the shape to a given context
@@ -143,6 +162,7 @@ export let shapes = {
 
         /** Check if this shape collides with another shape
          * @param {shapes.Shape} obj - The object to check for collision
+         * @return {Boolean}
          */
         this.collidesWith = (obj, recursion) => {
             if (obj.type === "Rectangle") {
@@ -180,6 +200,20 @@ export let shapes = {
                 }
                 // else see if the passed object can handle the request
                 return obj.collidesWith(this, /*recursion=*/true);
+            }
+        }
+        
+        /** Check if a point (Vector2d) is inside this shape
+         * @param {gameify.Vector2d} point - The point to check
+         * @return {Boolean}
+         */
+        this.contains = (point) => {
+            if (this.position.x < point.x && this.position.x + this.size.x > point.x
+                && this.position.y < point.y && this.position.y + this.size.y > point.y
+            ) {
+                return true;
+            } else {
+                return false;
             }
         }
 
