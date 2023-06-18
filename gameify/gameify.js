@@ -8,10 +8,6 @@ import { text }     from "./text.js"
 
 console.log("Welcome to Gameify");
 
-window.onerror = (message, source, lineno, colno, error) => {
-    // explain the error. Todo later.
-}
-
 /** This is the main gameify object. All other things are contained within it. 
  * @global
  */
