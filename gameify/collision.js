@@ -3,7 +3,7 @@ import { vectors } from "./vector.js"
 "use strict"
 
 /** Shapes and collision detection for use in gameify. Usually you'll access this through the gameify object.
- * @example // Use sprites via gameify
+ * @example // Use shapes via gameify
  * // This is the most common way
  * import { gameify } from "./gameify/gameify.js"
  * let myCircle = new gameify.shapes.Circle(0, 0, 5);
