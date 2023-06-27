@@ -4,6 +4,7 @@ import { sprites }  from "./sprite.js"
 import { scenes }   from "./scene.js"
 import { vectors }  from "./vector.js"
 import { text }     from "./text.js"
+import { audio }     from "./audio.js"
 "use strict"
 
 console.log("Welcome to Gameify");
@@ -18,6 +19,7 @@ export let gameify = {
     vectors: vectors.vectors,
 
     shapes: shapes,
+    audio: audio,
 
     /** Manages keyboard events. One is created automatically for every screen, you can access it as shown in the example.
      * @constructor
@@ -460,6 +462,12 @@ export let gameify = {
          */
         this.mouse = new gameify.MouseEventManager(this.element.parentElement, this.element);
         this.mouse.setup();
+
+        /** This screen's default AudioManager.
+         * @type {gameify.audio.AudioManager}
+         */
+        this.audio = new gameify.audio.AudioManager();
+        this.audio.setVolume(0.5);
 
         /** Get the Screen's canvas context 
          * @private
