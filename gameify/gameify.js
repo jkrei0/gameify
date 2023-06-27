@@ -125,6 +125,16 @@ export let gameify = {
             return false;
         }
 
+        this.firstFocusFunction = undefined;
+        this.firstFocusHappened = false;
+
+        /** Run a callback when the game is first focused (Useful for starting audio, etc)
+         * @arg {Function} callback - The callback to run
+         */
+        this.onFirstFocus = (callback) => {
+            this.firstFocusFunction = callback;
+        }
+
         // How long before "just pressed" keys are removed from the justPressedKeys list
         this.clearJpkTimeout = 1;
 
@@ -157,7 +167,15 @@ export let gameify = {
          * @package
         */
         this.setup = () => {
+            this.firstFocusHappened = false;
+
             this.captureScope.setAttribute("tabindex", 1);
+            this.captureScope.addEventListener("focusin", () => {
+                if (!this.firstFocusHappened) {
+                    this.firstFocusHappened = true;
+                    if (this.firstFocusFunction) this.firstFocusFunction();
+                }
+            });
             this.captureScope.addEventListener("keydown", this.onKeyDown);
             this.captureScope.addEventListener("keyup", this.onKeyUp);
         }
