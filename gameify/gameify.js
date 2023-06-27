@@ -605,7 +605,9 @@ export let gameify = {
             });
         }
 
-        /** The image filepath. Modifying this will not do anything. */
+        /** The image filepath. Modifying this will not do anything.
+         * @readonly
+         */
         this.path = path;
 
         /** If the image is loaded */
