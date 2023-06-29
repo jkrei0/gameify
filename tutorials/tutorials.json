@@ -1,0 +1,12 @@
+{
+    "getting_started": {
+        "title": "Getting Started",
+        "children": {
+            "intro_to_engine": {"title": "Starting with the Engine"},
+            "editing_objects": {"title": "Editing Engine Objects"},
+            "use_engine_objects": {"title": "Using Engine Objects"},
+            "game_loop": {"title": "The Game Loop"}
+        }
+    }
+
+}
