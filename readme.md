@@ -16,4 +16,4 @@ import {gameify} from "https://gameify.vercel.app/gameify/gameify.js";
 
 To use the visual engine, start a static http server (eg `http-server` from npm) from the project root, and open `/engine/engine.html`.
 
-To generate tutorials and documentation from source, run `jsdoc -c jsdoc.json` from the repository root, and open `/out/index.html`.
+To generate tutorials and documentation from source, run `npm install` to install the JSDoc theme, then run `jsdoc -c jsdoc.json` and open `/out/index.html`.
