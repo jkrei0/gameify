@@ -7,7 +7,8 @@
         "encoding": "utf8",
         "destination": "out/",
         "recurse": true,
-        "readme": "./README.md",
+        "readme": "./readme.md",
+        "tutorials": "./tutorials/",
         "template": "./node_modules/clean-jsdoc-theme",
         "theme_opts": {
             "theme": "dark"
