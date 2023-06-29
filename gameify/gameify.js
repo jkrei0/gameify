@@ -9,6 +9,14 @@ import { audio }     from "./audio.js"
 
 console.log("Welcome to Gameify");
 
+/** Access engine objects in your code
+ * @example import {$get} from './_out.js';
+ * $get('Tilemap::Dungeon Map');
+ * @arg {String} sel - The object selector ( Type::Name )
+ * @return The object, if it exists (undefined if it doesn't)
+ */
+let $get = (sel) => { throw 'How\'d you access this?? (Bad $get)'; }
+
 /** This is the main gameify object. All other things are contained within it. 
  * @global
  */
