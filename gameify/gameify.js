@@ -580,6 +580,11 @@ export let gameify = {
                 throw new Error(`You need to set a Scene before you can start the game. See ${gameify.getDocs("gameify.Scene")} for details`);
             }
             
+            if (gameActive) {
+                console.warn('The game is already started!');
+                return;
+            }
+
             gameActive = true;
             lastUpdate = 0;
 
