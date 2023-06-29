@@ -571,6 +571,8 @@ export let gameify = {
         // Timestamp of the last update
         let lastUpdate = 0;
 
+        let gameActive = false;
+
         /** Starts the game.
         */
         this.startGame = () => {
@@ -578,6 +580,7 @@ export let gameify = {
                 throw new Error(`You need to set a Scene before you can start the game. See ${gameify.getDocs("gameify.Scene")} for details`);
             }
             
+            gameActive = true;
             lastUpdate = 0;
 
             const eachFrame = async (time) => {
@@ -590,10 +593,17 @@ export let gameify = {
                 this.currentScene.update(delta || 1);
                 this.currentScene.draw();
                 
-                window.requestAnimationFrame(eachFrame);
+                if (gameActive) {
+                    window.requestAnimationFrame(eachFrame);
+                }
             }
             window.requestAnimationFrame(eachFrame);
 
+        }
+
+        /** Stops (pauses) the game */
+        this.stopGame = () => {
+            gameActive = false;
         }
     },
 
