@@ -1,6 +1,7 @@
 import {gameify} from '/gameify/gameify.js';
 import {game_template} from '/engine/project/_template.js';
 
+import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js"
 
 /* Code Editor */
 
@@ -944,7 +945,6 @@ gameFrame.addEventListener('load', () => {
     }
 });
 
-
 const runGame = () => {
     clearVisualEditor();
     showWindow('preview');
@@ -1004,7 +1004,54 @@ const saveProject = (asName) => {
 
     return name;
 }
+
+const exportProject = async () => {
+    const zipFiles = [];
+    let styles = '';
+    let scripts = '';
+    for (const file in files) {
+        zipFiles.push({
+            name: file,
+            input: files[file].getValue()
+        });
+
+        if (file.endsWith('.js')) {
+            scripts += `<script src="./${file}" type="module"></script>`;
+        } else if (file.endsWith('.css')) {
+            styles += `<link rel="stylesheet" href="./${file}">`;
+        }
+    }
+
+    zipFiles.push({
+        name: 'index.html',
+        input: `<!DOCTYPE html>
+            <html>
+                <head>
+                    <title>A Game</title>
+                    ${styles}
+                </head>
+                <body>
+                    <div><canvas id="game-canvas"></canvas></div>
+                </body>
+                ${scripts}
+            </html>`
+    });
+
+    const outJS = await fetch("./project/_out.js");
+    zipFiles.push(outJS);
+
+    const blob = await downloadZip(zipFiles).blob();
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + ".zip";
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+}
+
 document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
+document.querySelector('#export-button').addEventListener('click', () => { exportProject() });
 document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 's') {
         // Ctrl + S
