@@ -1,6 +1,6 @@
 The sidebar isn't very useful if you can't use the objects in your game.
 
-Any projects in the engine have access to the {@linkcode $get|`$get(...)`} function, which you can use to access any objects from the sidebar. The easiest way to do this is to right-click the object in the sidebar, and select `Copy Javascript`
+Any projects in the engine have access to the {@linkcode $get|` $get(...)`} function, which you can use to access any objects from the sidebar. The easiest way to do this is to right-click the object in the sidebar, and select `Copy Javascript`
 
 ![](/tutorials/rc_copy_javascript.png)
 
@@ -19,3 +19,8 @@ const dungeonMap = $get('Tilemap::Dungeon Map')
 
 dungeonMap.offset.x += 1;
 ```
+
+---
+Now that you're familiar with using objects, it's time to start making your game.
+
+**Next: {@tutorial game_loop}**
