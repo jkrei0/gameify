@@ -13,10 +13,6 @@ if (!window.__s_objects) console.error('Failed to load game objects');
 
 const __objects = {};
 
-const deserializeObject = () => {
-
-}
-
 /** Access an object from the engine
  * @param {string} name - The name of the object to access
  */
