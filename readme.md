@@ -5,7 +5,7 @@ Documentation is available at [gameify.vercel.app](https://gameify.vercel.app/ou
 
 ### Use it yourself
 
-The easiest way to get started with gameify is to use the [gameify engine online](https://gameify.vercel.app/engine/engine.html). Read {@tutorial getting started} to get familiar with the engine.
+The easiest way to get started with gameify is to use the [gameify engine online](https://gameify.vercel.app/engine/engine.html). Read {@tutorial getting_started} to get familiar with the engine.
 
 Or, use the library in your own projects without the engine:
 ```js
