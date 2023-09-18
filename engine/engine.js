@@ -626,7 +626,17 @@ previewScene.onDraw(() => {
             const obj = objects[type][name];
             const ps = obj.getParent();
             editorScreen.add(obj);
-            obj.draw();
+            try {
+                obj.draw();
+                obj.__engine_error = false;
+            } catch (e) {
+                // Object failed to draw
+                if (!obj.__engine_error) {
+                    visualLog(`Error drawing ${type}::${name}: ${e}`, 'error');
+                    // Track errors to not spam logs
+                    obj.__engine_error = true;
+                }
+            }
             ps.add(obj); // Set the screen back!
         }
     }
