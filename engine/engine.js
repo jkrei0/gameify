@@ -1038,7 +1038,13 @@ const exportProject = async () => {
     });
 
     const outJS = await fetch("./project/_out.js");
-    zipFiles.push(outJS);
+    const outJSText = await outJS.text();
+    const objListText = 'window.__s_objects = ' + JSON.stringify(serializeObjectsList());
+
+    zipFiles.push({
+        name: '_out.js',
+        input: outJSText.replace('/*__s_objects*/', objListText)
+    });
 
     const blob = await downloadZip(zipFiles).blob();
 

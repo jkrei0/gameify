@@ -9,6 +9,10 @@ import {gameify} from '/gameify/gameify.js';
 
 /* Engine Objects */
 
+/* Game objects are inserted below.
+Please do not edit the following line: */
+/*__s_objects*/
+
 if (!window.__s_objects) console.error('Failed to load game objects');
 
 const __objects = {};
