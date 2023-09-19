@@ -41,3 +41,8 @@ menu.onDraw(() => {
 
 screen.startGame();
 ```
+
+---
+With this basic understanding, you can start making something:
+
+**Next: {@tutorial your_first_game}**
