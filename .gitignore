@@ -5,3 +5,4 @@ test/*
 TODO*
 NOTE*
 .vercel
+.env*.local
