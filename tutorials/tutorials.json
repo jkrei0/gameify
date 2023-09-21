@@ -8,13 +8,7 @@
         }
     },
     "your_first_game": {
-        "title": "Your First Game",
-        "children": {
-            "fg_main_menu": {"title": "Main Menu"},
-            "fg_game_levels": {"title": "Game Levels"},
-            "fg_game_over": {"title": "Game Over"},
-            "fg_extra_features": {"title": "Extra Features"}
-        }
+        "title": "Your First Game"
     },
     "game_loop": {"title": "The Game Loop"}
 }
