@@ -993,7 +993,7 @@ const saveProject = (asName) => {
     if (cloudAccountName) {
         visualLog(`Uploading '${cloudAccountName}/${name}' to cloud ...`, 'info');
         // Logged in, save to cloud!
-        fetch('/api/games-store/save-game.js', {
+        fetch('/api/games-store/save-game', {
             method: 'POST',
             body: JSON.stringify({
                 username: cloudAccountName,
@@ -1253,7 +1253,7 @@ const listSaves = () => {
         cloudLoadingIndicator.innerHTML = 'Loading cloud saves...';
         listElem.prepend(cloudLoadingIndicator);
 
-        fetch('/api/games-store/list-games.js', {
+        fetch('/api/games-store/list-games', {
             method: 'POST',
             body: JSON.stringify({
                 username: cloudAccountName,
@@ -1279,7 +1279,7 @@ const listSaves = () => {
                 button.onclick = () => {
                     visualLog(`Loading cloud save '${name}' ...`, 'info');
 
-                    fetch(`/api/games-store/load-game.js`, {
+                    fetch(`/api/games-store/load-game`, {
                         method: 'POST',
                         body: JSON.stringify({
                             // no session key needed for loading

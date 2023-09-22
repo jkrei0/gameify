@@ -28,7 +28,7 @@ window.addEventListener('hashchange', () => {
 let gameData = {};
 
 // don't bother looking for nothing
-if (accountName && gameTitle) fetch(`/api/games-store/load-game.js`, {
+if (accountName && gameTitle) fetch(`/api/games-store/load-game`, {
     method: 'POST',
     body: JSON.stringify({
         // no session key needed for loading

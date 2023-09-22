@@ -20,7 +20,7 @@ if (accountName !== null) {
     cloudLoadingIndicator.innerHTML = 'Loading cloud saves...';
     listElem.prepend(cloudLoadingIndicator);
 
-    fetch('/api/games-store/list-games.js', {
+    fetch('/api/games-store/list-games', {
         method: 'POST',
         body: JSON.stringify({
             username: accountName,
@@ -58,7 +58,7 @@ if (accountName !== null) {
         const username = document.querySelector('#username').value;
         const password = document.querySelector('#password').value;
 
-        fetch('/api/games-store/login.js', {
+        fetch('/api/games-store/login', {
             method: 'POST',
             body: JSON.stringify({
                 username: username,
@@ -75,6 +75,8 @@ if (accountName !== null) {
             } else {
                 loginButton.innerHTML = 'Try again';
             }
+        }).catch(() => {
+            loginButton.innerHTML = 'Server Error';
         });
     }
 
