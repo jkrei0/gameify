@@ -33,6 +33,21 @@ async function connect(callback) {
     }
 }
 
+async function verifySession(username, sessionKey) {
+    return connect(async (database) => {
+        const sessions = database.collection("sessions");
+        const session = await sessions.findOne({ username: username, sessionKey: sessionKey });
+        console.log(session);
+
+        if (!session) return { error: 'session invalid', valid: false };
+        if (session.expires < Date.now()) {
+            await sessions.deleteOne({ username: username, sessionKey: sessionKey });
+            return { error: 'session expired', valid: false };
+        }
+        else return { valid: true };
+    });
+}
+
 export async function hashPassword(pass) {
 
     bcrypt.hash(pass, 10, function (err, hash) {
@@ -44,19 +59,16 @@ export async function hashPassword(pass) {
 export async function login(query) {
 
     if (!query.username || !query.password) {
-        console.log('no user/pass', query);
-        return false;
+        return { error: 'missing username or password' };
     }
 
     return connect(async (database) => {
         const accounts = database.collection("accounts");
         const user = await accounts.findOne({ username: query.username });
 
+        if (!user) return { error: 'incorrect username or password' };
         const pass_correct = await bcrypt.compare(query.password, user.password);
-
-        if (!user || pass_correct !== true) {
-            return false;
-        }
+        if (pass_correct !== true) return { error: 'incorrect username or password' };
 
         // Credentials are valid
 
@@ -70,7 +82,27 @@ export async function login(query) {
         });
 
         console.log(key);
-        return key;
+        return { sessionKey: key };
 
+    });
+}
+
+export async function saveGame(query) {
+    const result = await verifySession(query.username, query.sessionKey);
+    if (result.error) return { error: result.error };
+    if (!result.valid) return { error: 'session invalid' };
+
+    return connect(async (database) => {
+        const games = database.collection("games");
+
+        await games.updateOne({ username: query.username, title: query.title }, { $set: {
+            timestamp: Date.now(),
+            title: query.title,
+            data: query.data
+        } }, { upsert: true }); // create new entry if none exists
+
+        console.log(query.title);
+
+        return { success: true };
     });
 }
