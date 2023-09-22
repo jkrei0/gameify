@@ -1,7 +1,9 @@
 import {gameify} from '/gameify/gameify.js';
 import {game_template} from '/engine/project/_template.js';
 
-import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js"
+import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js";
+
+import { serializeObjectsList } from '/engine/serialize.js';
 
 /* Code Editor */
 
@@ -555,26 +557,6 @@ const populateObjectsList = () => {
 
 }
 
-const serializeObjectsList = () => {
-    const out = {};
-    for (const type in objects) {
-        const set = objects[type];
-        out[type] = {}
-        for (const name in set) {
-            const item = set[name];
-            if (item.serialize) {
-                out[type][name] = item.serialize((o) => {
-                    return o?.__engine_name;
-                });
-            } else {
-                console.warn(`Cannot save ${type}::${name}`);
-                out[type][name] = false;
-            }
-        }
-    }
-
-    return out;
-}
 const loadObjectsList = (data) => {
     const loadObject = (query) => {
         const type = query.split('::')[0];
@@ -931,7 +913,7 @@ gameFrame.addEventListener('load', () => {
         }
     }
 
-    win.__s_objects = serializeObjectsList();
+    win.__s_objects = serializeObjectsList(objects);
 
     // Add scripts
     const html = win.document.querySelector('html');
@@ -999,7 +981,7 @@ const saveProject = (asName) => {
     localStorage.setItem('saveNames', savedList.join(','))
 
     const saved = {
-        objects: serializeObjectsList(),
+        objects: serializeObjectsList(objects),
         files: {}
     };
     for (const file in files) {
@@ -1076,7 +1058,7 @@ const exportProject = async () => {
 
     const outJS = await fetch("./project/_out.js");
     const outJSText = await outJS.text();
-    const objListText = 'window.__s_objects = ' + JSON.stringify(serializeObjectsList());
+    const objListText = 'window.__s_objects = ' + JSON.stringify(serializeObjectsList(objects));
 
     zipFiles.push({
         name: '_out.js',
@@ -1132,7 +1114,7 @@ document.addEventListener('keydown', e => {
 
 document.querySelector('#download-button').addEventListener('click', () => {
     const saved = {
-        objects: serializeObjectsList(),
+        objects: serializeObjectsList(objects),
         files: {}
     };
     for (const file in files) {
