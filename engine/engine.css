@@ -137,6 +137,7 @@ body, html {
 
 .top {
   display: flex;
+  position: relative;
   flex-direction: row;
   align-items: center;
   justify-content: center;
@@ -162,6 +163,19 @@ body, html {
 }
 .top button:hover {
   background: #648;
+}
+.top a {
+  font-family: inherit;
+  color: inherit;
+}
+.top a:hover {
+  text-decoration-thickness: 2px;
+}
+.top .account {
+  font-family: Poppins, sans-serif;
+  color: white;
+  position: absolute;
+  right: 15px;
 }
 
 .sidebar {

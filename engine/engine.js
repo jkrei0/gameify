@@ -1263,6 +1263,9 @@ const listSaves = () => {
 
     const cloudAccountName = localStorage.getItem('accountName');
     if (cloudAccountName) {
+        // listprojects handles updating the account name in the corner
+        document.querySelector('#login-link').innerHTML = cloudAccountName;
+
         const cloudLoadingIndicator = document.createElement('span');
         cloudLoadingIndicator.classList.add('list-item');
         cloudLoadingIndicator.innerHTML = 'Loading cloud saves...';
@@ -1331,6 +1334,9 @@ const listSaves = () => {
                 }
             }
         });
+
+    } else {
+        document.querySelector('#login-link').innerHTML = 'Log in';
     }
 
     // local files
