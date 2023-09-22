@@ -301,7 +301,7 @@ body, html {
   border: none;
   color: #ebe;
 }
-.list .list-item > :is(button, input, select):first-child {
+.list .list-item > :is(button, input, select):first-child, .list .list-item > :is(button, input, select).right {
   margin-left: auto;
 }
 .list .list-item:focus-visible, .list .list-item *:focus-visible {

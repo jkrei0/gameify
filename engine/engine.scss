@@ -363,7 +363,7 @@ $transition: 0.1s;
                 }
             }
 
-            &:first-child {
+            &:first-child, &.right {
                 margin-left: auto;
             }
         }
