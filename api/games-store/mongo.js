@@ -21,7 +21,6 @@ async function connect(callback) {
         await client.connect();
         const database = client.db("gameify");
         await database.command({ ping: 1 }); // ping to confirm
-        console.log("Pinged deployment. Successfully connected to MongoDB!");
 
         return await callback(database);
 
