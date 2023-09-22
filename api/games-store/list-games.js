@@ -2,7 +2,14 @@
 import { listGames } from './mongo.js';
 
 export default async function handler(request, response) {
-    const result = await listGames(JSON.parse(request.body));
+    let body;
+    try {
+        body = JSON.parse(request.body);
+    } catch {
+        return response.status(400).json({ error: 'invalid request body' });
+    }
+
+    const result = await listGames(body);
 
     response.status(200).json(result);
 }
