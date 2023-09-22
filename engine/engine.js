@@ -1007,7 +1007,34 @@ const saveProject = (asName) => {
     }
     localStorage.setItem('savedObjects:' + name, JSON.stringify(saved));
 
-    visualLog(`Saved as '${name}'${overwrite ? ' (overwrote)' : ''}`, 'debug');
+    const cloudAccountName = localStorage.getItem('accountName');
+    if (cloudAccountName) {
+        visualLog(`Uploading '${cloudAccountName}/${name}' to cloud ...`, 'info');
+        // Logged in, save to cloud!
+        fetch('/api/games-store/save-game.js', {
+            method: 'POST',
+            body: JSON.stringify({
+                username: cloudAccountName,
+                sessionKey: localStorage.getItem('accountSessionKey'),
+                title: name,
+                data: saved
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            if (result.error) {
+                visualLog(`Failed to upload to cloud.`, 'error');
+                if (result.error.includes('session')) {
+                    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+                }
+            }
+            visualLog(`Saved to cloud as '${cloudAccountName}/${name}'`, 'debug');
+        });
+    }
+
+    visualLog(`Saved locally as '${name}'${overwrite ? ' (overwrote)' : ''}.${
+        cloudAccountName ? '' : ' <a href="./auth.html" target="_blank">Log in</a> to save to cloud.'
+    }`, 'debug');
     listSaves();
 
     currentProjectFilename = name;

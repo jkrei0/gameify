@@ -137,6 +137,14 @@ $transition: 0.1s;
                 max-width: 70%;
             }
 
+            a {
+                color: inherit;
+
+                &:hover {
+                    text-decoration-thickness: 2px; 
+                }
+            }
+
             &.info .message {
                 color: #bbf;
             }

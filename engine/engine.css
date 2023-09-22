@@ -107,6 +107,12 @@ body, html {
 .window .console .log-item .message {
   max-width: 70%;
 }
+.window .console .log-item a {
+  color: inherit;
+}
+.window .console .log-item a:hover {
+  text-decoration-thickness: 2px;
+}
 .window .console .log-item.info .message {
   color: #bbf;
 }
