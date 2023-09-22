@@ -1438,6 +1438,7 @@ const listSaves = () => {
 
     listElem.appendChild(label);
 }
+document.querySelector('#refresh-saves').addEventListener('click', listSaves);
 listSaves();
 
 visualLog('Loaded template project', 'debug');
