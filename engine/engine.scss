@@ -181,7 +181,7 @@ $transition: 0.1s;
     gap: 5px;
     background: $background;
 
-    svg {
+    svg, img {
         position: relative;
         top: 0.125em;
         height: 1em;
@@ -213,11 +213,14 @@ $transition: 0.1s;
         }
     }
 
-    .account {
+    .account, .name {
         font-family: $font;
         color: $text;
+        padding-inline: 15px;
+    }
+    .account {
         position: absolute;
-        right: 15px;
+        right: 0;
     }
 }
 
@@ -267,6 +270,25 @@ $transition: 0.1s;
     font-family: $font;
     color: $text;
     background: $background;
+
+    &.wide {
+        width: min(450px, 100%);
+        min-height: unset;
+    }
+
+    &.fixed {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    code {
+        font-family: $monospace;
+        font-size: 0.9em;
+        padding: 2px;
+        background: $highlightsecondary;
+    }
 }
 
 .list {

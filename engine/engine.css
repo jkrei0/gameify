@@ -145,7 +145,7 @@ body, html {
   gap: 5px;
   background: #335;
 }
-.top svg {
+.top svg, .top img {
   position: relative;
   top: 0.125em;
   height: 1em;
@@ -171,11 +171,14 @@ body, html {
 .top a:hover {
   text-decoration-thickness: 2px;
 }
-.top .account {
+.top .account, .top .name {
   font-family: Poppins, sans-serif;
   color: white;
+  padding-inline: 15px;
+}
+.top .account {
   position: absolute;
-  right: 15px;
+  right: 0;
 }
 
 .sidebar {
@@ -217,6 +220,22 @@ body, html {
   font-family: Poppins, sans-serif;
   color: white;
   background: #335;
+}
+.center.wide {
+  width: min(450px, 100%);
+  min-height: unset;
+}
+.center.fixed {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.center code {
+  font-family: "Roboto Mono";
+  font-size: 0.9em;
+  padding: 2px;
+  background: #668;
 }
 
 .list .list-item {
