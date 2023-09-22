@@ -37,7 +37,6 @@ async function verifySession(username, sessionKey) {
     return connect(async (database) => {
         const sessions = database.collection("sessions");
         const session = await sessions.findOne({ username: username, sessionKey: sessionKey });
-        console.log(session);
 
         if (!session) return { error: 'session invalid', valid: false };
         if (session.expires < Date.now()) {
@@ -81,7 +80,6 @@ export async function login(query) {
             expires: Date.now() + expires_hours * 60 * 60 * 1000
         });
 
-        console.log(key);
         return { sessionKey: key };
 
     });
@@ -101,8 +99,36 @@ export async function saveGame(query) {
             data: query.data
         } }, { upsert: true }); // create new entry if none exists
 
-        console.log(query.title);
-
         return { success: true };
+    });
+}
+
+export async function listGames(query) {
+    const result = await verifySession(query.username, query.sessionKey);
+    if (result.error) return { error: result.error };
+    if (!result.valid) return { error: 'session invalid' };
+
+    return connect(async (database) => {
+        const games = database.collection("games");
+
+        const result = await games.find({ username: query.username }, { projection: { _id: 0, title: 1 } }).toArray();
+        if (!result) return { error: 'no games found' };
+
+        return { games: result };
+    });
+
+}
+
+export async function loadGame(query) {
+    // No session validation for loading
+    // (anyone is allowed to see uploaded games)
+
+    return connect(async (database) => {
+        const games = database.collection("games");
+
+        const result = await games.findOne({ username: query.username, title: query.title });
+        if (!result) return { error: 'game not found' };
+
+        return { data: result.data, timestamp: result.timestamp };
     });
 }
