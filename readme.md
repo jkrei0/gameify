@@ -15,5 +15,21 @@ import {gameify} from "https://gameify.vercel.app/gameify/gameify.js";
 ### Run it yourself
 
 To use the visual engine, start a static http server (eg `http-server` from npm) from the project root, and open `/engine/engine.html`.
+Accounts functionality and cloud saved will be disabled.
 
 To generate tutorials and documentation from source, run `npm install` to install the JSDoc theme, then run `jsdoc -c jsdoc.json` and open `/out/index.html`.
+
+### Develop
+
+To develop the visual engine with accounts and cloud saves enabled, install the vercel CLI, and run using `vercel dev`.
+
+Make sure to add the follwing to your `.env.local` file:
+```
+MONGO_NAME = "your_mongodb_username"
+MONGO_PASSWORD = "your_mongodb_username"
+```
+
+The app attempts to connect to a `gameify` database, with the following collections:
+- `accounts`
+- `sessions`
+- `games`
