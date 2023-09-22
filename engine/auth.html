@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="engine.css">
+        <link rel="icon" href="images/boxes.svg">
+        <title>Login | Gameify</title>
+    </head>
+    <body>
+        
+        <div class="top">
+            <button onclick="window.location.href='/engine/engine.html'">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to engine
+            </button>
+        </div>
+
+        <div class="container" id="main">
+            <div class="center">
+                <h3>Account</h3>
+                <div class="list">
+                    <span class="list-item login-list-item">
+                        Name
+                        <input type="text" id="username" placeholder="Username">
+                    </span>
+                    <span class="list-item login-list-item">
+                        Password
+                        <input type="password" id="password" placeholder="Password">
+                    </span>
+                    <span class="list-item login-list-item">
+                        <button id="login-button">Login</button>
+                    </span>
+
+                    <span class="list-item account-list-item">
+                        Name <span class="type" id="account-name">Loading...</span>
+                    </span>
+                    <span class="list-item account-list-item">
+                        Sign out <button id="sign-out-button">Sign out</button>
+                    </span>
+                </div>
+                <h3>No account?</h3>
+                <div class="list">
+                    <p>
+                        New accounts are currently limited.<br>
+                        You can still save your projects locally,
+                        and all functionality is available without an account.<br>
+                    </p>
+                    <span class="list-item">
+                        <a href="https://github.com/jkrei0/gameify" target="_blank">Request an account</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <script src="auth.js" type="module"></script>
+
+    </body>
+</html>

@@ -10,6 +10,7 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  background: #223;
 }
 
 .container {
@@ -137,6 +138,12 @@ body, html {
   gap: 5px;
   background: #335;
 }
+.top svg {
+  position: relative;
+  top: 0.125em;
+  height: 1em;
+  margin-right: 0.5em;
+}
 .top button {
   background: #448;
   font-family: Poppins, sans-serif;
@@ -180,6 +187,16 @@ body, html {
 }
 .sidebar h3 button:hover {
   background: #648;
+}
+
+.center {
+  padding: 20px;
+  width: min(350px, 100%);
+  min-height: min(400px, 100%);
+  margin: auto;
+  font-family: Poppins, sans-serif;
+  color: white;
+  background: #335;
 }
 
 .list .list-item {
@@ -276,6 +293,9 @@ body, html {
   height: 1em;
   margin-left: 3px;
   margin-right: 12px;
+}
+.list .list-item a {
+  color: inherit;
 }
 .list .list-item img.preview {
   max-height: 80px;

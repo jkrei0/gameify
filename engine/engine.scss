@@ -14,6 +14,8 @@ body, html {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+
+    background: #223;
 }
 
 $background: #335;
@@ -170,6 +172,13 @@ $transition: 0.1s;
     gap: 5px;
     background: $background;
 
+    svg {
+        position: relative;
+        top: 0.125em;
+        height: 1em;
+        margin-right: 0.5em;
+    }
+
     button {
         background: $secondary;
         font-family: $font;
@@ -221,6 +230,18 @@ $transition: 0.1s;
             }
         }
     }
+}
+
+.center {
+    padding: 20px;
+    width: min(350px, 100%);
+    min-height: min(400px, 100%);
+
+    margin: auto;
+
+    font-family: $font;
+    color: $text;
+    background: $background;
 }
 
 .list {
@@ -331,6 +352,10 @@ $transition: 0.1s;
             height: 1em;
             margin-left: 3px;
             margin-right: 12px;
+        }
+
+        a {
+            color: inherit;
         }
 
         img.preview {
