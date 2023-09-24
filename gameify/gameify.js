@@ -503,7 +503,7 @@ export let gameify = {
         /** Check if antialising is enabled
          * @returns {Boolean} - Whether antialising is enabled or not
         */
-        this.getAntialiasing = (value) => {
+        this.getAntialiasing = () => {
             return this.context.imageSmoothingEnabled;
         }
 
