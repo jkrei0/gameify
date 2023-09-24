@@ -32,9 +32,8 @@ if (accountName !== null) {
         cloudLoadingIndicator.remove();
 
         if (result.error) {
-            visualLog(`Failed to list cloud saves.`, 'warn');
             if (result.error.includes('session')) {
-                visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+                document.querySelector('#sign-out-button').click();
             }
         }
 
