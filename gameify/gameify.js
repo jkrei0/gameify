@@ -517,10 +517,15 @@ export let gameify = {
         }
 
         /** Clear the screen
-         * @arg {gameify.Color} [color] - The color to clear to. Default is transparent;
+         * @arg {String} [color] - The color to clear to, e.g. #472d3c or rgb(123, 123, 123). Default is transparent
         */
-        this.clear = () => {
+        this.clear = (color) => {
             this.context.clearRect(0, 0, this.width, this.height);
+
+            this.context.beginPath();
+            this.context.rect(0, 0, this.width, this.height);
+            this.context.fillStyle = color;
+            this.context.fill();
         }
 
         /** Changes the width of the Screen
