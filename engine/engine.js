@@ -461,7 +461,6 @@ const populateObjectsList = () => {
 
                 details.appendChild(selectItem('Antialiasing', ['On', 'Off'], (v) => {
                     obj.setAntialiasing(v === 'On');
-                    console.log(v, obj.getAntialiasing());
                 }, obj.getAntialiasing() ? 'On' : 'Off')[0]);
 
             } else if (setName === 'Scene') {
