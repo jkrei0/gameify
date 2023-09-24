@@ -418,12 +418,13 @@ export let gameify = {
             return (data, find) => {
                 const obj = new gameify.Screen(document.getElementById(data[0]), data[1], data[2]);
                 if (data[3]) obj.setScene(find(data[3]));
+                obj.setAntialiasing(data[4]);
                 return obj;
             }
         }
         // name - a function to generate a name for an object to be restored later
         this.serialize = (name) => {
-            return [this.element.id, this.width, this.height, name(this.currentScene)];
+            return [this.element.id, this.width, this.height, name(this.currentScene), this.getAntialiasing()];
         }
 
         // Error if not given the correct parameters
@@ -484,11 +485,26 @@ export let gameify = {
             return this.context;
         }
 
-        /** Turn antialiasing on or off (set to off for pixel art)
+        /** Alias for setAntialiasing
+         * @see {gameify.Screen.setAntialiasing}
          * @param {Boolean} enable - Whether smoothing should be enabled or not (true/false)
-         */
+         * @deprecated
+        */
         this.setSmoothImages = (value) => {
             this.context.imageSmoothingEnabled = value;
+        }
+        /** Turn antialiasing on or off (set to off for pixel art)
+         * @param {Boolean} enable - Whether antialiasing should be enabled.
+         */
+        this.setAntialiasing = (value) => {
+            this.context.imageSmoothingEnabled = value;
+        }
+
+        /** Check if antialising is enabled
+         * @returns {Boolean} - Whether antialising is enabled or not
+        */
+        this.getAntialiasing = (value) => {
+            return this.context.imageSmoothingEnabled;
         }
 
         /** Clear the screen
