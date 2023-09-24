@@ -605,6 +605,7 @@ previewScene.onUpdate(() => {
     // Resize based on game screen size
     const defaultScreen = Object.values(objects['Screen'])[0];
     editorScreen.setSize(defaultScreen.getSize());
+    editorScreen.setAntialiasing(defaultScreen.getAntialiasing());
 });
 previewScene.onDraw(() => {
     for (const type of ['Tilemap', 'Sprite']) {
@@ -635,6 +636,9 @@ const editTileMap = (map) => {
     visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
 
     const tileset = map.getTileset();
+
+    // Update antialiasing to be consistent
+    editorScreen.setAntialiasing(map.getParent().getAntialiasing());
 
     const editScene = new gameify.Scene(editorScreen);
     editorScreen.setScene(editScene);
