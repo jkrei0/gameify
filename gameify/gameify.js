@@ -493,18 +493,27 @@ export let gameify = {
         this.setSmoothImages = (value) => {
             this.context.imageSmoothingEnabled = value;
         }
+
+        // Track this seperately (detatched from canvas el), so that if the
+        // canvas for some reason loses its status, it can be restored
+        // (it does this w/ the engine!)
+        let antialiasingEnabled = true;
+
         /** Turn antialiasing on or off (set to off for pixel art)
          * @param {Boolean} enable - Whether antialiasing should be enabled.
          */
         this.setAntialiasing = (value) => {
+            antialiasingEnabled = value;
             this.context.imageSmoothingEnabled = value;
         }
 
-        /** Check if antialising is enabled
+        /** Check if antialising is enabled (Note, also checks and corrects if
+         * the canvas element has the correct antialiasing setting)
          * @returns {Boolean} - Whether antialising is enabled or not
         */
         this.getAntialiasing = () => {
-            return this.context.imageSmoothingEnabled;
+            this.context.imageSmoothingEnabled = antialiasingEnabled;
+            return antialiasingEnabled;
         }
 
         /** Clear the screen
