@@ -168,6 +168,27 @@ export let vectors = {
         this.multiply = (value) => {
             return new vectors.Vector2d(this.x * value, this.y * value);
         }
+        /** Returns a copy of this vector rotated by an angle, in radians (counterclockwise)
+         * @example let vectorA = new gameify.Vector2d(3, 2);
+         * vectorA.rotated(Math.PI/2); // vectorA = <-2, 3>
+         * @arg {Number} angle - The angle to rotate by, in degrees
+         * @returns {gameify.Vector2d}
+         */
+        this.rotated = (angle) => {
+            return new vectors.Vector2d(
+                (this.x * Math.cos(angle)) - (this.y * Math.sin(angle)),
+                (this.x * Math.sin(angle)) + (this.y * Math.cos(angle))
+            )
+        }
+        /** Returns a copy of this vector rotated by an angle, in degrees (counterclockwise)
+         * @example let vectorA = new gameify.Vector2d(3, 2);
+         * vectorA.rotatedDegrees(90); // vectorA = <-2, 3>
+         * @arg {Number} angle - The angle to rotate by, in degrees
+         * @returns {gameify.Vector2d}
+         */
+        this.rotatedDegrees = (angle) => {
+            return this.rotated(angle * (Math.PI / 180));
+        }
         /** Linear interpolation from this vector to another
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * let vectorB = new gameify.Vector2d(7, 12);
