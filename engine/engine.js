@@ -1028,7 +1028,7 @@ const saveProject = (asName) => {
             visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'cloud');
         });
     } else {
-        visualLog(`Saved as ${name}`, 'localonly');
+        visualLog(`Saved as '${name}'`, 'localonly');
     }
 
     visualLog(`Saved locally as '${name}'${overwrite ? ' (overwrote)' : ''}.${
