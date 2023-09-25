@@ -522,10 +522,12 @@ export let gameify = {
         this.clear = (color) => {
             this.context.clearRect(0, 0, this.width, this.height);
 
-            this.context.beginPath();
-            this.context.rect(0, 0, this.width, this.height);
-            this.context.fillStyle = color;
-            this.context.fill();
+            if (color) {
+                this.context.beginPath();
+                this.context.rect(0, 0, this.width, this.height);
+                this.context.fillStyle = color;
+                this.context.fill();
+            }
         }
 
         /** Changes the width of the Screen
