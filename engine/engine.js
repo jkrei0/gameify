@@ -21,6 +21,13 @@ editor.setOptions({fontSize: '16px'})
 const visualLog = (message, type = 'info', source = 'editor') => {
     if (type === 'error') showWindow('visual');
 
+    if (type === 'cloud') {
+        document.querySelector('#cloud-progress').innerHTML = message;
+    } else if (type === 'localonly') {
+        document.querySelector('#cloud-progress').innerHTML = message;
+        return;
+    }
+
     const visualEl = document.querySelector('#visual-output');
     visualEl.innerHTML += `<span class="log-item ${type}">
             <span class="short">${type.toUpperCase()}</span>
@@ -999,7 +1006,7 @@ const saveProject = (asName) => {
 
     const cloudAccountName = localStorage.getItem('accountName');
     if (cloudAccountName) {
-        visualLog(`Uploading '${cloudAccountName}/${name}' to cloud ...`, 'info');
+        visualLog(`Uploading '${cloudAccountName}/${name}' to cloud ...`, 'cloud');
         // Logged in, save to cloud!
         fetch('/api/games-store/save-game', {
             method: 'POST',
@@ -1013,13 +1020,15 @@ const saveProject = (asName) => {
         .then(res => res.json())
         .then(result => {
             if (result.error) {
-                visualLog(`Failed to upload to cloud.`, 'error');
+                visualLog(`Failed to upload to cloud.`, 'cloud');
                 if (result.error.includes('session')) {
-                    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+                    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log in</a> again`, 'cloud');
                 }
             }
-            visualLog(`Saved to cloud as '${cloudAccountName}/${name}'`, 'debug');
+            visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'cloud');
         });
+    } else {
+        visualLog(`Saved as ${name}`, 'localonly');
     }
 
     visualLog(`Saved locally as '${name}'${overwrite ? ' (overwrote)' : ''}.${
@@ -1243,6 +1252,8 @@ const openProject = (data) => {
 
     // Load editor objects
     loadObjectsList(data.objects);
+
+    visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'localonly');
 }
 
 const listSaves = () => {
@@ -1285,7 +1296,7 @@ const listSaves = () => {
                 button.classList.add('list-item');
 
                 button.onclick = () => {
-                    visualLog(`Loading cloud save '${name}' ...`, 'info');
+                    visualLog(`Loading '${name}' ...`, 'cloud');
 
                     fetch(`/api/games-store/load-game`, {
                         method: 'POST',

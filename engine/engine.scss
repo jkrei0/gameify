@@ -213,7 +213,7 @@ $transition: 0.1s;
         }
     }
 
-    .account, .name {
+    .account, .progress, .name {
         font-family: $font;
         color: $text;
         padding-inline: 15px;
@@ -221,6 +221,10 @@ $transition: 0.1s;
     .account {
         position: absolute;
         right: 0;
+    }
+    .progress {
+        position: absolute;
+        left: 0;
     }
 }
 
