@@ -1460,3 +1460,38 @@ listSaves();
 
 visualLog('Loaded template project', 'debug');
 openProject(game_template);
+
+// Load project from hash
+const loadFromHash = () => {
+    if (window.location.hash) {
+        const accountName = window.location.hash.split('/')[0].replace('#', '');
+        const game = window.location.hash.split('/')[1];
+    
+        visualLog(`Loading '${accountName}/${game}' ...`, 'cloud');
+    
+        fetch(`/api/games-store/load-game`, {
+            method: 'POST',
+            body: JSON.stringify({
+                // no session key needed for loading
+                username: accountName,
+                title: game
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            if (result.error) {
+                visualLog(`Failed to load game '${game}' - ${result.error}`, 'warn');
+                if (result.error.includes('session')) {
+                    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+                }
+            }
+    
+            currentProjectFilename = game;
+            openProject(result.data);
+            visualLog(`Loaded cloud save '${game}'`, 'debug');
+        });
+    }
+}
+// will only do anything if the hash exists
+loadFromHash();
+window.onhashchange = loadFromHash;
