@@ -1024,8 +1024,9 @@ const saveProject = (asName) => {
                 if (result.error.includes('session')) {
                     visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log in</a> again`, 'cloud');
                 }
+            } else {
+                visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'cloud');
             }
-            visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'cloud');
         });
     } else {
         visualLog(`Saved as '${name}'`, 'localonly');
