@@ -85,6 +85,9 @@ export async function login(query) {
 }
 
 export async function saveGame(query) {
+    // Note: You can only save your own game (by design)
+    // because the username used to verify the session is the same as the
+    // one used to save the game.
     const result = await verifySession(query.username, query.sessionKey);
     if (result.error) return { error: result.error };
     if (!result.valid) return { error: 'session invalid' };
