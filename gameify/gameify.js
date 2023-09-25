@@ -17,6 +17,17 @@ console.log("Welcome to Gameify");
  */
 let $get = (sel) => { throw 'How\'d you access this?? (Bad $get)'; }
 
+/** Share objects between files / modules (in the engine).
+ * By default, variables/etc defined (in the engine) in one file aren't accessible in another.
+ * NOTE that shared variables are not automatically updated (copy, not reference).
+ * @example import {$share} from './_out.js';
+ * $share('my name', 'bob');
+ * console.log($share('my name')); // 'bob'
+ * @arg {String} name - A name for what you're sharing
+ * @arg {String} [obj] - The object/function/variable to share
+ */
+let $share = (sel, obj) => { throw 'How\'d you access this?? (Bad $share)'; }
+
 /** This is the main gameify object. All other things are contained within it. 
  * @global
  */

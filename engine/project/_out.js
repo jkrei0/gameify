@@ -17,7 +17,9 @@ if (!window.__s_objects) console.error('Failed to load game objects');
 
 const __objects = {};
 
-/** Access an object from the engine
+const __share = {};
+
+/** Access an object from the engine. Actual docs in gameify.js
  * @param {string} name - The name of the object to access
  */
 export const $get = (name) => {
@@ -53,6 +55,11 @@ export const $get = (name) => {
 
     return __objects[name];
 };
+/** Share other things. Actual docs in gameify.js */
+export const $share = (name, object) => {
+    if (object) __share[name] = object;
+    else return __share[name];
+}
 
 
 /* Error handling */
