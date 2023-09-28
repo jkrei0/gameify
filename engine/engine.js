@@ -81,29 +81,7 @@ window.addEventListener('click', (event) => {
 
 /* Visual Editor and Tools */
 
-let objects = {
-    'None': {
-        // Leave empty
-    },
-    'Screen': {
-        'Screen': new gameify.Screen(document.querySelector('#game-canvas'), 1200, 800)
-    },
-    'Scene': {
-        'Main Scene': new gameify.Scene()
-    },
-    'Tileset': {
-        'Dungeon Tiles': new gameify.Tileset('/sample/tilesheet.png', 64, 64)
-    },
-    'Tilemap': {
-        'Dungeon Map': new gameify.Tilemap(64, 64, 5, 5)
-    },
-    'Sprite': {
-        'Player': new gameify.Sprite(0, 0, {__engine_name: 'Image::Player Image'})
-    },
-    'Image': {
-        'Player Image': new gameify.Image('/sample/tilesheet.png')
-    }
-}
+let objects = { };
 
 /** A label and button
  * @param {string} text - Label text
