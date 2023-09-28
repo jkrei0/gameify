@@ -10,5 +10,6 @@
     "your_first_game": {
         "title": "Your First Game"
     },
-    "game_loop": {"title": "The Game Loop"}
+    "game_loop": {"title": "The Game Loop"},
+    "share_in_engine": {"title": "Sharing objects between files"}
 }

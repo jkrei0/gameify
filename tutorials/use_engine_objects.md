@@ -23,4 +23,6 @@ dungeonMap.offset.x += 1;
 ---
 Now that you're familiar with using objects, it's time to start making your game.
 
+Optional: {@tutorial share_in_engine}
+
 **Next: {@tutorial game_loop}**
