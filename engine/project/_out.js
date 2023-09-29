@@ -43,8 +43,16 @@ export const $get = (name) => {
                 console.warn(`Cannot deserialize ${type}::${oName}`);
                 return undefined;
             }
+
+            let constructor = gameify[type];
+            if (type.includes('.')) {
+                const module = type.split('.')[0];
+                const name = type.split('.')[1];
+                constructor = gameify[module][name];
+            }
+
             // Deserialize object (call constructor, then call deserializer with data and $get)
-            __objects[type + '::' + oName] = gameify[type]('_deserialize')(window.__s_objects[type][oName], $get);
+            __objects[type + '::' + oName] = constructor('_deserialize')(window.__s_objects[type][oName], $get);
             console.debug(`Loaded ${name}`);
 
         } else {
