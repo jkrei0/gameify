@@ -1,3 +1,4 @@
+import { gameify } from '/gameify/gameify.js';
 import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
 
@@ -31,6 +32,9 @@ export const engineTypes = {
             </svg>`,
             buildUI: (parent, obj) => {
                 parent.appendChild(engineUI.labelItem('No options available'));
+            },
+            newObject: (screen) => {
+                return undefined;
             }
         },
         'Tileset': {
@@ -58,6 +62,9 @@ export const engineTypes = {
 
                 })[0]);
                 parent.appendChild(engineUI.imageItem('Preview', obj.path)[0]);
+            },
+            newObject: (_screen) => {
+                return new gameify.Tileset('path/to/image.png', 64, 64);
             }
         },
         'Tilemap': {
@@ -84,6 +91,11 @@ export const engineTypes = {
                     // Screen.add(obj)
                     objects[v.split('::')[0]][v.split('::')[1]].add(obj);
                 }, obj.parent?.__engine_name)[0]);
+            },
+            newObject: (screen) => {
+                const obj = new gameify.Tilemap(64, 64, 0, 0);
+                screen.add(obj);
+                return obj;
             }
         },
         'Scene': {
@@ -95,6 +107,9 @@ export const engineTypes = {
                 parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
                     obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
                 }, obj.parent?.__engine_name)[0]);
+            },
+            newObject: (screen) => {
+                return new gameify.Scene(null);
             }
         },
         'Screen': {
@@ -160,6 +175,9 @@ export const engineTypes = {
                     console.log('Crop WH', x, y);
                     obj.crop(obj.getCrop().x || 0, obj.getCrop().y || 0, x, y);
                 })[0]);
+            },
+            newObject: (_screen) => {
+                return new gameify.Image('path/to/image.png');
             }
         },
         'Sprite': {
@@ -208,6 +226,11 @@ export const engineTypes = {
                     // Screen.add(obj)
                     objects[v.split('::')[0]][v.split('::')[1]].add(obj);
                 }, obj.parent?.__engine_name)[0]);
+            },
+            newObject: (screen) => {
+                const obj = new gameify.Sprite(0, 0, undefined);
+                screen.add(obj);
+                return obj;
             }
         }
     }

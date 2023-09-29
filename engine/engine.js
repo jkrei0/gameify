@@ -232,27 +232,16 @@ const populateObjectsList = () => {
         if (objects[type][name]) {
             visualLog(`Object with the name '${type}::${name}' already exists!`, 'error');
         }
-
-        const addToScreen = () => {
-            // Add the image to the default screen
-            Object.values(objects['Screen'])[0].add(objects[type][name]);
-        }
         
-        if (type === 'Tileset') {
-            objects[type][name] = new gameify.Tileset('path/to/image.png', 64, 64);
-        } else if (type === 'Tilemap') {
-            objects[type][name] = new gameify.Tilemap(64, 64, 0, 0);
-            addToScreen();
-        } else if (type === 'Sprite') {
-            objects[type][name] = new gameify.Sprite(0, 0, undefined);
-            addToScreen();
-        } else if (type === 'Image') {
-            objects[type][name] = new gameify.Image('path/to/image.png');
-        } else if (type === 'Scene') {
-            objects[type][name] = new gameify.Scene(null);
-        } else {
+        const defaultScreen = Object.values(objects['Screen'])[0];
+        const newObject = engineTypes.get(type, 'newObject')(defaultScreen);
+
+        if (!newObject) {
             visualLog(`You may not create a new ${type} object from the visual editor.`, 'error');
             return;
+
+        } else {
+            objects[type][name] = newObject;
         }
 
         visualLog(`Created new object '${type}::${name}'`, 'log');
