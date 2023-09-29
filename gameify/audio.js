@@ -100,6 +100,12 @@ export let audio = {
         this.setLoop = (loop) => {
             this.audio.loop = loop;
         }
+        /** Check if the sound is set to loop
+         * @return {Boolean} If the sound is set to loop
+         */
+        this.getLoop = () => {
+            return this.audio.loop;
+        }
 
         /** Get the duration of the audio (in seconds)
          * @return {Number} The duration of the sound in seconds
@@ -139,7 +145,19 @@ export let audio = {
                 console.warn('Volume should be between 0 and 1');
             }
             this._volume = Math.max(0, Math.min(1, volume));
-            this.audio.volume = this._volume * this.audioManager._volume;
+            this.audio.volume = this.getCalculatedVolume();
+        }
+        /** Get the volume of the sound
+         * @return {Number} The volume of the sound, between 0 and 1
+         */
+        this.getVolume = () => {
+            return this._volume;
+        }
+        /** Get the calculated volume of the sound (after audioManager volume is applied)
+         * @return {Number} The calculated volume of the sound, between 0 and 1
+         */
+        this.getCalculatedVolume = () => {
+            return this._volume * this.audioManager._volume;
         }
 
         /** Set a function to be run when the sound is loaded (Can be played through w/o buffering)
