@@ -5,6 +5,10 @@ import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js";
 
 import { serializeObjectsList } from '/engine/serialize.js';
 
+import { engineTypes } from '/engine/engine_types.js';
+import { engineUI } from '/engine/engine_ui.js';
+import { engineEvents } from '/engine/engine_events.js';
+
 /* Code Editor */
 
 const editorFileList = document.querySelector('#editor-list');
@@ -83,120 +87,13 @@ window.addEventListener('click', (event) => {
 
 let objects = { };
 
-/** A label and button
- * @param {string} text - Label text
- * @param {string} [btn] - Button text
- * @param {Function} [call] - Button onclick callback
- */
-const labelItem = (text, btn, call = ()=>{}) => {
-    const label = document.createElement('span');
-    label.classList.add('list-item');
-    label.classList.add('property');
-    label.innerHTML = text;
-    const button = document.createElement('button');
-    button.innerHTML = btn;
-    button.onclick = call;
-    if (btn !== undefined) label.append(button);
-    return label;
-}
-/** A label and input
-* @param {string} text - Label text
-* @param {string} [value] - Input value
-* @param {string} [type='text'] - Input type
-* @param {Function} [call] - Input onchange callback
-*/
-const inputItem = (text, value, type = 'text', call = ()=>{}) => {
-    const label = document.createElement('span');
-    label.classList.add('list-item');
-    label.classList.add('property');
-    label.innerHTML = text;
-    const input = document.createElement('input');
-    input.setAttribute('type', type);
-    if (value !== undefined) input.value = value;
-    if (value !== undefined && type == 'checkbox') input.checked = value;
-    if (type === 'file') {
-        input.onchange = ()=>{ call(input.files); }
-    } else if (type === 'checkbox') {
-        input.onchange = ()=>{ call(input.checked); }
-    } else if (type === 'number') {
-        input.onchange = ()=>{ call(Number(input.value)); }
-    } else {
-        input.onchange = ()=>{ call(input.value); }
-    }
-    label.append(input);
-    return [label, input];
-}
-const twoInputItem = (text, values = ['', ''], type = 'text', call = ()=>{}) => {
-    const label = document.createElement('span');
-    label.classList.add('list-item');
-    label.classList.add('property');
-    label.innerHTML = text;
-
-    const xvl = document.createElement('span');
-    xvl.classList.add('x-value-label');
-    label.appendChild(xvl);
-    const input = document.createElement('input');
-    input.setAttribute('type', type);
-    input.value = values[0];
-    if (type === 'number') input.onchange = ()=>{ call(Number(input.value), Number(input2.value)); };
-    else input.onchange = ()=>{ call(input.value, input2.value); };
-    label.append(input);
-
-    const yvl = document.createElement('span');
-    yvl.classList.add('y-value-label');
-    label.appendChild(yvl);
-    const input2 = document.createElement('input');
-    input2.setAttribute('type', type);
-    input2.value = values[1];
-    if (type === 'number') input2.onchange = ()=>{ call(Number(input.value), Number(input2.value)); };
-    else input2.onchange = ()=>{ call(input.value, input2.value); };
-    label.append(input2);
-
-    return [label, input, input2];
-}
-const selectItem = (text, options, call = ()=>{}, selected) => {
-    const label = document.createElement('span');
-    label.classList.add('list-item');
-    label.classList.add('property');
-    label.innerHTML = text;
-    const input = document.createElement('select');
-    input.onchange = () => {
-        if (input.value !== 'None::None') {
-            input.querySelector('option[value="None::None"]').setAttribute('disabled', true);
-        }
-        call(input.value);
-    };
-
-    input.innerHTML += `<option value="None::None" ${selected ? 'disabled' : ''}>- None -</option>`;
-    for (const opt of options) {
-        input.innerHTML += `<option ${selected === opt ? 'selected' : ''}>${opt}</option>`;
-    }
-    label.append(input);
-    return [label, input];
-}
-/** An image preview
-* @param {string} text - Label text
-* @param {string} source - Image source
-*/
-const imageItem = (text, source) => {
-    const label = document.createElement('span');
-    label.classList.add('list-item');
-    label.classList.add('property');
-    label.innerHTML = text;
-    const image = document.createElement('img');
-    image.classList.add('preview');
-    image.src = source;
-    label.append(image);
-    return [label, image];
-}
-
 const populateObjectsList = () => {
     const objList = document.querySelector('#node-list');
     objList.innerHTML = '';
 
     const types = [];
 
-    for (const setName in objects) {
+    for (const setName in engineTypes.types) {
         const set = objects[setName];
         types.push(setName);
 
@@ -214,40 +111,8 @@ const populateObjectsList = () => {
             details.classList.add('list-item');
             const summary = document.createElement('summary');
 
-            /* Icons */
-            let icon = '';
-            if (setName === 'Tileset') {
-                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-grid-3x3" viewBox="0 0 16 16">
-                        <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13zM1.5 1a.5.5 0 0 0-.5.5V5h4V1H1.5zM5 6H1v4h4V6zm1 4h4V6H6v4zm-1 1H1v3.5a.5.5 0 0 0 .5.5H5v-4zm1 0v4h4v-4H6zm5 0v4h3.5a.5.5 0 0 0 .5-.5V11h-4zm0-1h4V6h-4v4zm0-5h4V1.5a.5.5 0 0 0-.5-.5H11v4zm-1 0V1H6v4h4z"/>
-                    </svg>`;
-
-            } else if (setName === 'Tilemap') {
-                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-map" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.502.502 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103zM10 1.91l-4-.8v12.98l4 .8V1.91zm1 12.98 4-.8V1.11l-4 .8v12.98zm-6-.8V1.11l-4 .8v12.98l4-.8z"/>
-                    </svg>`;
-
-            } else if (setName === 'Scene') {
-                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-play-circle" viewBox="0 0 16 16">
-                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                        <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
-                    </svg>`;
-
-            } else if (setName === 'Screen') {
-                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-display" viewBox="0 0 16 16">
-                        <path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/>
-                    </svg>`;
-
-            } else if (setName === 'Image') {
-                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
-                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-                        <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
-                    </svg>`;
-
-            } else {
-                icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-box" viewBox="0 0 16 16">
-                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
-                    </svg>`;
-            }
+            // Get the type's icon
+            let icon = engineTypes.get(setName, 'icon');
 
             // Icon is a button that shows/hides the object
             const visibilityButton = document.createElement('button');
@@ -280,7 +145,7 @@ const populateObjectsList = () => {
 
             /* Property Items */
 
-            const [nameElem, selName] = inputItem('Name', objName, 'text', (newName) => {
+            const [nameElem, selName] = engineUI.inputItem('Name', objName, 'text', (newName) => {
                 newName = newName.replaceAll('::', '_');
                 if (set[newName]) {
                     visualLog(`Object with the name '${setName}::${newName}' already exists!`, 'error');
@@ -294,164 +159,16 @@ const populateObjectsList = () => {
             // Don't allow changing the name of locked items
             if (!obj.__engine_locked) details.appendChild(nameElem);
 
-            
-            const screens = [];
-            for (const scr in objects.Screen) { screens.push('Screen::' + scr); }
-            const scenes = [];
-            for (const scn in objects.Scene) { scenes.push('Scene::' + scn); }
-            const images = [];
-            for (const img in objects.Image) { images.push('Image::' + img); }
-            const tilesets = [];
-            for (const tst in objects.Tileset) { tilesets.push('Tileset::' + tst); }
-
             if (obj.__engine_locked) {
-                details.appendChild(labelItem(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                details.appendChild(engineUI.labelItem(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
                         <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
                         <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
                     </svg>
                     This object is locked
                 `));
-            } else if (setName === 'Tilemap') {
-                details.appendChild(labelItem('Edit map', 'Edit', () => {
-                    if (!obj.tileset) {
-                        visualLog('You need to add a tileset before you can edit the map', 'error', obj.__engine_name);
-                        return;
-                    }
-                    if (obj.__engine_editing) clearVisualEditor(obj);
-                    else editTileMap(obj);
-                }));
-                details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
-                    obj.twidth  = Number(x);
-                    obj.theight = Number(y);
-                })[0]);
-                details.appendChild(selectItem('Tileset', tilesets, (v) => {
-                    obj.setTileset(objects[v.split('::')[0]][v.split('::')[1]]);
-                }, obj.tileset?.__engine_name)[0]);
-                details.appendChild(selectItem('Screen', screens, (v) => {
-                    // Screen.add(obj)
-                    objects[v.split('::')[0]][v.split('::')[1]].add(obj);
-                }, obj.parent?.__engine_name)[0]);
-
-            } else if (setName === 'Tileset') {
-                details.appendChild(twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
-                    obj.twidth  = Number(x);
-                    obj.theight = Number(y);
-                })[0]);
-                details.appendChild(inputItem('File', obj.path, 'text', (v) => {
-                    obj.path = v;
-                })[0]);
-                details.appendChild(inputItem('Upload', undefined, 'file', (files) => {
-                    const file = files[0];
-                    const reader = new FileReader();
-                    reader.addEventListener('load', () => {
-                        const dataUrl = reader.result;
-                        // just make a new image, so it loads the file
-                        obj.changePath(dataUrl);
-                        populateObjectsList();
-                    });
-                    reader.readAsDataURL(file);
-
-                })[0]);
-                details.appendChild(imageItem('Preview', obj.path)[0]);
-            } else if (setName === 'Image') {
-                details.appendChild(inputItem('Path', obj.path, 'text', (v) => {
-                    // just make a new image, so it loads the file
-                    obj.changePath(v);
-                    populateObjectsList();
-                })[0]);
-                details.appendChild(inputItem('Upload', undefined, 'file', (files) => {
-                    const file = files[0];
-                    const reader = new FileReader();
-                    reader.addEventListener('load', () => {
-                        const dataUrl = reader.result;
-                        // just make a new image, so it loads the file
-                        obj.changePath(dataUrl);
-                        populateObjectsList();
-                    });
-                    reader.readAsDataURL(file);
-
-                })[0]);
-                details.appendChild(imageItem('Preview', obj.path)[0]);
-
-                details.appendChild(inputItem('Crop', obj.getCrop().cropped, 'checkbox', (v) => {
-                    console.log('Crop set', v)
-                    if (v === false) {
-                        obj.uncrop();
-                    } else if (v === true) {
-                        const pc = obj.getCrop();
-                        obj.crop(pc.x, pc.y, pc.width, pc.height);
-
-                    } else console.error('Checkbox value is', v);
-                })[0]);
-                details.appendChild(twoInputItem('Crop XY',  [obj.getCrop().x, obj.getCrop().y], 'number', (x, y) => {
-                    console.log('Crop XY', x, y);
-                    obj.crop(x, y, obj.getCrop().width || 0, obj.getCrop().height || 0);
-                })[0]);
-                details.appendChild(twoInputItem('Crop WH',  [obj.getCrop().width, obj.getCrop().height], 'number', (x, y) => {
-                    console.log('Crop WH', x, y);
-                    obj.crop(obj.getCrop().x || 0, obj.getCrop().y || 0, x, y);
-                })[0]);
-            } else if (setName === 'Sprite') {
-                details.appendChild(selectItem('Image', images.concat(tilesets), (v) => {
-                    if (v.split('::')[0] === 'Image') {
-                        obj.setImage(objects[v.split('::')[0]][v.split('::')[1]]);
-                    } else if (v.split('::')[0] === 'Tileset') {
-                        const tileset = objects[v.split('::')[0]][v.split('::')[1]];
-                        obj.setImage(tileset.getTile(tileX.value, tileY.value));
-                        // Nothing special about this format,
-                        // But that it identifies a derived image
-                        // The name after the :: has no special meaning
-                        obj.image.__engine_name = `Tileset/Image::${setName} ${objName}`;
-                    }
-                    updateTSPos();
-                }, obj.image?.__engine_name || obj.image?.tileData.tileset?.__engine_name)[0]);
-
-                const [tileLabel, tileX, tileY] = twoInputItem('Tile',  [0, 0], 'number', (x, y) => {
-                    obj.setImage(obj.image.tileData.tileset.getTile(tileX.value, tileY.value));
-                });
-                const updateTSPos = () => {
-                    if (obj.image?.tileData?.tileset) {
-                        tileLabel.style.display = '';
-                        tileX.value = obj.image.tileData.position.x;
-                        tileY.value = obj.image.tileData.position.y;
-                    } else {
-                        tileLabel.style.display = 'none';
-                    }
-                }
-                updateTSPos();
-                details.appendChild(tileLabel);
-
-                details.appendChild(twoInputItem('Position',  [obj.position.x, obj.position.y], 'number', (x, y) => {
-                    obj.position.x = Number(x);
-                    obj.position.y = Number(y);
-                })[0]);
-                details.appendChild(inputItem('Scale', obj.scale, 'number', (v) => {
-                    obj.scale = Number(v);
-                })[0]);
-                details.appendChild(selectItem('Screen', screens, (v) => {
-                    // Screen.add(obj)
-                    objects[v.split('::')[0]][v.split('::')[1]].add(obj);
-                }, obj.parent?.__engine_name)[0]);
-
-            } else if (setName === 'Screen') {
-                details.appendChild(inputItem('Canvas', obj.element.id, 'text', (v) => {
-                    obj.element = document.getElementById(obj.element.id);
-                })[0]);
-                details.appendChild(twoInputItem('Size',  [obj.width, obj.height], 'number', (x, y) => {
-                    obj.setSize(x, y);
-                })[0]);
-                details.appendChild(selectItem('Start Scene', scenes, (v) => {
-                    obj.setScene(objects[v.split('::')[0]][v.split('::')[1]]);
-                }, obj.currentScene?.__engine_name)[0]);
-
-                details.appendChild(selectItem('Antialiasing', ['On', 'Off'], (v) => {
-                    obj.setAntialiasing(v === 'On');
-                }, obj.getAntialiasing() ? 'On' : 'Off')[0]);
-
-            } else if (setName === 'Scene') {
-                details.appendChild(selectItem('Screen', screens, (v) => {
-                    obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
-                }, obj.parent?.__engine_name)[0]);
+            } else {
+                // Call the type's buildUI function
+                engineTypes.get(setName, 'buildUI')(details, obj, objects);
             }
 
             /* Delete Button */
@@ -499,9 +216,9 @@ const populateObjectsList = () => {
     details.appendChild(summary); 
 
     const rand = Math.floor(Math.random() * 1000);
-    const [nameElem, selName] = inputItem('Name', 'New Object ' + rand, 'text');
+    const [nameElem, selName] = engineUI.inputItem('Name', 'New Object ' + rand, 'text');
     details.appendChild(nameElem);
-    const [typeElem, selType] = selectItem('Type', types, 'text', 'Sprite');
+    const [typeElem, selType] = engineUI.selectItem('Type', types, 'text', 'Sprite');
     details.appendChild(typeElem);
 
     const addButton = document.createElement('button');
@@ -545,6 +262,7 @@ const populateObjectsList = () => {
     objList.appendChild(details);
 
 }
+engineEvents.listen('refresh objects list', () => populateObjectsList());
 
 const loadObjectsList = (data) => {
     const loadObject = (query) => {
@@ -772,6 +490,7 @@ const editTileMap = (map) => {
 
     });
 }
+engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
 
 const clearVisualEditor = () => {
     visualLog(`Cleared tilemap editor`, 'info', 'tilemap editor');
@@ -785,6 +504,7 @@ const clearVisualEditor = () => {
     }
     editorScreen.setScene(previewScene);
 }
+engineEvents.listen('clear visual editor', () => clearVisualEditor());
 
 // Populate list after editor setup
 populateObjectsList();
