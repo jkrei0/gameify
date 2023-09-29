@@ -53,6 +53,60 @@ export const engineUI = {
         label.append(image);
         return [label, image];
     },
+    /** Generates an audio preview item.
+     * @param {string} text - The text to be displayed in the label.
+     * @param {string} source - The source URL for the audio element.
+     * @return {HTMLElement[]} An array containing the label and the audio element.
+     */
+    audioItem: (text, source) => {
+        const label = document.createElement('span');
+        label.classList.add('list-item');
+        label.classList.add('property');
+        label.innerHTML = text;
+        const audio = document.createElement('audio');
+        audio.classList.add('preview');
+        audio.src = source;
+        audio.volume = 0.1;
+
+        const playpause = document.createElement('button');
+        playpause.classList.add('icon-button');
+        const playIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-play" viewBox="0 0 16 16">
+            <path d="M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z"/>
+        </svg>`;
+        const pauseIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-pause" viewBox="0 0 16 16">
+            <path d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/>
+        </svg>`;
+        const brokenIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-file-earmark-x" viewBox="0 0 16 16">
+            <path d="M6.854 7.146a.5.5 0 1 0-.708.708L7.293 9l-1.147 1.146a.5.5 0 0 0 .708.708L8 9.707l1.146 1.147a.5.5 0 0 0 .708-.708L8.707 9l1.147-1.146a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146z"/>
+            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+        </svg>`
+        playpause.innerHTML = playIcon;
+        playpause.onclick = () => {
+            if (audio.paused) {
+                playpause.innerHTML = pauseIcon;
+                audio.play().catch(() => {
+                    playpause.innerHTML = brokenIcon;
+                });
+            } else {
+                playpause.innerHTML = playIcon;
+                audio.pause();
+            }
+        }
+
+        const volume = document.createElement('input');
+        volume.setAttribute('type', 'number');
+        volume.value = audio.volume * 100;
+        volume.onchange = () => {
+            if (volume.value < 1) volume.value = 1;
+            if (volume.value  > 100) volume.value = 100;
+            audio.volume = volume.value / 100;
+        }
+
+        label.append(playpause);
+        label.append(volume);
+        label.append(audio);
+        return [label, audio];
+    },
     /** Generates a selection box form item
     *
     * @param {string} text - Label text

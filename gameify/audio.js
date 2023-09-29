@@ -65,6 +65,20 @@ export let audio = {
      * @arg {String} path - The path to the sound file
      */
     Sound: function (path) {
+        if (path === '_deserialize') {
+            // data - saved data
+            // find - a function to find an object based on a saved name
+            return (data, find) => {
+                const obj = new audio.Sound(data[0]);
+                obj.setLoop(data[1]);
+                obj.setVolume(data[2]);
+                return obj;
+            }
+        }
+        // name - a function to generate a name for an object to be restored later
+        this.serialize = (name) => {
+            return [this.path, this.getLoop(), this.getVolume()];
+        }
 
         /** The sound path. Modifying this will not do anything.
          * @readonly

@@ -277,6 +277,12 @@ body, html {
   cursor: pointer;
   transition: 0.1s;
 }
+.list .list-item > :is(button, input, select).icon-button {
+  padding: 5px;
+}
+.list .list-item > :is(button, input, select).icon-button svg {
+  margin-inline: 3px;
+}
 .list .list-item > :is(button, input, select):hover {
   background: #3a3d4f;
 }

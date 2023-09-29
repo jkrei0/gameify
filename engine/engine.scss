@@ -330,6 +330,15 @@ $transition: 0.1s;
             background: $dark;
             border: none;
             padding: 5px 15px;
+
+            &.icon-button {
+                padding: 5px;
+
+                svg {
+                    margin-inline: 3px;
+                }
+            }
+
             font-family: $labeltext;
             font-size: 1rem;
             cursor: pointer;
