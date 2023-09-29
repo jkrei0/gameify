@@ -160,6 +160,21 @@ export let audio = {
             return this._volume * this.audioManager._volume;
         }
 
+        /** Change and load a new image path. Resets the image's crop
+         * @param {string} path - The new image path
+         */
+        this.changePath = (path) => {
+            this.path = path;
+            if (path !== undefined) {
+                this.audio = document.createElement('audio');
+                this.audio.src = path;
+                this.audio.oncanplaythrough = () => {
+                    this.loaded = true;
+                    if (this.loadFunction) { this.loadFunction(); }
+                }
+            }
+        }
+
         /** Set a function to be run when the sound is loaded (Can be played through w/o buffering)
          * @param {Function} callback - The function to be called when the sound is loaded.
          */
@@ -168,13 +183,6 @@ export let audio = {
         }
 
         this.audio = undefined;
-        if (path !== undefined) {
-            this.audio = document.createElement('audio');
-            this.audio.src = path;
-            this.audio.oncanplaythrough = () => {
-                this.loaded = true;
-                if (this.loadFunction) { this.loadFunction(); }
-            }
-        }
+        this.changePath(path);
     }
 }
