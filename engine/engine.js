@@ -94,6 +94,7 @@ const populateObjectsList = () => {
     const types = [];
 
     for (const setName in engineTypes.types) {
+        if (!objects[setName]) objects[setName] = {};
         const set = objects[setName];
         types.push(setName);
 
@@ -218,7 +219,7 @@ const populateObjectsList = () => {
     const rand = Math.floor(Math.random() * 1000);
     const [nameElem, selName] = engineUI.inputItem('Name', 'New Object ' + rand, 'text');
     details.appendChild(nameElem);
-    const [typeElem, selType] = engineUI.selectItem('Type', types, 'text', 'Sprite');
+    const [typeElem, selType] = engineUI.selectItem('Type', types, undefined, 'Sprite');
     details.appendChild(typeElem);
 
     const addButton = document.createElement('button');
