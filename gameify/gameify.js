@@ -471,6 +471,13 @@ export let gameify = {
          */
         this.context = this.element.getContext("2d");
 
+        /** Get the screen's HTML5 canvas context
+         * @returns {CanvasRenderingContext2D} - The canvas context
+         */
+        this.getContext = () => {
+            return this.context;
+        }
+
         /** Keyboard events for the Screen. Used to see what keys are pressed.
          * @type {gameify.KeyboardEventManager}
          */
