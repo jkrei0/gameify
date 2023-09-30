@@ -37,6 +37,40 @@ export const engineTypes = {
                 return undefined;
             }
         },
+        'Screen': {
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-display" viewBox="0 0 16 16">
+                <path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/>
+            </svg>`,
+            buildUI: (parent, obj, objects) => {
+                parent.appendChild(engineUI.inputItem('Canvas', obj.element.id, 'text', (v) => {
+                    obj.element = document.getElementById(obj.element.id);
+                })[0]);
+                parent.appendChild(engineUI.twoInputItem('Size',  [obj.width, obj.height], 'number', (x, y) => {
+                    obj.setSize(x, y);
+                })[0]);
+                parent.appendChild(engineUI.selectItem('Start Scene', list(objects, ['Scene']), (v) => {
+                    obj.setScene(objects[v.split('::')[0]][v.split('::')[1]]);
+                }, obj.currentScene?.__engine_name)[0]);
+
+                parent.appendChild(engineUI.selectItem('Antialiasing', ['On', 'Off'], (v) => {
+                    obj.setAntialiasing(v === 'On');
+                }, obj.getAntialiasing() ? 'On' : 'Off')[0]);
+            }
+        },
+        'Scene': {
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-play-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
+            </svg>`,
+            buildUI: (parent, obj, objects) => {
+                parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
+                    obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
+                }, obj.parent?.__engine_name)[0]);
+            },
+            newObject: (screen) => {
+                return new gameify.Scene(null);
+            }
+        },
         'Tileset': {
             icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-grid-3x3" viewBox="0 0 16 16">
                 <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13zM1.5 1a.5.5 0 0 0-.5.5V5h4V1H1.5zM5 6H1v4h4V6zm1 4h4V6H6v4zm-1 1H1v3.5a.5.5 0 0 0 .5.5H5v-4zm1 0v4h4v-4H6zm5 0v4h3.5a.5.5 0 0 0 .5-.5V11h-4zm0-1h4V6h-4v4zm0-5h4V1.5a.5.5 0 0 0-.5-.5H11v4zm-1 0V1H6v4h4z"/>
@@ -96,40 +130,6 @@ export const engineTypes = {
                 const obj = new gameify.Tilemap(64, 64, 0, 0);
                 screen.add(obj);
                 return obj;
-            }
-        },
-        'Scene': {
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-play-circle" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
-            </svg>`,
-            buildUI: (parent, obj, objects) => {
-                parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
-                    obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
-                }, obj.parent?.__engine_name)[0]);
-            },
-            newObject: (screen) => {
-                return new gameify.Scene(null);
-            }
-        },
-        'Screen': {
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-display" viewBox="0 0 16 16">
-                <path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/>
-            </svg>`,
-            buildUI: (parent, obj, objects) => {
-                parent.appendChild(engineUI.inputItem('Canvas', obj.element.id, 'text', (v) => {
-                    obj.element = document.getElementById(obj.element.id);
-                })[0]);
-                parent.appendChild(engineUI.twoInputItem('Size',  [obj.width, obj.height], 'number', (x, y) => {
-                    obj.setSize(x, y);
-                })[0]);
-                parent.appendChild(engineUI.selectItem('Start Scene', list(objects, ['Scene']), (v) => {
-                    obj.setScene(objects[v.split('::')[0]][v.split('::')[1]]);
-                }, obj.currentScene?.__engine_name)[0]);
-
-                parent.appendChild(engineUI.selectItem('Antialiasing', ['On', 'Off'], (v) => {
-                    obj.setAntialiasing(v === 'On');
-                }, obj.getAntialiasing() ? 'On' : 'Off')[0]);
             }
         },
         'Image': {
