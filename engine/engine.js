@@ -690,7 +690,16 @@ const saveProject = (asName) => {
     for (const file in files) {
         saved.files[file] = files[file].getValue();
     }
-    localStorage.setItem('savedObjects:' + name, JSON.stringify(saved));
+
+    let success = false;
+    try {
+        localStorage.setItem('savedObjects:' + name, JSON.stringify(saved));
+        success = true;
+    } catch (e) {
+        console.error(e);
+        alert('Your project could not be saved locally (likely because your files are too large)');
+        visualLog(`FAILED to save project, an error occurred!`, 'error');
+    }
 
     const cloudAccountName = localStorage.getItem('accountName');
     if (cloudAccountName) {
@@ -720,9 +729,11 @@ const saveProject = (asName) => {
         visualLog(`Saved as '${name}'`, 'localonly');
     }
 
-    visualLog(`Saved locally as '${name}'${overwrite ? ' (overwrote)' : ''}.${
-        cloudAccountName ? '' : ' <a href="./auth.html" target="_blank">Log in</a> to save to cloud.'
-    }`, 'debug');
+    if (success) {
+        visualLog(`Saved locally as '${name}'${overwrite ? ' (overwrote)' : ''}.${
+            cloudAccountName ? '' : ' <a href="./auth.html" target="_blank">Log in</a> to save to cloud.'
+        }`, 'debug');
+    }
     listSaves();
 
     currentProjectFilename = name;
