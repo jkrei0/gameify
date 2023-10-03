@@ -921,6 +921,34 @@ export let gameify = {
         }
     },
 
+    /** A tile as part of a tilemap
+     * @constructor
+     * @arg {Number} x - The x coordinate of the tile
+     * @arg {Number} y - The y coordinate of the tile
+     * @arg {Number} sourcex - The source x coordinate of the tile
+     * @arg {Number} sourcey - The source y coordinate of the tile
+     * @arg {Number} [rotation=0] - The rotation of the tile
+     * @arg {gameify.Image} image - The tile's Image (reference)
+    */
+    Tile: function (x, y, sx, sy, r = 0, image) {
+        /** The tile's Image
+         * @type {gameify.Image}
+         */
+        this.image = image;
+        /** The tile's position in the tilemap
+         * @type {gameify.Vector2d}
+         */
+        this.position = new gameify.Vector2d(x, y);
+        /** The tile's source coordinates
+         * @type {gameify.Vector2d}
+         */
+        this.source = new gameify.Vector2d(sx, sy);
+        /** The tile's rotation
+         * @type {Number}
+         */
+        this.rotation = r;
+    },
+
     /** Creates a map of rectangular tiles
      * @example // ...
      * // make a new tileset with 8x8 pixels
@@ -1065,26 +1093,37 @@ export let gameify = {
             }
 
             // add the tile to the list of placed tiles
-            this.tiles.placed[destx][desty] = {
-                image: this.tiles[`${originx},${originy}`],
-                source: {
-                    x: originx,
-                    y: originy
-                },
-                rotation: rotation || 0
-            };
+            this.tiles.placed[destx][desty] = new gameify.Tile(
+                destx, desty,       // destination position
+                originx, originy,   // source position
+                rotation || 0,      // rotation
+                this.tiles[`${originx},${originy}`] // gameify.Image
+            )
         }
 
         /** Get the tile (if it exists) placed at a certain position
          * @param {Number} x - X coordinate of the tile
          * @param {Number} y - Y coordinate of the tile
-         * @return {Object} { image, source: {originX, originY}, rotation }
+         * @return {gameify.Tile}
          */
         this.get = (x, y) => {
             if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
                 return this.tiles.placed[x][y];
 
             } else return undefined;
+        }
+
+        /** Get an array of all the tiles in the map
+         * @return {gameify.Tile[]}
+         */
+        this.listTiles = () => {
+            const out = [];
+            for (const x in this.tiles.placed) {
+                for (const y in this.tiles.placed[x]) {
+                    out.push(this.tiles.placed[x][y]);
+                }
+            }
+            return out;
         }
 
         /** Remove a tile from the tilemap
