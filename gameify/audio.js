@@ -161,7 +161,10 @@ export let audio = {
             this._volume = Math.max(0, Math.min(1, volume));
             this.audio.volume = this.getCalculatedVolume();
         }
-        /** Get the volume of the sound
+        /** Get the volume of the sound. Note that this volume is mixed with the
+         * audioManager's volume to get the actual volume. Use getCalculatedVolume()
+         * to get the actual volume the sound will be played at.
+         * @see {gameify.audio.Sound.getCalculatedVolume}
          * @return {Number} The volume of the sound, between 0 and 1
          */
         this.getVolume = () => {
