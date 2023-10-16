@@ -203,10 +203,10 @@ export let vectors = {
             return new vectors.Vector2d(this.x + (vectorB.x - this.x) * t, this.y + (vectorB.y - this.y) * t);
         }
         /** Truncates the x and y values to a certain precision
-         * @param {Number} precision - Values after the decimal to keep
+         * @param {Number} [precision=0] - Values after the decimal to keep
          * @returns {gameify.Vector2d} The vector with truncated values
          */
-        this.truncated = (precision) => {
+        this.truncated = (precision = 0) => {
             const amt = 10 ** precision;
             return new vectors.Vector2d(
                 Math.floor(this.x * amt)/amt,
