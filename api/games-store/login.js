@@ -2,7 +2,6 @@
 import { login } from './mongo.js';
 
 export default async function handler(request, response) {
-    console.log(request.body);
 
     let body;
     try {
