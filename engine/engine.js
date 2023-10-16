@@ -719,7 +719,7 @@ const saveProject = (asName) => {
             if (result.error) {
                 visualLog(`Failed to upload to cloud.`, 'cloud');
                 if (result.error.includes('session')) {
-                    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log in</a> again`, 'cloud');
+                    notifySessionExpired();
                 }
             } else {
                 visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'cloud');
@@ -956,6 +956,13 @@ const openProject = (data) => {
     visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'localonly');
 }
 
+const notifySessionExpired = () => {
+    localStorage.removeItem('accountName');
+    localStorage.removeItem('accountSessionKey');
+    document.querySelector('#login-link').innerHTML = 'Log In';
+    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+}
+
 const listSaves = () => {
     const listElem = document.querySelector('#load-save-list');
     listElem.innerHTML = '';
@@ -986,8 +993,9 @@ const listSaves = () => {
             if (result.error) {
                 visualLog(`Failed to list cloud saves.`, 'warn');
                 if (result.error.includes('session')) {
-                    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+                    notifySessionExpired();
                 }
+                return;
             }
 
             for (const game of result.games) {
@@ -1011,8 +1019,9 @@ const listSaves = () => {
                         if (result.error) {
                             visualLog(`Failed to load game '${name}' - ${result.error}`, 'warn');
                             if (result.error.includes('session')) {
-                                visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+                                notifySessionExpired();
                             }
+                            return;
                         }
 
                         currentProjectFilename = name;
@@ -1182,8 +1191,9 @@ const loadFromHash = () => {
             if (result.error) {
                 visualLog(`Failed to load game '${game}' - ${result.error}`, 'warn');
                 if (result.error.includes('session')) {
-                    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+                    notifySessionExpired();
                 }
+                return;
             }
     
             currentProjectFilename = game;
