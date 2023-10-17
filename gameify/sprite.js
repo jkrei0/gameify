@@ -168,7 +168,9 @@ export let sprites = {
 
         let deltaWarned = false;
 
-        /** Update the Sprite */
+        /** Update the Sprite
+         * @param {Number} [delta] - The time, in miliseconds, since the last frame
+        */
         this.update = (delta) => {
             if (delta === undefined) {
                 delta = 1000;
