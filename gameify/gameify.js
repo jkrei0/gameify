@@ -4,7 +4,8 @@ import { sprites }  from "./sprite.js"
 import { scenes }   from "./scene.js"
 import { vectors }  from "./vector.js"
 import { text }     from "./text.js"
-import { audio }     from "./audio.js"
+import { audio }    from "./audio.js"
+import { camera }   from "./camera.js"
 "use strict"
 
 console.log("Welcome to Gameify");
@@ -34,6 +35,7 @@ let $share = (sel, obj) => { throw 'How\'d you access this?? (Bad $share)'; }
 export let gameify = {
     getDocs: docs.getDocs,
 
+    Camera: camera.Camera,
     Vector2d: vectors.Vector2d,
     vectors: vectors.vectors,
 
@@ -496,6 +498,11 @@ export let gameify = {
         this.audio = new gameify.audio.AudioManager();
         this.audio.setVolume(0.5);
 
+        /** This screen's default Camera.
+         * @type {gameify.Camera}
+         */ 
+        this.camera = new gameify.Camera(this.context);
+
         /** Get the Screen's canvas context 
          * @private
          */
@@ -659,6 +666,7 @@ export let gameify = {
                 lastUpdate = time;
                 // if delta is zero, pass one instead (bc of div-by-zero errors)
                 this.currentScene.update(delta || 1);
+                this.camera.update(delta || 1);
                 this.currentScene.draw();
                 
                 if (gameActive) {
