@@ -527,16 +527,6 @@ const maxMessages = 1000
 window.addEventListener('message', (event) => {
     numMessages += 1;
     totalMessages += 1;
-    if (totalMessages > maxMessages) {
-        return;
-    } else if (totalMessages === maxMessages) {
-        consoleOut.innerHTML += `<span class="log-item error">
-            <span class="short">OVERFLOW</span>
-            <span class="message">Output overflow - Print less logs</span>
-            <span class="source">console</span>
-        </span>`;
-        return;
-    }
 
     if (numMessages > 200) {
         consoleOut.innerHTML = '';
