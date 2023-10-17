@@ -538,6 +538,9 @@ export let gameify = {
          * @arg {String} [color] - The color to clear to, e.g. #472d3c or rgb(123, 123, 123). Default is transparent
         */
         this.clear = (color) => {
+            this.context.save();
+            this.context.setTransform(1, 0, 0, 1, 0, 0);
+
             this.context.clearRect(0, 0, this.width, this.height);
 
             if (color) {
@@ -546,6 +549,8 @@ export let gameify = {
                 this.context.fillStyle = color;
                 this.context.fill();
             }
+            // Restore transformations
+            this.context.restore();
         }
 
         /** Changes the width of the Screen
