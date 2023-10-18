@@ -644,10 +644,19 @@ document.querySelector('#play-button').addEventListener('click', () => {
 document.querySelector('#code-button').addEventListener('click', () => {
     showWindow('editor');
 });
+document.querySelector('#docs-button').addEventListener('click', () => {
+    showWindow('docs');
+});
 document.querySelector('#visual-button').addEventListener('click', () => {
     showWindow('visual');
 });
 
+const docsIFrame = document.querySelector('#docs-iframe');
+docsIFrame.onload = () => {
+    if (String(docsIFrame.contentWindow.location).endsWith('/out/')) {
+        docsIFrame.contentWindow.location = '/out/tutorial-engine_home.html';
+    }
+}
 
 let currentProjectFilename = undefined;
 

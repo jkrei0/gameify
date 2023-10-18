@@ -11,5 +11,9 @@
         "title": "Your First Game"
     },
     "game_loop": {"title": "The Game Loop"},
-    "share_in_engine": {"title": "Sharing objects between files"}
+    "share_in_engine": {"title": "Sharing objects between files"},
+    "engine_home": {
+        "title":
+"<span style=\"background: transparent; cursor: default; margin: -.25rem -2rem; position: relative; height: .5rem; display: block;\" onclick=\"event.stopPropagation(); event.preventDefault();\"></span>"
+    }
 }
