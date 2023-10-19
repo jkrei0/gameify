@@ -13,6 +13,44 @@ if (accountName !== null) {
         location.reload();
     }
 
+    const changePasswordButton = document.querySelector('#change-password-button');
+    changePasswordButton.onclick = () => {
+        const oldPass = document.querySelector('#chp-old-password').value;
+        const newPass = document.querySelector('#chp-new-password').value;
+        const repeatPass = document.querySelector('#chp-repeat-password').value;
+
+        if (newPass !== repeatPass) {
+            changePasswordButton.innerHTML = 'Passwords do not match';
+            repeatPass.value = '';
+            return;
+        }
+
+        console.log(newPass);
+
+        changePasswordButton.innerHTML = 'Updating...';
+        fetch('/api/games-store/change-password', {
+            method: 'POST',
+            body: JSON.stringify({
+                username: accountName,
+                password: oldPass,
+                new_password: newPass,
+                sessionKey: localStorage.getItem('accountSessionKey'),
+            })
+        })
+        .then (res => res.json())
+        .then(result => {
+            if (result.error) {
+                if (result.error.includes('session')) {
+                    document.querySelector('#sign-out-button').click();
+                }
+            } else if (result.success) {
+                changePasswordButton.innerHTML = 'Password updated!';
+            } else {
+                changePasswordButton.innerHTML = 'Try again';
+            }
+        })
+    }
+
     const listElem = document.querySelector('#projects-list');
 
     const cloudLoadingIndicator = document.createElement('span');

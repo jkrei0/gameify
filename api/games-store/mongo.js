@@ -46,12 +46,12 @@ async function verifySession(username, sessionKey) {
     });
 }
 
-export async function hashPassword(pass) {
-
-    bcrypt.hash(pass, 10, function (err, hash) {
-        console.log(hash);
+export async function hashPassword(pass, callback) {
+    return new Promise(function (resolve, reject) {
+        bcrypt.hash(pass, 10, function (err, hash) {
+            resolve(hash);
+        });
     });
-
 }
 
 export async function login(query) {
@@ -82,6 +82,35 @@ export async function login(query) {
 
         return { sessionKey: key };
 
+    });
+}
+
+export async function changePassword(query) {
+    const result = await verifySession(query.username, query.sessionKey);
+    if (result.error) return { error: result.error };
+    if (!result.valid) return { error: 'session invalid' };
+
+    return connect(async (database) => {
+        const accounts = database.collection("accounts");
+        const user = await accounts.findOne({ username: query.username });
+
+        if (!user) return { error: 'incorrect username or password' };
+        const pass_correct = await bcrypt.compare(query.password, user.password);
+        if (pass_correct !== true) return { error: 'incorrect username or password' };
+
+        console.log(query.new_password);
+        const newPassword = await hashPassword(query.new_password);
+
+        if (!newPassword) return { error: 'error updating password' };
+
+        const result = await accounts.updateOne({
+            username: query.username,
+        }, { $set: {
+            password: newPassword
+        }});
+
+        if (result.modifiedCount === 0) return { error: 'error updating password' };
+        else return { success: true };
     });
 }
 
