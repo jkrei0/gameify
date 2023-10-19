@@ -75,9 +75,21 @@ if (accountName !== null) {
 
         for (const game of result.games) {
             const name = game.title
-            const button = document.createElement('span');
+            const button = document.createElement('button');
             button.classList.add('list-item');
+            button.onclick = () => {
+                window.location.href = `/engine/engine.html#${accountName}/${name}`;
+            }
             button.innerText = name;
+
+            const playButton = document.createElement('button');
+            playButton.onclick = () => {
+                window.open(`${window.location.protocol}//${window.location.host}/engine/play.html#${cloudAccountName}/${name}`, '_blank');
+            }
+            playButton.classList.add('right');
+            playButton.innerText = 'Play';
+            button.appendChild(playButton);
+
             listElem.append(button);
         }
     });
