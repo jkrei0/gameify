@@ -98,7 +98,6 @@ export async function changePassword(query) {
         const pass_correct = await bcrypt.compare(query.password, user.password);
         if (pass_correct !== true) return { error: 'incorrect username or password' };
 
-        console.log(query.new_password);
         const newPassword = await hashPassword(query.new_password);
 
         if (!newPassword) return { error: 'error updating password' };

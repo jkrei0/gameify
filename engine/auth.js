@@ -25,8 +25,6 @@ if (accountName !== null) {
             return;
         }
 
-        console.log(newPass);
-
         changePasswordButton.innerHTML = 'Updating...';
         fetch('/api/games-store/change-password', {
             method: 'POST',
