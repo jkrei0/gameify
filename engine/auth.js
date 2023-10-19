@@ -73,6 +73,7 @@ if (accountName !== null) {
 
             } else {
                 loginButton.innerHTML = 'Try again';
+                if (data.error.includes('server error')) loginButton.innerHTML = 'Server Error';
             }
         }).catch(() => {
             loginButton.innerHTML = 'Server Error';

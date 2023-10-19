@@ -65,6 +65,7 @@ export async function login(query) {
         const user = await accounts.findOne({ username: query.username });
 
         if (!user) return { error: 'incorrect username or password' };
+        if (!user.password) return { error: 'server error' };
         const pass_correct = await bcrypt.compare(query.password, user.password);
         if (pass_correct !== true) return { error: 'incorrect username or password' };
 
