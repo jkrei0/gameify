@@ -33,3 +33,7 @@ The app attempts to connect to a `gameify` database, with the following collecti
 - `accounts`
 - `sessions`
 - `games`
+
+### Wishlist
+
+Read [wishlist.md](wishlist.md) for a list of things I'd like to add at some point.
