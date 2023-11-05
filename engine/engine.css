@@ -346,6 +346,9 @@ body, html {
 .list .list-item a {
   color: inherit;
 }
+.list .list-item a.clean {
+  text-decoration: none;
+}
 .list .list-item img.preview {
   max-height: 80px;
   margin-left: auto;
@@ -485,24 +488,33 @@ body, html {
   background: transparent;
 }
 
-.visual-editor-controls {
+.editor-controls {
   flex-grow: 0;
   padding: 5px;
-  padding-bottom: 10px;
   background: #335;
 }
-.visual-editor-controls .legend {
+.editor-controls:not(.docs) {
+  padding-bottom: 10px;
+}
+.editor-controls .legend {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
 }
-.visual-editor-controls .legend button {
+.editor-controls .legend button {
   cursor: pointer;
 }
-.visual-editor-controls .legend button:first-of-type {
+.editor-controls .legend button:first-of-type {
   margin-left: auto;
 }
-.visual-editor-controls .legend span, .visual-editor-controls .legend button {
+.editor-controls .legend input:hover, .editor-controls .legend button:hover {
+  background: #448;
+  transition: 0.1s;
+}
+.editor-controls .legend input.wide, .editor-controls .legend button.wide {
+  flex-grow: 1;
+}
+.editor-controls .legend span, .editor-controls .legend button, .editor-controls .legend input {
   border: none;
   background: transparent;
   padding: 5px 10px;
@@ -514,11 +526,14 @@ body, html {
   white-space: nowrap;
   color: white;
 }
-.visual-editor-controls .legend span svg, .visual-editor-controls .legend span img, .visual-editor-controls .legend button svg, .visual-editor-controls .legend button img {
+.editor-controls .legend span:is(input), .editor-controls .legend button:is(input), .editor-controls .legend input:is(input) {
+  font-size: 14px;
+}
+.editor-controls .legend span svg, .editor-controls .legend span img, .editor-controls .legend button svg, .editor-controls .legend button img, .editor-controls .legend input svg, .editor-controls .legend input img {
   height: 16px;
   margin-right: 5px;
 }
-.visual-editor-controls .tile-list {
+.editor-controls .tile-list {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -530,15 +545,15 @@ body, html {
   min-height: 75px;
   overflow-y: scroll;
 }
-.visual-editor-controls .tile-list .tile {
+.editor-controls .tile-list .tile {
   background: repeating-conic-gradient(rgba(0, 0, 0, 0) 0% 25%, rgba(255, 255, 255, 0.0666666667) 0% 50%) 50%/80px 80px;
 }
-.visual-editor-controls .tile-list .tile.selected {
+.editor-controls .tile-list .tile.selected {
   outline: 2px solid #ebe;
 }
-.visual-editor-controls .tile-list .tile:hover {
+.editor-controls .tile-list .tile:hover {
   outline: 2px solid #bbf;
 }
-.visual-editor-controls .tile-list .row-break {
+.editor-controls .tile-list .row-break {
   width: 100%;
 }/*# sourceMappingURL=engine.css.map */

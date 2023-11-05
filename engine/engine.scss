@@ -597,12 +597,14 @@ $transition: 0.1s;
     z-index: 99;
 }
 
-.visual-editor-controls {
+.editor-controls {
     flex-grow: 0;
     padding: 5px;
-    padding-bottom: 10px;
-
+    &:not(.docs){
+        padding-bottom: 10px;
+    }
     background: $background;
+
 
     .legend {
         display: flex;
@@ -617,7 +619,18 @@ $transition: 0.1s;
             }
         }
 
-        span, button {
+        input, button {
+            &:hover {
+                background: $secondary;
+                transition: 0.1s;
+            }
+
+            &.wide {
+                flex-grow: 1;
+            }
+        }
+
+        span, button, input {
             border: none;
             background: transparent;
             padding: 5px 10px;
@@ -628,6 +641,10 @@ $transition: 0.1s;
             align-items: center;
             white-space: nowrap;
             color: $text;
+
+            &:is(input) {
+                font-size: 14px;
+            }
             
             svg, img {
                 height: 16px;

@@ -9,6 +9,8 @@ import { engineTypes } from '/engine/engine_types.js';
 import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
 
+import '/engine/docs.js';
+
 /* Code Editor */
 
 const editorFileList = document.querySelector('#editor-list');
@@ -337,7 +339,8 @@ const editTileMap = (map) => {
     editorScreen.setScene(editScene);
 
     const controls = document.createElement('div');
-    controls.classList.add('visual-editor-controls');
+    controls.classList.add('editor-controls');
+    controls.classList.add('visual');
     const tileList = document.createElement('div');
     tileList.classList.add('tile-list');
 
@@ -484,7 +487,7 @@ engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
 
 const clearVisualEditor = () => {
     visualLog(`Cleared tilemap editor`, 'info', 'tilemap editor');
-    const controls = document.querySelector('.visual-editor-controls');
+    const controls = document.querySelector('.editor-controls.visual');
     if (controls) {
         controls.remove();
     }
@@ -650,13 +653,6 @@ document.querySelector('#docs-button').addEventListener('click', () => {
 document.querySelector('#visual-button').addEventListener('click', () => {
     showWindow('visual');
 });
-
-const docsIFrame = document.querySelector('#docs-iframe');
-docsIFrame.onload = () => {
-    if (String(docsIFrame.contentWindow.location).endsWith('/out/')) {
-        docsIFrame.contentWindow.location = '/out/tutorial-engine_home.html';
-    }
-}
 
 let currentProjectFilename = undefined;
 
