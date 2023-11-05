@@ -15,5 +15,12 @@
     "engine_home": {
         "title":
 "<span style=\"background: transparent; cursor: default; margin: -.25rem -2rem; position: relative; height: .5rem; display: block;\" onclick=\"event.stopPropagation(); event.preventDefault();\"></span>"
+    },
+    "how_tos": {
+        "title": "How-Tos and Common Tasks",
+        "children": {
+            "how_to_tilemap_collisions": {"title": "Tilemap Collisions"},
+            "how_to_player_collisions": {"title": "Player Collisions"}
+        }
     }
 }
