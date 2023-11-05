@@ -416,6 +416,10 @@ $transition: 0.1s;
 
         a {
             color: inherit;
+
+            &.clean {
+                text-decoration: none;
+            }
         }
 
         img.preview {
