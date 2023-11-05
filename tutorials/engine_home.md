@@ -14,4 +14,4 @@ If you find a problem, please [open an issue](https://github.com/jkrei0/gameify/
 ---
 
 (While in the engine, the docs homepage is replaced with this page. If you'd like
-to see that page, open the docs in <a href="/out" target="_blank">a new tab</a>.)
+to see that page, open the docs in <a href="/out/" target="_blank">a new tab</a>.)
