@@ -381,6 +381,16 @@ $transition: 0.1s;
             }
         }
 
+        textarea {
+            margin-left: auto;
+            background: $dark;
+            color: $text;
+            border: none;
+
+            font-family: $labeltext;
+            font-size: 0.9em;
+        }
+
         &:focus-visible, *:focus-visible {
             outline: 2px solid $text;
         }

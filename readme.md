@@ -24,9 +24,16 @@ To generate tutorials and documentation from source, run `npm install` to instal
 To develop the visual engine with accounts and cloud saves enabled, install the vercel CLI, and run using `vercel dev`.
 
 Make sure to add the follwing to your `.env.local` file:
-```
-MONGO_NAME = "your_mongodb_username"
-MONGO_PASSWORD = "your_mongodb_username"
+```py
+# Accounts and cloud saves (If left blank, offline will still work but cloud will be broken)
+MONGO_NAME="your_mongodb_username"
+MONGO_PASSWORD="your_mongodb_username"
+
+# Send email notifications (i.e. account requests. Leave blank for no emails)
+# Send and receive addresses can be the same
+EMAIL_REC_ADDR="your_email@domain.com"
+EMAIL_SEND_ADDR="sender_email@domain.com"
+EMAIL_PASSWORD="sender_email_password"
 ```
 
 The app attempts to connect to a `gameify` database, with the following collections:

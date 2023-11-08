@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/engine/engine.css">
+        <link rel="icon" href="/engine/images/boxes.svg">
+        <title>Request Account | Gameify</title>
+    </head>
+    <body>
+        
+        <div class="top">
+            <button onclick="window.location.href='/engine/auth.html'">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to login
+            </button>
+        </div>
+
+        <div class="container" id="main">
+            <div class="center">
+                <h2>Request Account</h2>
+                <div class="list account-request">
+                    <p>
+                        New accounts are currently limited.<br>
+                        You can still save your projects locally,
+                        and all functionality is available without an account.
+                        <br><br>
+                        If you really want an account, fill out this form:<br>
+                    </p>
+                    <div class="list">
+                        <span class="list-item">
+                            Name
+                            <input type="text" id="name" placeholder="Your Name">
+                        </span>
+                        <span class="list-item">
+                            Username
+                            <input type="text" id="username" placeholder="Username">
+                        </span>
+                        <span class="list-item">
+                            Email
+                            <input type="email" id="email" placeholder="email@domain.com">
+                        </span>
+                        <span class="list-item">
+                            Reason<br>
+                            <textarea id="reason"></textarea>
+                        </span>
+                        <span class="list-item">
+                            Send <button id="send-request-button">Send Request</button>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="list request-received" style="display:none;">
+                    <p>
+                        Your request was submitted!<br>
+                        You should receive an email in a couple days, after I look at the request
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <script src="request.js" type="module"></script>
+    </body>
+</html>
