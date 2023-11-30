@@ -6,4 +6,4 @@ TODO*
 NOTE*
 .vercel
 .env*.local
-.pem
+*.pem
