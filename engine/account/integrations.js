@@ -71,7 +71,7 @@ const fetchIntegrationDetails = () => {
 
 const githubIntegrationButton = document.querySelector('#github-integration-button');
 githubIntegrationButton.onclick = () => {
-    window.location.href = 'https://github.com/apps/gameify-gh/installations/new/';
+    window.location.href = 'https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef';
 }
 
 const urlParams = new URLSearchParams(window.location.search);
