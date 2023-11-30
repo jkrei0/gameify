@@ -163,3 +163,20 @@ export async function loadGame(query) {
         return { data: result.data, timestamp: result.timestamp };
     });
 }
+
+export async function saveGithubToken(query) {
+    // Only add an integration to an authorized user
+    const result = await verifySession(query.username, query.sessionKey);
+    if (result.error) return { error: result.error };
+    if (!result.valid) return { error: 'session invalid' };
+
+    return connect(async (database) => {
+        const integrations = database.collection("github-integrations");
+
+        await integrations.updateOne({ username: query.username }, { $set: {
+            token: query.token
+        } }, { upsert: true }); // update or replace user token
+
+        return { success: true };
+    });
+}
