@@ -1,6 +1,5 @@
 
 import { saveGithubToken } from '../games-store/mongo.js';
-import { https } from 'https';
 
 export default async function handler(request, response) {
 
@@ -23,8 +22,9 @@ export default async function handler(request, response) {
         })
     })
     .then(res => res.json())
-    .then(result => {
-        query.token = result.access_token;
+    .then(res => {
+        query.token = res.access_token;
+
         const result = saveGithubToken(query);
         response.status(200).json(result);
 
