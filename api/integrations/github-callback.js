@@ -22,14 +22,18 @@ export default async function handler(request, response) {
         })
     })
     .then(res => res.json())
-    .then(res => {
-        query.token = res.access_token;
+    .then(async res => {
+        if (res.error || !res.access_token) {
+            response.status(500).json({ error: 'error exchanging code' });
+            return;
+        }
 
-        const result = saveGithubToken(query);
+        query.token = res.access_token;
+        const result = await saveGithubToken(query);
         response.status(200).json(result);
 
     }).catch(error => {
         console.error("Error exchanging code:", error);
-        response.status(500).json({ error: 'error exchanging code' });
+        response.status(500).json({ error: 'server error' });
     });
 }
