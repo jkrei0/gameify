@@ -44,6 +44,31 @@ const addGithubIntegration = (code, retry) => {
     });
 }
 
+const fetchIntegrationDetails = () => {
+    console.log('fetching');
+    fetch('/api/integrations/github-details', {
+        method: 'POST',
+        body: JSON.stringify({
+            username: accountName,
+            sessionKey: localStorage.getItem('accountSessionKey')
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        console.log(result);
+        if (result.error) {
+            if (result.error.includes('session')) {
+                window.location.href = '/engine/auth.html';
+            }
+        }
+
+        if (!result.integration) {
+            document.querySelector('#github-integration-button').innerHTML = 'Manage Integration';
+        }
+    });
+}
+
+
 const githubIntegrationButton = document.querySelector('#github-integration-button');
 githubIntegrationButton.onclick = () => {
     window.location.href = 'https://github.com/apps/gameify-gh/installations/new/';
@@ -57,6 +82,7 @@ if (urlParams.get('code')) {
     githubIntegrationButton.onclick = () => {
         addGithubIntegration(localStorage.getItem('githubCode'), /*retry=*/true);
     }
+} else {
+    // only fetch details if we're not adding an integration
+    fetchIntegrationDetails();
 }
-
-console.log(urlParams.get('code'));

@@ -180,3 +180,18 @@ export async function saveGithubToken(query) {
         return { success: true };
     });
 }
+
+export async function getGithubDetails(query) {
+    // Only add an integration to an authorized user
+    const result = await verifySession(query.username, query.sessionKey);
+    if (result.error) return { error: result.error };
+    if (!result.valid) return { error: 'session invalid' };
+
+    return connect(async (database) => {
+        const integrations = database.collection("github-integrations");
+        const result = await integrations.find({ username: query.username }, { projection: { _id: 0, token: 1 } }).toArray();
+
+        if (result && result[0]?.token) return { integration: true };
+        else return { integration: false };
+    });
+}
