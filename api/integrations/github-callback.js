@@ -1,5 +1,5 @@
 
-import { github } from '../games-store/mongo.js';
+import { saveGithubToken } from '../games-store/mongo.js';
 import { https } from 'https';
 
 export default async function handler(request, response) {
