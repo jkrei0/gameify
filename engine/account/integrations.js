@@ -6,6 +6,7 @@ if (!accountName)  {
 }
 
 const githubIntegrationLink = 'https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef';
+const githubAppLink = 'https://github.com/apps/gameify-gh';
 
 /** Connect to server to exchange the code for an access token and complete integration
  * On failure, reloads the page for the user to try again
@@ -66,7 +67,10 @@ const fetchIntegrationStatus = () => {
         if (!result.integration) {
             document.querySelector('#github-integration-button').innerHTML = 'Add Integration';
         } else {
-            console.log('listing repos');
+            document.querySelector('#github-integration-button').innerHTML = 'Manage';
+            document.querySelector('#github-integration-button').onclick = () => {
+                window.location.href = githubAppLink;
+            }
             listAvailableRepos();
         }
     });
