@@ -27,9 +27,9 @@ editor.setOptions({fontSize: '16px'})
 const visualLog = (message, type = 'info', source = 'editor') => {
     if (type === 'error') showWindow('visual');
 
-    if (type === 'cloud') {
+    if (source.includes('progress')) {
         document.querySelector('#cloud-progress').innerHTML = message;
-    } else if (type === 'localonly') {
+    } else if (source === 'project') {
         document.querySelector('#cloud-progress').innerHTML = message;
         return;
     }
@@ -151,7 +151,7 @@ const populateObjectsList = () => {
             const [nameElem, selName] = engineUI.inputItem('Name', objName, 'text', (newName) => {
                 newName = newName.replaceAll('::', '_');
                 if (set[newName]) {
-                    visualLog(`Object with the name '${setName}::${newName}' already exists!`, 'error');
+                    visualLog(`Object with the name '${setName}::${newName}' already exists!`, 'error', 'objects editor');
                     return;
                 }
                 set[newName] = obj;
@@ -184,7 +184,7 @@ const populateObjectsList = () => {
             delButton.onclick = () => {
                 if (!confirm('Delete ' + obj.__engine_name + '? You can\'t undo this!')) return;
                 delete set[objName];
-                visualLog(`Deleted object '${setName}::${objName}'`, 'warn');
+                visualLog(`Deleted object '${setName}::${objName}'`, 'warn', 'objects editor');
                 populateObjectsList();
             }
             // Don't allow deleting locked items
@@ -232,21 +232,21 @@ const populateObjectsList = () => {
         const type = selType.value;
         const name = selName.value.replaceAll('::', '_');
         if (objects[type][name]) {
-            visualLog(`Object with the name '${type}::${name}' already exists!`, 'error');
+            visualLog(`Object with the name '${type}::${name}' already exists!`, 'error', 'objects editor');
         }
         
         const defaultScreen = Object.values(objects['Screen'])[0];
         const newObject = engineTypes.get(type, 'newObject')(defaultScreen);
 
         if (!newObject) {
-            visualLog(`You may not create a new ${type} object from the visual editor.`, 'error');
+            visualLog(`You may not create a new ${type} object from the visual editor.`, 'error', 'objects editor');
             return;
 
         } else {
             objects[type][name] = newObject;
         }
 
-        visualLog(`Created new object '${type}::${name}'`, 'log');
+        visualLog(`Created new object '${type}::${name}'`, 'log', 'objects editor');
         populateObjectsList();
     }
     details.appendChild(addButton);
@@ -314,7 +314,7 @@ previewScene.onDraw(() => {
             } catch (e) {
                 // Object failed to draw
                 if (!obj.__engine_error) {
-                    visualLog(`Error drawing ${type}::${name}: ${e}`, 'error');
+                    visualLog(`Error drawing ${type}::${name}: ${e}`, 'error', 'visual editor');
                     // Track errors to not spam logs
                     obj.__engine_error = true;
                 }
@@ -486,7 +486,7 @@ const editTileMap = (map) => {
 engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
 
 const clearVisualEditor = () => {
-    visualLog(`Cleared tilemap editor`, 'info', 'tilemap editor');
+    visualLog(`Cleared tilemap editor`, 'debug', 'tilemap editor');
     const controls = document.querySelector('.editor-controls.visual');
     if (controls) {
         controls.remove();
@@ -693,12 +693,12 @@ const saveProject = (asName) => {
     } catch (e) {
         console.error(e);
         alert('Your project could not be saved locally (likely because your files are too large)');
-        visualLog(`FAILED to save project, an error occurred!`, 'error');
+        visualLog(`Failed to save project, an error occurred!`, 'error', 'local save');
     }
 
     const cloudAccountName = localStorage.getItem('accountName');
     if (cloudAccountName) {
-        visualLog(`Uploading '${cloudAccountName}/${name}' to cloud ...`, 'cloud');
+        visualLog(`Uploading '${cloudAccountName}/${name}' to cloud ...`, 'info', 'cloud progress');
         // Logged in, save to cloud!
         fetch('/api/games-store/save-game', {
             method: 'POST',
@@ -712,22 +712,22 @@ const saveProject = (asName) => {
         .then(res => res.json())
         .then(result => {
             if (result.error) {
-                visualLog(`Failed to upload to cloud.`, 'cloud');
+                visualLog(`Failed to upload to cloud.`, 'error', 'cloud save');
                 if (result.error.includes('session')) {
                     notifySessionExpired();
                 }
             } else {
-                visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'cloud');
+                visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'info', 'cloud save');
             }
         });
     } else {
-        visualLog(`Saved as '${name}'`, 'localonly');
+        visualLog(`Saved as '${name}'`, 'info', 'local save');
     }
 
     if (success) {
         visualLog(`Saved locally as '${name}'${overwrite ? ' (overwrote)' : ''}.${
             cloudAccountName ? '' : ' <a href="./auth.html" target="_blank">Log in</a> to save to cloud.'
-        }`, 'debug');
+        }`, 'info', 'local save');
     }
     listSaves();
 
@@ -934,13 +934,13 @@ const listFiles = (data) => {
                 const temp = files[file];
                 delete files[file];
                 files[name] = temp;
-                visualLog(`Renamed file '${file}' to '${name}'`);
+                visualLog(`Renamed file '${file}' to '${name}'`, 'log', 'filesystem');
                 listFiles();
             },
             'Delete': () => { 
                 if (confirm('Delete ' + file + '?')) {
                     delete files[file];
-                    visualLog(`Deleted file '${file}'`);
+                    visualLog(`Deleted file '${file}'`, 'warn', 'filesystem');
                     listFiles();
                 }   
             }
@@ -979,7 +979,7 @@ const listFiles = (data) => {
         }
         files[name] = ace.createEditSession(`// ${name}\n`);
         files[name].setMode("ace/mode/javascript");
-        visualLog(`Created file '${name}'`);
+        visualLog(`Created file '${name}'`, 'log', 'filesystem');
         listFiles();
         // Make sure the new file is opened
         showWindow('editor');
@@ -997,14 +997,14 @@ const openProject = (data) => {
     // Load editor objects
     loadObjectsList(data.objects);
 
-    visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'localonly');
+    visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'log', 'project');
 }
 
 const notifySessionExpired = () => {
     localStorage.removeItem('accountName');
     localStorage.removeItem('accountSessionKey');
     document.querySelector('#login-link').innerHTML = 'Log In';
-    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'error', 'account');
 }
 
 const listSaves = () => {
@@ -1035,7 +1035,7 @@ const listSaves = () => {
             cloudLoadingIndicator.remove();
 
             if (result.error) {
-                visualLog(`Failed to list cloud saves.`, 'warn');
+                visualLog(`Failed to list cloud saves.`, 'warn', 'cloud save');
                 if (result.error.includes('session')) {
                     notifySessionExpired();
                 }
@@ -1048,7 +1048,7 @@ const listSaves = () => {
                 button.classList.add('list-item');
 
                 button.onclick = () => {
-                    visualLog(`Loading '${name}' ...`, 'cloud');
+                    visualLog(`Loading '${name}' ...`, 'info', 'cloud progress');
 
                     fetch(`/api/games-store/load-game`, {
                         method: 'POST',
@@ -1061,7 +1061,7 @@ const listSaves = () => {
                     .then(res => res.json())
                     .then(result => {
                         if (result.error) {
-                            visualLog(`Failed to load game '${name}' - ${result.error}`, 'warn');
+                            visualLog(`Failed to load game '${name}' - ${result.error}`, 'error', 'cloud save');
                             if (result.error.includes('session')) {
                                 notifySessionExpired();
                             }
@@ -1070,7 +1070,7 @@ const listSaves = () => {
 
                         currentProjectFilename = name;
                         openProject(result.data);
-                        visualLog(`Loaded cloud save '${name}'`, 'debug');
+                        visualLog(`Loaded cloud save '${name}'`, 'info', 'cloud save');
                     });
                 }
                 button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-cloud-arrow-down" viewBox="0 0 16 16">
@@ -1129,7 +1129,7 @@ const listSaves = () => {
             currentProjectFilename = name;
             openProject(JSON.parse(loaded));
 
-            visualLog(`Loaded save '${name}'`, 'debug');
+            visualLog(`Loaded save '${name}'`, 'info', 'local save');
         }
         button.innerText = name;
         const delButton = document.createElement('button');
@@ -1144,7 +1144,7 @@ const listSaves = () => {
             localStorage.setItem('saveNames', savedList.join(','))
             if (savedList.length < 1) localStorage.removeItem('saveNames');
 
-            visualLog(`Deleted save '${name}'`, 'warn');
+            visualLog(`Deleted save '${name}'`, 'warn', 'local save');
             listSaves();
         }
         delButton.innerText = 'Delete';
@@ -1178,7 +1178,7 @@ const listSaves = () => {
                 localStorage.setItem('saveNames', savedList.join(','));
                 // Delete the old save
                 localStorage.removeItem('savedObjects:' + name);
-                visualLog(`Renamed save '${name}' to '${newName}'`);
+                visualLog(`Renamed save '${name}' to '${newName}'`, 'log', 'local save');
                 listSaves();
             }
         }
@@ -1199,7 +1199,7 @@ const listSaves = () => {
         reader.readAsText(file);
         reader.onload = (event) => {
             const fileContents = event.target.result;
-            visualLog(`Loaded project file '${file.name}'`, 'debug');
+            visualLog(`Loaded project file '${file.name}'`, 'info', 'local save');
             currentProjectFilename = file.name;
             openProject(JSON.parse(fileContents));
         };
@@ -1211,7 +1211,7 @@ const listSaves = () => {
 document.querySelector('#refresh-saves').addEventListener('click', listSaves);
 listSaves();
 
-visualLog('Loaded template project', 'debug');
+visualLog('Loaded template project', 'debug', 'engine');
 openProject(game_template);
 
 // Load project from hash
@@ -1222,7 +1222,7 @@ const loadFromHash = () => {
         // load from github
         const repo = window.location.hash.replace('#github:', '');
         const repoName = repo.split('/')[1];
-        visualLog(`Loading 'github:${repo}' ...`, 'cloud');
+        visualLog(`Loading 'github:${repo}' ...`, 'info', 'github progress');
 
         fetch('/api/integrations/github-load-game', {
             method: 'POST',
@@ -1237,19 +1237,19 @@ const loadFromHash = () => {
         .then(res => res.json())
         .then(result => {
             if (result.error) {
-                visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error');
+                visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
                 if (result.error === 'github unauthorized') {
                     visualLog(`Failed to load '${repo}'. To fix this:<br>
                         - <a href="https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef" target="_blank">Log in to GitHub</a><br>
                         - Make sure the repo URL is correct`,
-                    'warn');
+                    'warn', 'github');
                 }
                 return;
             }
     
             currentProjectFilename = 'github:' + repoName;
             openProject(result.data);
-            visualLog(`Loaded github repository: '${repo}'`, 'debug');
+            visualLog(`Loaded github repository: '${repo}'`, 'info', 'github');
         });
 
     } else {
@@ -1257,7 +1257,7 @@ const loadFromHash = () => {
         const accountName = window.location.hash.split('/')[0].replace('#', '');
         const game = window.location.hash.split('/')[1];
     
-        visualLog(`Loading '${accountName}/${game}' ...`, 'cloud');
+        visualLog(`Loading '${accountName}/${game}' ...`, 'info', 'cloud progress');
     
         fetch(`/api/games-store/load-game`, {
             method: 'POST',
@@ -1270,7 +1270,7 @@ const loadFromHash = () => {
         .then(res => res.json())
         .then(result => {
             if (result.error) {
-                visualLog(`Failed to load game '${game}' - ${result.error}`, 'warn');
+                visualLog(`Failed to load game '${game}' - ${result.error}`, 'error', 'cloud save');
                 if (result.error.includes('session')) {
                     notifySessionExpired();
                 }
@@ -1279,7 +1279,7 @@ const loadFromHash = () => {
     
             currentProjectFilename = game;
             openProject(result.data);
-            visualLog(`Loaded cloud save '${game}'`, 'debug');
+            visualLog(`Loaded cloud save '${game}'`, 'info', 'cloud save');
         });
     }
 }
