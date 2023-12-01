@@ -27,7 +27,6 @@ export default async function handler(request, response) {
     // If all requests are complete, return the result
     const done = () => {
         ct -= 1;
-        console.log(ct);
         if (ct === 0) {
             // After all details have been fetched
             return response.status(200).json(result);
