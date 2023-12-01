@@ -43,6 +43,7 @@ const addGithubIntegration = (code, retry) => {
         if (result.success) {
             localStorage.removeItem('githubCode');
             document.querySelector('#github-integration-button').innerHTML = 'Github Linked';
+            listAvailableRepos();
         }
     });
 }
