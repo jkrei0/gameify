@@ -44,8 +44,7 @@ const addGithubIntegration = (code, retry) => {
     });
 }
 
-const fetchIntegrationDetails = () => {
-    console.log('fetching');
+const fetchIntegrationStatus = () => {
     fetch('/api/integrations/github-details', {
         method: 'POST',
         body: JSON.stringify({
@@ -63,8 +62,52 @@ const fetchIntegrationDetails = () => {
         }
 
         if (!result.integration) {
-            document.querySelector('#github-integration-button').innerHTML = 'Manage Integration';
+            document.querySelector('#github-integration-button').innerHTML = 'Add Integration';
+        } else {
+            console.log('listing repos');
+            listAvailableRepos();
         }
+    });
+}
+const listAvailableRepos = () => {
+    const repoList = document.querySelector('#available-github-repos');
+    repoList.style.display = 'block';
+    const loadingEl = document.createElement('span');
+    loadingEl.classList.add('list-item');
+    loadingEl.innerText = 'Loading repos...';
+    repoList.appendChild(loadingEl);
+
+    fetch('/api/integrations/github-details', {
+        method: 'POST',
+        body: JSON.stringify({
+            username: accountName,
+            sessionKey: localStorage.getItem('accountSessionKey'),
+            query: {
+                user: true,
+                repos: true
+            }
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        console.log(result);
+        if (result.error) {
+            if (result.error.includes('session')) {
+                window.location.href = '/engine/auth.html';
+            }
+            loadingEl.innerHTML = 'Error loading repositories';
+        }
+
+        if (result.repos) {
+            for (const repo of result.repos) {
+                const listItem = document.createElement('span');
+                listItem.classList.add('list-item');
+                listItem.innerText = repo.full_name;
+                repoList.appendChild(listItem);
+            }
+            loadingEl.remove();
+        }
+
     });
 }
 
@@ -84,5 +127,5 @@ if (urlParams.get('code')) {
     }
 } else {
     // only fetch details if we're not adding an integration
-    fetchIntegrationDetails();
+    fetchIntegrationStatus();
 }
