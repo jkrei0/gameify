@@ -786,9 +786,58 @@ const exportProject = async () => {
     link.remove();
     URL.revokeObjectURL(link.href);
 }
+const exportProjectSource = async () => {
+    const zipFiles = [];
+    for (const file in files) {
+        zipFiles.push({
+            name: file,
+            input: files[file].getValue()
+        });
+    }
+
+    const config = { objects: 'objects.gpj' };
+    if ('.gfengine' in files) {
+        // simplified parsing (as compared to github-load-game.js),
+        // this only grabs values needed for exporting the project
+        for (const line of configText.split('\n')) {
+            if (line.startsWith('#')) continue;
+            const param = line.split(':')[0].trim();
+            const value = line.split(':')[1].trim();
+
+            if (param == 'OBJECTS')  config.objects = value;
+        }
+
+    } else {
+        zipFiles.push({
+            name: '.gfengine',
+            input: `# This file tells gameify how to configure your project
+# What folder gameify should read files from
+FOLDER:.
+# The objects file
+OBJECTS:objects.gpj
+# Any files to ignore (one file per line)
+# IGNORE: uncomment this line to add files`
+        });
+    }
+    zipFiles.push({
+        name: config.objects,
+        // Be nice to version control and format the json
+        input: JSON.stringify({ "objects": serializeObjectsList(objects) }, null, 2)
+    })
+
+    const blob = await downloadZip(zipFiles).blob();
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + ".zip";
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+}
 
 document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
-document.querySelector('#export-button').addEventListener('click', () => { exportProject() });
+document.querySelector('#export-game-button').addEventListener('click', () => { exportProject() });
+document.querySelector('#export-source-button').addEventListener('click', () => { exportProjectSource() });
 document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 's') {
         // Ctrl + S
