@@ -7,3 +7,4 @@ NOTE*
 .vercel
 .env*.local
 *.pem
+project-dir/*

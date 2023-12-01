@@ -1167,7 +1167,36 @@ openProject(game_template);
 
 // Load project from hash
 const loadFromHash = () => {
-    if (window.location.hash) {
+    if (!window.location.hash) return;
+
+    if (window.location.hash.startsWith('#github:')) {
+        // load from github
+        const repo = window.location.hash.replace('#github:', '');
+        const repoName = repo.split('/')[1];
+        fetch('/api/integrations/github-load-game', {
+            method: 'POST',
+            body: JSON.stringify({
+                // github integration requires a session key
+                username: localStorage.getItem('accountName'),
+                sessionKey: localStorage.getItem('accountSessionKey'),
+                repo: repo,
+                url: 'https://github.com/' + repo
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            if (result.error) {
+                visualLog(`Failed to load git repo '${repo}' - ${result.error}`, 'warn');
+                return;
+            }
+    
+            currentProjectFilename = 'github:' + repoName;
+            openProject(result.data);
+            visualLog(`Loaded git repository: '${game}'`, 'debug');
+        });
+
+    } else {
+        // load from gameify cloud
         const accountName = window.location.hash.split('/')[0].replace('#', '');
         const game = window.location.hash.split('/')[1];
     
