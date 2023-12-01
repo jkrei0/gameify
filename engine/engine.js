@@ -1222,6 +1222,8 @@ const loadFromHash = () => {
         // load from github
         const repo = window.location.hash.replace('#github:', '');
         const repoName = repo.split('/')[1];
+        visualLog(`Loading 'github:${repo}' ...`, 'cloud');
+
         fetch('/api/integrations/github-load-game', {
             method: 'POST',
             body: JSON.stringify({
@@ -1235,13 +1237,19 @@ const loadFromHash = () => {
         .then(res => res.json())
         .then(result => {
             if (result.error) {
-                visualLog(`Failed to load git repo '${repo}' - ${result.error}`, 'warn');
+                visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error');
+                if (result.error === 'github unauthorized') {
+                    visualLog(`Failed to load '${repo}'. To fix this:<br>
+                        - <a href="https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef" target="_blank">Log in to GitHub</a><br>
+                        - Make sure the repo URL is correct`,
+                    'warn');
+                }
                 return;
             }
     
             currentProjectFilename = 'github:' + repoName;
             openProject(result.data);
-            visualLog(`Loaded git repository: '${game}'`, 'debug');
+            visualLog(`Loaded github repository: '${repo}'`, 'debug');
         });
 
     } else {
