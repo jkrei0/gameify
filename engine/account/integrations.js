@@ -2,8 +2,10 @@
 const accountName = localStorage.getItem('accountName');
 
 if (!accountName)  {
-    window.location.href = '/engine/account.html';
+    window.location.href = '/engine/auth.html';
 }
+
+const githubIntegrationLink = 'https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef';
 
 /** Connect to server to exchange the code for an access token and complete integration
  * On failure, reloads the page for the user to try again
@@ -32,7 +34,7 @@ const addGithubIntegration = (code, retry) => {
                 document.querySelector('#github-integration-button').innerHTML = 'An error occurred';
                 if (retry) {
                     localStorage.removeItem('githubCode');
-                    window.location.href = 'https://github.com/apps/gameify-gh/installations/new/';
+                    window.location.href = githubIntegrationLink;
                 }
             }
         }
@@ -114,7 +116,7 @@ const listAvailableRepos = () => {
 
 const githubIntegrationButton = document.querySelector('#github-integration-button');
 githubIntegrationButton.onclick = () => {
-    window.location.href = 'https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef';
+    window.location.href = githubIntegrationLink;
 }
 
 const urlParams = new URLSearchParams(window.location.search);

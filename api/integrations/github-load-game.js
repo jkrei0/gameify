@@ -70,5 +70,11 @@ export default async function handler(request, response) {
         addFiles(config.folder, '');
 
         return response.status(200).json({ success: true, data: projectData });
+    }).catch((e) => {
+        if (e.data.statusMessage = 'Unauthorized') {
+            console.log('GH unauthorized');
+            return response.status(401).json({ error: 'github unauthorized' });
+        }
+        return response.status(500).json({ error: 'unable to clone repository' });
     });
 }
