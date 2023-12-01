@@ -182,7 +182,11 @@ body, html {
 }
 .top .progress {
   position: absolute;
+  z-index: 1;
   left: 0;
+}
+.top :not(.progress) {
+  z-index: 2;
 }
 
 .sidebar {
