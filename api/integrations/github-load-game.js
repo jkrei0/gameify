@@ -27,7 +27,11 @@ export default async function handler(request, response) {
     console.log(dir, fs.existsSync(dir), fs.existsSync(process.cwd()), process.cwd(), __dirname, cloneUrl);
 
     if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-    fs.mkdirSync(gitDirectory, { recursive: true });
+    try {
+        await execInDir(`mkdir ${gitDirectory}`);
+    } catch (e) {
+        return response.status(500).json({ error: 'failed to create directory' });
+    }
 
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
         let configTextTemp;
