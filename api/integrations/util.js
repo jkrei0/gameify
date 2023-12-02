@@ -43,7 +43,6 @@ export async function execInDir(command, dir = gitDirectory) {
  * @param {Object} config - The config object (should contain an array called `ignore`)
  */
 export function fileIsIgnored(basePath = '', file, config) {
-    console.log(basePath, basePath.toString());
     if (basePath === '') {
         const parts = file.split('/');
         parts.pop();

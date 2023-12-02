@@ -29,7 +29,7 @@ export default async function handler(request, response) {
     // If gh.token is undefined, you can still clone public repositories
     const cloneUrl = `https://x-access-token:${ghDetails.token}@github.com/` + query.repo;
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
-        const configText = fs.readFileSync(path.join(dir, '.gfengine'), 'utf8');
+        const configText = query.data.files['.gfengine'] || fs.readFileSync(path.join(dir, '.gfengine'), 'utf8');
         const config = await parseGfEngineConfig(configText, dir);
 
         const delFiles = (newdir, relpath) => {
@@ -51,9 +51,12 @@ export default async function handler(request, response) {
         // Write files from sent project
         for (const file in query.data.files) {
             if (fileIsIgnored('', file, config)) continue; // Don't write ignored files
-            console.log(file, config.ignore)
             fs.writeFileSync(path.join(config.folder, file), query.data.files[file]);
         }
+        fs.writeFileSync(
+            path.join(config.folder, config.objects),
+            JSON.stringify({ "objects": query.data.objects }, null, 2)
+        );
 
         // Sanitize message and hash strings (and limit message to 75 chars)
         let message = query.message.replace(/[^a-zA-Z0-9 _.,\n-]/g, '_').slice(0, 75);
