@@ -26,9 +26,6 @@ export default async function handler(request, response) {
     // If gh.token is undefined, you can still clone public repositories
     const cloneUrl = `https://x-access-token:${ghDetails.token}@github.com/` + query.repo;
 
-    console.log(dir, process.cwd(), __dirname, gitDirectory, cloneUrl);
-    console.log(fs.existsSync(dir), fs.existsSync(process.cwd()), fs.existsSync(__dirname), fs.existsSync(gitDirectory), fs.existsSync('/var/task'));
-
     try {
         if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
         fs.mkdirSync(dir);

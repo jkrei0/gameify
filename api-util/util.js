@@ -24,10 +24,10 @@ export async function parseGfEngineConfig(configText, baseDir = gitDirectory) {
     return config;
 }
 
-export async function execInDir(command, dir = gitDirectory) {
+export async function execInDir(command, dir = path.join('/tmp/', gitDirectory)) {
     return new Promise((resolve, reject) => {
         exec.exec(command, {
-            cwd: path.join(process.cwd(), dir)
+            cwd: dir
         }, function(error, stdout, stderr) {
             if (error) {
                 reject({ error, stdout, stderr });
