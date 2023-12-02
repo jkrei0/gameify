@@ -717,7 +717,7 @@ const saveProject = (asName) => {
                     notifySessionExpired();
                 }
             } else {
-                visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'info', 'cloud save');
+                visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'info', 'cloud progress');
             }
         });
     } else {
