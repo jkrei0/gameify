@@ -123,7 +123,8 @@ if (accountName !== null) {
                 loginButton.innerHTML = 'Try again';
                 if (data.error.includes('server error')) loginButton.innerHTML = 'Server Error';
             }
-        }).catch(() => {
+        }).catch((e) => {
+            console.error(e);
             loginButton.innerHTML = 'Server Error';
         });
     }

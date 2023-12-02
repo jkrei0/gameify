@@ -12,8 +12,11 @@ export default async function handler(request, response) {
 
     const result = await login(body);
 
-    response.status(200).json({
+    const out = {
         success: (result.error ? false : true),
         sessionKey: result.sessionKey
-    });
+    }
+    if (result.error) out.error = result.error;
+
+    response.status(200).json(out);
 }
