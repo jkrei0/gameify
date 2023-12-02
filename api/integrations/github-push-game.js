@@ -29,8 +29,14 @@ export default async function handler(request, response) {
     // If gh.token is undefined, you can still clone public repositories
     const cloneUrl = `https://x-access-token:${ghDetails.token}@github.com/` + query.repo;
 
-    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-    fs.mkdirSync(dir, { recursive: true });
+    try {
+        if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+        fs.mkdirSync(dir);
+    } catch (e) {
+        console.error(e);
+        return response.status(500).json({ error: 'server error: failed to create directory' });
+    }
+    
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
         let configTextTemp;
         try {

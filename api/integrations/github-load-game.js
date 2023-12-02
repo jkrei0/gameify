@@ -18,14 +18,23 @@ export default async function handler(request, response) {
 
     const ghDetails = await getGithubDetailsSensitive(query);
 
-    const dir = path.join(process.cwd(), gitDirectory);
+    const dir = path.join('/tmp', gitDirectory);
     // Use auth token to clone anything the user has access to
     // unfortunately, this means we can't pass this off to the client-side
     // If gh.token is undefined, you can still clone public repositories
     const cloneUrl = `https://x-access-token:${ghDetails.token}@github.com/` + query.repo;
 
-    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-    fs.mkdirSync(dir, { recursive: true });
+    console.log(dir, process.cwd(), __dirname, gitDirectory, cloneUrl);
+    console.log(fs.existsSync(dir), fs.existsSync(process.cwd()), fs.existsSync(__dirname), fs.existsSync(gitDirectory), fs.existsSync('/var/task'));
+
+    try {
+        if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+        fs.mkdirSync(dir);
+    } catch (e) {
+        console.error(e);
+        return response.status(500).json({ error: 'server error: failed to create directory' });
+    }
+
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
         let configTextTemp;
         try {
