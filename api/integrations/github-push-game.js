@@ -22,6 +22,8 @@ export default async function handler(request, response) {
     }
 
     const ghDetails = await getGithubDetailsSensitive(query);
+    if (ghDetails.error)             return response.status(400).json({ error: ghDetails.error });
+    else if (!ghDetails.integration) return response.status(400).json({ error: 'github unauthorized' });
 
     const dir = path.join(process.cwd(), gitDirectory);
     // Use auth token to clone anything the user has access to
