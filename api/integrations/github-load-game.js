@@ -25,7 +25,7 @@ export default async function handler(request, response) {
     const cloneUrl = `https://x-access-token:${ghDetails.token}@github.com/` + query.repo;
 
     if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-    fs.mkdirSync(dir, { recursive: true });
+    //fs.mkdirSync(dir, { recursive: true });
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
         let configTextTemp;
         try {
