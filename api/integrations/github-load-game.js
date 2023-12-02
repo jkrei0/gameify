@@ -30,6 +30,7 @@ export default async function handler(request, response) {
     try {
         await execInDir(`mkdir ${gitDirectory}`);
     } catch (e) {
+        console.error(e);
         return response.status(500).json({ error: 'failed to create directory' });
     }
 
