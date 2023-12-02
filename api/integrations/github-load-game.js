@@ -31,7 +31,7 @@ export default async function handler(request, response) {
         fs.mkdirSync(dir, { recursive: true });
     } catch (e) {
         console.error(e);
-        return response.status(500).json({ error: 'failed to create directory' });
+        //return response.status(500).json({ error: 'failed to create directory' });
     }
 
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
