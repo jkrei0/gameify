@@ -50,7 +50,7 @@ export default async function handler(request, response) {
 
         const addFiles = (newdir, relpath) => {
             fs.readdirSync(config.folder).forEach(file => {
-                if (fileIsIgnored(path, file, config)) return;
+                if (fileIsIgnored(relpath, file, config)) return;
                 
                 const filepath = path.join(newdir, file);
                 if (fs.lstatSync(filepath).isDirectory()) {
