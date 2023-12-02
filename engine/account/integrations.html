@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/engine/engine.css">
+        <link rel="icon" href="/engine/images/boxes.svg">
+        <title>Integrations | Gameify</title>
+    </head>
+    <body>
+        
+        <div class="top">
+            <button onclick="window.location.href='/engine/auth.html'">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to account
+            </button>
+        </div>
+
+        <div class="container" id="main">
+            <div class="center">
+                <h3>Integrations</h3>
+                <div class="list">
+                    <p>
+                        Connect your GitHub account to use version control, and to use assets from a github repository.
+                    </p>
+                </div>
+                <div class="list">
+                    <span class="list-item">
+                        Github <button id="github-integration-button">Loading...</button>
+                    </span>
+                    <details class="list-item" id="available-github-repos" style="display:none;"><summary>Available Repositories</summary>
+                    </details>
+                </div>
+
+            </div>
+        </div>
+
+        <script src="integrations.js" type="module"></script>
+
+    </body>
+</html>

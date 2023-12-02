@@ -224,7 +224,11 @@ $transition: 0.1s;
     }
     .progress {
         position: absolute;
+        z-index: 1;
         left: 0;
+    }
+    :not(.progress) {
+        z-index: 2;
     }
 }
 

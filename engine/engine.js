@@ -8,6 +8,7 @@ import { serializeObjectsList } from '/engine/serialize.js';
 import { engineTypes } from '/engine/engine_types.js';
 import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
+import { engineIntegrations } from '/engine/engine_integration.js';
 
 import '/engine/docs.js';
 
@@ -27,9 +28,9 @@ editor.setOptions({fontSize: '16px'})
 const visualLog = (message, type = 'info', source = 'editor') => {
     if (type === 'error') showWindow('visual');
 
-    if (type === 'cloud') {
+    if (source.includes('progress')) {
         document.querySelector('#cloud-progress').innerHTML = message;
-    } else if (type === 'localonly') {
+    } else if (source.includes('project')) {
         document.querySelector('#cloud-progress').innerHTML = message;
         return;
     }
@@ -151,7 +152,7 @@ const populateObjectsList = () => {
             const [nameElem, selName] = engineUI.inputItem('Name', objName, 'text', (newName) => {
                 newName = newName.replaceAll('::', '_');
                 if (set[newName]) {
-                    visualLog(`Object with the name '${setName}::${newName}' already exists!`, 'error');
+                    visualLog(`Object with the name '${setName}::${newName}' already exists!`, 'error', 'objects editor');
                     return;
                 }
                 set[newName] = obj;
@@ -184,7 +185,7 @@ const populateObjectsList = () => {
             delButton.onclick = () => {
                 if (!confirm('Delete ' + obj.__engine_name + '? You can\'t undo this!')) return;
                 delete set[objName];
-                visualLog(`Deleted object '${setName}::${objName}'`, 'warn');
+                visualLog(`Deleted object '${setName}::${objName}'`, 'warn', 'objects editor');
                 populateObjectsList();
             }
             // Don't allow deleting locked items
@@ -232,21 +233,21 @@ const populateObjectsList = () => {
         const type = selType.value;
         const name = selName.value.replaceAll('::', '_');
         if (objects[type][name]) {
-            visualLog(`Object with the name '${type}::${name}' already exists!`, 'error');
+            visualLog(`Object with the name '${type}::${name}' already exists!`, 'error', 'objects editor');
         }
         
         const defaultScreen = Object.values(objects['Screen'])[0];
         const newObject = engineTypes.get(type, 'newObject')(defaultScreen);
 
         if (!newObject) {
-            visualLog(`You may not create a new ${type} object from the visual editor.`, 'error');
+            visualLog(`You may not create a new ${type} object from the visual editor.`, 'error', 'objects editor');
             return;
 
         } else {
             objects[type][name] = newObject;
         }
 
-        visualLog(`Created new object '${type}::${name}'`, 'log');
+        visualLog(`Created new object '${type}::${name}'`, 'log', 'objects editor');
         populateObjectsList();
     }
     details.appendChild(addButton);
@@ -314,7 +315,7 @@ previewScene.onDraw(() => {
             } catch (e) {
                 // Object failed to draw
                 if (!obj.__engine_error) {
-                    visualLog(`Error drawing ${type}::${name}: ${e}`, 'error');
+                    visualLog(`Error drawing ${type}::${name}: ${e}`, 'error', 'visual editor');
                     // Track errors to not spam logs
                     obj.__engine_error = true;
                 }
@@ -486,7 +487,7 @@ const editTileMap = (map) => {
 engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
 
 const clearVisualEditor = () => {
-    visualLog(`Cleared tilemap editor`, 'info', 'tilemap editor');
+    visualLog(`Cleared tilemap editor`, 'debug', 'tilemap editor');
     const controls = document.querySelector('.editor-controls.visual');
     if (controls) {
         controls.remove();
@@ -680,6 +681,7 @@ const saveProject = (asName) => {
 
     const saved = {
         objects: serializeObjectsList(objects),
+        integrations: engineIntegrations.getIntegrations(),
         files: {}
     };
     for (const file in files) {
@@ -693,12 +695,12 @@ const saveProject = (asName) => {
     } catch (e) {
         console.error(e);
         alert('Your project could not be saved locally (likely because your files are too large)');
-        visualLog(`FAILED to save project, an error occurred!`, 'error');
+        visualLog(`Failed to save project, an error occurred!`, 'error', 'local save');
     }
 
     const cloudAccountName = localStorage.getItem('accountName');
     if (cloudAccountName) {
-        visualLog(`Uploading '${cloudAccountName}/${name}' to cloud ...`, 'cloud');
+        visualLog(`Uploading '${cloudAccountName}/${name}' to cloud ...`, 'info', 'cloud progress');
         // Logged in, save to cloud!
         fetch('/api/games-store/save-game', {
             method: 'POST',
@@ -712,28 +714,86 @@ const saveProject = (asName) => {
         .then(res => res.json())
         .then(result => {
             if (result.error) {
-                visualLog(`Failed to upload to cloud.`, 'cloud');
+                visualLog(`Failed to upload to cloud.`, 'error', 'cloud save');
                 if (result.error.includes('session')) {
                     notifySessionExpired();
                 }
             } else {
-                visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'cloud');
+                visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'info', 'cloud progress');
             }
         });
     } else {
-        visualLog(`Saved as '${name}'`, 'localonly');
+        visualLog(`Saved as '${name}'`, 'info', 'local save');
     }
 
     if (success) {
         visualLog(`Saved locally as '${name}'${overwrite ? ' (overwrote)' : ''}.${
             cloudAccountName ? '' : ' <a href="./auth.html" target="_blank">Log in</a> to save to cloud.'
-        }`, 'debug');
+        }`, 'info', 'local save');
     }
     listSaves();
 
     currentProjectFilename = name;
 
     return name;
+}
+const pushProjectToGithub = () => {
+    const saved = {
+        objects: serializeObjectsList(objects),
+        integrations: engineIntegrations.getIntegrations(),
+        files: {}
+    };
+    for (const file in files) {
+        saved.files[file] = files[file].getValue();
+    }
+
+    if (engineIntegrations.getProvider() !== 'github') {
+        visualLog(`Current project does not have GitHub integration.`, 'error', 'github push');
+    }
+
+    const repoName = engineIntegrations.getRepo();
+    const commitMessage = prompt('Describe your changes', 'Update project')?.replaceAll(',', '_');
+    if (!commitMessage) {
+        visualLog(`Github push canceled`, 'warn', 'github push');
+        return;
+    }
+
+    visualLog(`Pushing changes to GitHub...`, 'info', 'github progress');
+
+    fetch('/api/integrations/github-push-game', {
+        method: 'POST',
+        body: JSON.stringify({
+            username: localStorage.getItem('accountName'),
+            sessionKey: localStorage.getItem('accountSessionKey'),
+            repo: repoName,
+            url: 'https://github.com/' + repoName,
+            message: commitMessage,
+            data: saved
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (result.error) {
+            visualLog(`Failed to push '${repoName}' to GitHub.`, 'error', 'github push');
+            if (result.error.includes('session')) {
+                notifySessionExpired();
+            } else if (result.error.includes('merge conflict')) {
+                visualLog(`Merge conflict`, 'info', 'github project');
+                visualLog(`There was a merge conflict while pushing your changes<br>
+                    Your changes were pushed to a new branch, <code>${result.branch}</code><br>
+                    You'll need to resolve these issues on your own.`,
+                    'warn', 'github push');
+
+            } else visualLog(result.error, 'warn', 'github push');
+            return;
+        }
+        if (result.message.includes('no changes')) {
+            visualLog(`Up-to-date with GitHub`, 'info', 'github project');
+            visualLog(`Did not push to GitHub, no changes (your copy is up to date).`, 'info', 'github push');
+        } else {
+            visualLog(`Pushed changes to GitHub.`, 'info', 'github project');
+        }
+    });
 }
 
 const exportProject = async () => {
@@ -786,9 +846,59 @@ const exportProject = async () => {
     link.remove();
     URL.revokeObjectURL(link.href);
 }
+const exportProjectSource = async () => {
+    const zipFiles = [];
+    for (const file in files) {
+        zipFiles.push({
+            name: file,
+            input: files[file].getValue()
+        });
+    }
+
+    const config = { objects: 'objects.gpj' };
+    if ('.gfengine' in files) {
+        // simplified parsing (as compared to github-load-game.js),
+        // this only grabs values needed for exporting the project
+        for (const line of configText.split('\n')) {
+            if (line.startsWith('#')) continue;
+            const param = line.split(':')[0].trim();
+            const value = line.split(':')[1].trim();
+
+            if (param == 'OBJECTS')  config.objects = value;
+        }
+
+    } else {
+        zipFiles.push({
+            name: '.gfengine',
+            input: `# This file tells gameify how to configure your project
+# What folder gameify should read files from
+FOLDER:.
+# The objects file
+OBJECTS:objects.gpj
+# Any files to ignore (one file per line)
+# IGNORE: uncomment this line to add files`
+        });
+    }
+    zipFiles.push({
+        name: config.objects,
+        // Be nice to version control and format the json
+        input: JSON.stringify({ "objects": serializeObjectsList(objects) }, null, 2)
+    })
+
+    const blob = await downloadZip(zipFiles).blob();
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + ".zip";
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+}
 
 document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
-document.querySelector('#export-button').addEventListener('click', () => { exportProject() });
+document.querySelector('#github-push-button').addEventListener('click', () => { pushProjectToGithub() });
+document.querySelector('#export-game-button').addEventListener('click', () => { exportProject() });
+document.querySelector('#export-source-button').addEventListener('click', () => { exportProjectSource() });
 document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 's') {
         // Ctrl + S
@@ -885,13 +995,13 @@ const listFiles = (data) => {
                 const temp = files[file];
                 delete files[file];
                 files[name] = temp;
-                visualLog(`Renamed file '${file}' to '${name}'`);
+                visualLog(`Renamed file '${file}' to '${name}'`, 'log', 'filesystem');
                 listFiles();
             },
             'Delete': () => { 
                 if (confirm('Delete ' + file + '?')) {
                     delete files[file];
-                    visualLog(`Deleted file '${file}'`);
+                    visualLog(`Deleted file '${file}'`, 'warn', 'filesystem');
                     listFiles();
                 }   
             }
@@ -930,7 +1040,7 @@ const listFiles = (data) => {
         }
         files[name] = ace.createEditSession(`// ${name}\n`);
         files[name].setMode("ace/mode/javascript");
-        visualLog(`Created file '${name}'`);
+        visualLog(`Created file '${name}'`, 'log', 'filesystem');
         listFiles();
         // Make sure the new file is opened
         showWindow('editor');
@@ -940,6 +1050,14 @@ const listFiles = (data) => {
 }
 
 const openProject = (data) => {
+    engineIntegrations.setIntegrations(data.integrations);
+    console.log(data);
+    if (data.integrations?.github) {
+        document.querySelector('#github-save-integration').style.display = '';
+    } else {
+        document.querySelector('#github-save-integration').style.display = 'none';
+    }
+
     // Clear the visual editor
     clearVisualEditor();
 
@@ -948,14 +1066,14 @@ const openProject = (data) => {
     // Load editor objects
     loadObjectsList(data.objects);
 
-    visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'localonly');
+    visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'log', 'project');
 }
 
 const notifySessionExpired = () => {
     localStorage.removeItem('accountName');
     localStorage.removeItem('accountSessionKey');
     document.querySelector('#login-link').innerHTML = 'Log In';
-    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'warn');
+    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'error', 'account');
 }
 
 const listSaves = () => {
@@ -986,7 +1104,7 @@ const listSaves = () => {
             cloudLoadingIndicator.remove();
 
             if (result.error) {
-                visualLog(`Failed to list cloud saves.`, 'warn');
+                visualLog(`Failed to list cloud saves.`, 'warn', 'cloud save');
                 if (result.error.includes('session')) {
                     notifySessionExpired();
                 }
@@ -999,7 +1117,7 @@ const listSaves = () => {
                 button.classList.add('list-item');
 
                 button.onclick = () => {
-                    visualLog(`Loading '${name}' ...`, 'cloud');
+                    visualLog(`Loading '${name}' ...`, 'info', 'cloud progress');
 
                     fetch(`/api/games-store/load-game`, {
                         method: 'POST',
@@ -1012,7 +1130,7 @@ const listSaves = () => {
                     .then(res => res.json())
                     .then(result => {
                         if (result.error) {
-                            visualLog(`Failed to load game '${name}' - ${result.error}`, 'warn');
+                            visualLog(`Failed to load game '${name}' - ${result.error}`, 'error', 'cloud save');
                             if (result.error.includes('session')) {
                                 notifySessionExpired();
                             }
@@ -1021,7 +1139,7 @@ const listSaves = () => {
 
                         currentProjectFilename = name;
                         openProject(result.data);
-                        visualLog(`Loaded cloud save '${name}'`, 'debug');
+                        visualLog(`Loaded cloud save '${name}'`, 'info', 'cloud save');
                     });
                 }
                 button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-cloud-arrow-down" viewBox="0 0 16 16">
@@ -1080,7 +1198,7 @@ const listSaves = () => {
             currentProjectFilename = name;
             openProject(JSON.parse(loaded));
 
-            visualLog(`Loaded save '${name}'`, 'debug');
+            visualLog(`Loaded save '${name}'`, 'info', 'local save');
         }
         button.innerText = name;
         const delButton = document.createElement('button');
@@ -1095,7 +1213,7 @@ const listSaves = () => {
             localStorage.setItem('saveNames', savedList.join(','))
             if (savedList.length < 1) localStorage.removeItem('saveNames');
 
-            visualLog(`Deleted save '${name}'`, 'warn');
+            visualLog(`Deleted save '${name}'`, 'warn', 'local save');
             listSaves();
         }
         delButton.innerText = 'Delete';
@@ -1129,7 +1247,7 @@ const listSaves = () => {
                 localStorage.setItem('saveNames', savedList.join(','));
                 // Delete the old save
                 localStorage.removeItem('savedObjects:' + name);
-                visualLog(`Renamed save '${name}' to '${newName}'`);
+                visualLog(`Renamed save '${name}' to '${newName}'`, 'log', 'local save');
                 listSaves();
             }
         }
@@ -1150,7 +1268,7 @@ const listSaves = () => {
         reader.readAsText(file);
         reader.onload = (event) => {
             const fileContents = event.target.result;
-            visualLog(`Loaded project file '${file.name}'`, 'debug');
+            visualLog(`Loaded project file '${file.name}'`, 'info', 'local save');
             currentProjectFilename = file.name;
             openProject(JSON.parse(fileContents));
         };
@@ -1162,16 +1280,53 @@ const listSaves = () => {
 document.querySelector('#refresh-saves').addEventListener('click', listSaves);
 listSaves();
 
-visualLog('Loaded template project', 'debug');
+visualLog('Loaded template project', 'debug', 'engine');
 openProject(game_template);
 
 // Load project from hash
 const loadFromHash = () => {
-    if (window.location.hash) {
+    if (!window.location.hash) return;
+
+    if (window.location.hash.startsWith('#github:')) {
+        // load from github
+        const repo = window.location.hash.replace('#github:', '');
+        const repoName = repo.split('/')[1];
+        visualLog(`Loading 'github:${repo}' ...`, 'info', 'github progress');
+
+        fetch('/api/integrations/github-load-game', {
+            method: 'POST',
+            body: JSON.stringify({
+                // github integration requires a session key
+                username: localStorage.getItem('accountName'),
+                sessionKey: localStorage.getItem('accountSessionKey'),
+                repo: repo,
+                url: 'https://github.com/' + repo
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            if (result.error) {
+                visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
+                if (result.error === 'github unauthorized') {
+                    visualLog(`Failed to load '${repo}'. To fix this:<br>
+                        - <a href="https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef" target="_blank">Log in to GitHub</a><br>
+                        - Make sure the repo URL is correct`,
+                    'warn', 'github');
+                }
+                return;
+            }
+    
+            currentProjectFilename = 'github:' + repoName;
+            openProject(result.data);
+            visualLog(`Loaded github repository: '${repo}'`, 'info', 'github');
+        });
+
+    } else {
+        // load from gameify cloud
         const accountName = window.location.hash.split('/')[0].replace('#', '');
         const game = window.location.hash.split('/')[1];
     
-        visualLog(`Loading '${accountName}/${game}' ...`, 'cloud');
+        visualLog(`Loading '${accountName}/${game}' ...`, 'info', 'cloud progress');
     
         fetch(`/api/games-store/load-game`, {
             method: 'POST',
@@ -1184,7 +1339,7 @@ const loadFromHash = () => {
         .then(res => res.json())
         .then(result => {
             if (result.error) {
-                visualLog(`Failed to load game '${game}' - ${result.error}`, 'warn');
+                visualLog(`Failed to load game '${game}' - ${result.error}`, 'error', 'cloud save');
                 if (result.error.includes('session')) {
                     notifySessionExpired();
                 }
@@ -1193,7 +1348,7 @@ const loadFromHash = () => {
     
             currentProjectFilename = game;
             openProject(result.data);
-            visualLog(`Loaded cloud save '${game}'`, 'debug');
+            visualLog(`Loaded cloud save '${game}'`, 'info', 'cloud save');
         });
     }
 }

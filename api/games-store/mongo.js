@@ -163,3 +163,38 @@ export async function loadGame(query) {
         return { data: result.data, timestamp: result.timestamp };
     });
 }
+
+export async function saveGithubToken(query) {
+    // Only add an integration to an authorized user
+    const result = await verifySession(query.username, query.sessionKey);
+    if (result.error) return { error: result.error };
+    if (!result.valid) return { error: 'session invalid' };
+
+    return connect(async (database) => {
+        const integrations = database.collection("github-integrations");
+
+        await integrations.updateOne({ username: query.username }, { $set: {
+            token: query.token
+        } }, { upsert: true }); // update or replace user token
+
+        return { success: true };
+    });
+}
+
+// DON'T give the results of this function directly to the user!
+export async function getGithubDetailsSensitive(query) {
+    // Only add an integration to an authorized user
+    const result = await verifySession(query.username, query.sessionKey);
+    if (result.error) return { error: result.error };
+    if (!result.valid) return { error: 'session invalid' };
+
+    return connect(async (database) => {
+        const integrations = database.collection("github-integrations");
+        const result = await integrations.find({ username: query.username }, { projection: { _id: 0, token: 1 } }).toArray();
+
+        if (result && result[0]?.token) {
+            return { integration: true, token: result[0]?.token };
+
+        } else return { integration: false };
+    });
+}
