@@ -234,11 +234,15 @@ $transition: 0.1s;
 
 .sidebar {
     padding: 5px;
-    min-width: 320px;
+    width: 320px;
+    max-width: min(70%, 550px);
+    min-width: 300px;
+    resize: horizontal;
     height: 100%;
     max-height: calc(100vh - 41px);
     overflow-y: scroll;
     z-index: 1;
+    flex-shrink: 0;
 
     font-family: $font;
     color: $text;
