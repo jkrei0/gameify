@@ -659,6 +659,26 @@ let currentProjectFilename = undefined;
 
 /* Save and load */
 
+const checkGithubErrors = (result, repo) => {
+    if (result.error === 'github unauthorized') {
+        visualLog(`Failed to load '${repo}'. To fix this:<br>
+            - <a href="https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef" target="_blank">Log in to GitHub</a><br>
+            - <a href="https://github.com/apps/gameify-gh/installations/new" target="_blank">Check permissions</a><br>
+            - Make sure the repo URL is correct`,
+        'warn', 'github');
+        return true;
+
+    } else if (result.error === 'need permissions') {
+        visualLog(`Failed to load '${repo}', gameify does not have permission to access it!<br>
+            Please <a href="https://github.com/apps/gameify-gh/installations/new" target="_blank">
+               update your github permissions
+            </a><br> and try again.<br>`,
+        'warn', 'github');
+        return true;
+    }
+    return false;
+}
+
 const saveProject = (asName) => {
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
@@ -784,6 +804,8 @@ const pushProjectToGithub = () => {
                     You'll need to resolve these issues on your own.`,
                     'warn', 'github push');
 
+            } else if (checkGithubErrors(result, repoName)) {
+                return;
             } else visualLog(result.error, 'warn', 'github push');
             return;
         }
@@ -1307,12 +1329,7 @@ const loadFromHash = () => {
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
-                if (result.error === 'github unauthorized') {
-                    visualLog(`Failed to load '${repo}'. To fix this:<br>
-                        - <a href="https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef" target="_blank">Log in to GitHub</a><br>
-                        - Make sure the repo URL is correct`,
-                    'warn', 'github');
-                }
+                checkGithubErrors(result, repo);
                 return;
             }
     

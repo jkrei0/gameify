@@ -28,6 +28,7 @@ export default async function handler(request, response) {
     // unfortunately, this means we can't pass this off to the client-side
     // If gh.token is undefined, you can still clone public repositories
     const cloneUrl = `https://x-access-token:${ghDetails.token}@github.com/` + query.repo;
+    fs.rmSync(dir, { recursive: true, force: true });
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
         const configText = query.data.files['.gfengine'] || fs.readFileSync(path.join(dir, '.gfengine'), 'utf8');
         const config = await parseGfEngineConfig(configText, dir);
@@ -107,6 +108,9 @@ export default async function handler(request, response) {
         if (e.data?.statusMessage == 'Unauthorized') {
             console.log('GH unauthorized');
             return response.status(401).json({ error: 'github unauthorized' });
+        } else if (e.data?.statusMessage === 'Forbidden') {
+            return response.status(401).json({ error: 'need permissions' });
+            
         } else console.error(e);
         return response.status(500).json({ error: 'unable to clone repository, or error pushing changes' });
     });;
