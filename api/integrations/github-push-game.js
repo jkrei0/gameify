@@ -32,7 +32,13 @@ export default async function handler(request, response) {
     if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(dir, { recursive: true });
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
-        const configText = query.data.files['.gfengine'] || fs.readFileSync(path.join(dir, '.gfengine'), 'utf8');
+        let configTextTemp;
+        try {
+            configTextTemp = query.data.files['.gfengine'] || fs.readFileSync(path.join(dir, '.gfengine'), 'utf8');
+        } catch (e) {
+            return response.status(400).json({ error: 'no .gfengine file in repository' });
+        }
+        const configText  = configTextTemp;
         const config = await parseGfEngineConfig(configText, dir);
 
         const delFiles = (newdir, relpath) => {
