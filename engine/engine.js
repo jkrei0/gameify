@@ -1098,6 +1098,35 @@ const notifySessionExpired = () => {
     visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'error', 'account');
 }
 
+const deleteCloudSave = (save) => {
+    const cloudAccountName = localStorage.getItem('accountName');
+    if (!confirm(`Delete cloud save '${cloudAccountName}/${save}'?`)) return;
+
+    visualLog(`Deleting '${cloudAccountName}/${save}' from the cloud.`, 'warn', 'cloud save');
+
+    fetch('/api/games-store/save-game', {
+        method: 'POST',
+        body: JSON.stringify({
+            username: cloudAccountName,
+            sessionKey: localStorage.getItem('accountSessionKey'),
+            title: save,
+            delete: true
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (result.error) {
+            visualLog(`Failed to delete '${save}' from the cloud.`, 'error', 'cloud save');
+            if (result.error.includes('session')) {
+                notifySessionExpired();
+            }
+        } else {
+            visualLog(`Deleted '${cloudAccountName}/${save}' from the cloud.`, 'warn', 'cloud save');
+        }
+        listSaves();
+    });
+}
+
 const listSaves = () => {
     const listElem = document.querySelector('#load-save-list');
     listElem.innerHTML = '';
@@ -1185,6 +1214,10 @@ const listSaves = () => {
                     },
                     'Load': () => {
                         button.click();
+                    },
+                    'Delete': () => {
+                        button.style.color = '#ff8';
+                        deleteCloudSave(name);
                     }
                 }
             }

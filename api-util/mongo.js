@@ -134,6 +134,23 @@ export async function saveGame(query) {
     });
 }
 
+export async function deleteGame(query) {
+    // Note: You can only save your own game (by design)
+    // because the username used to verify the session is the same as the
+    // one used to save the game.
+    const result = await verifySession(query.username, query.sessionKey);
+    if (result.error) return { error: result.error };
+    if (!result.valid) return { error: 'session invalid' };
+
+    return connect(async (database) => {
+        const games = database.collection("games");
+
+        await games.deleteOne({ username: query.username, title: query.title }); // create new entry if none exists
+
+        return { success: true };
+    });
+}
+
 export async function listGames(query) {
     const result = await verifySession(query.username, query.sessionKey);
     if (result.error) return { error: result.error };
