@@ -28,7 +28,7 @@ export default async function handler(request, response) {
 
     if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
     try {
-        await execInDir(`mkdir ${gitDirectory}`);
+        fs.mkdirSync(dir, { recursive: true });
     } catch (e) {
         console.error(e);
         return response.status(500).json({ error: 'failed to create directory' });
