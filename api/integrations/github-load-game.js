@@ -1,6 +1,6 @@
 
-import { getGithubDetailsSensitive } from '../games-store/mongo.js';
-import { parseGfEngineConfig, gitDirectory, execInDir, fileIsIgnored } from './util.js';
+import { getGithubDetailsSensitive } from '../../api-util/mongo.js';
+import { parseGfEngineConfig, gitDirectory, execInDir, fileIsIgnored } from '../../api-util/util.js';
 
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';

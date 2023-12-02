@@ -1,5 +1,5 @@
-import { getGithubDetailsSensitive } from '../games-store/mongo.js';
-import { execInDir, gitDirectory, fileIsIgnored, parseGfEngineConfig } from './util.js';
+import { getGithubDetailsSensitive } from '../../api-util/mongo.js';
+import { execInDir, gitDirectory, fileIsIgnored, parseGfEngineConfig } from '../../api-util/util.js';
 
 import git, { commit } from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
