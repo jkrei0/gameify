@@ -1,7 +1,7 @@
 import { getGithubDetailsSensitive } from '../../api-util/mongo.js';
 import { execInDir, gitDirectory, fileIsIgnored, parseGfEngineConfig } from '../../api-util/util.js';
 
-import git, { commit } from 'isomorphic-git';
+import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
 import fs from 'fs';
 import path from 'path';
@@ -25,7 +25,7 @@ export default async function handler(request, response) {
     if (ghDetails.error)             return response.status(400).json({ error: ghDetails.error });
     else if (!ghDetails.integration) return response.status(400).json({ error: 'github unauthorized' });
 
-    const dir = path.join(process.cwd(), gitDirectory);
+    const dir = path.join('/tmp', gitDirectory);
     // Use auth token to clone anything the user has access to
     // unfortunately, this means we can't pass this off to the client-side
     // If gh.token is undefined, you can still clone public repositories
@@ -59,7 +59,7 @@ export default async function handler(request, response) {
 
                 } else if (!query.data.files[relpath + file]) {
                     // File was deleted, remove it
-                    fs.unlink(filepath);
+                    fs.unlink(filepath, () => {});
                 }
             });
         }
@@ -85,7 +85,7 @@ export default async function handler(request, response) {
         // The random numbers are because someone might try to commit the same thing multiple times
         // And same message + same base commit would result in the same branch name.
         const randomNum = Math.floor(Math.random()*10000).toString().padStart(4, '0')
-        const branchName = messageSimple + '_' + randomNum + '_' + commitHash.slice(7);
+        const branchName = messageSimple + '_' + randomNum + '_' + commitHash.slice(0, 7);
         await execInDir(`git branch ${branchName} ${commitHash}`);
         await execInDir(`git add *`);
         try {

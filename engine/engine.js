@@ -804,10 +804,10 @@ const pushProjectToGithub = () => {
             return;
         }
         if (result.message.includes('no changes')) {
-            visualLog(`Up-to-date with GitHub`, 'info', 'github project');
-            visualLog(`Did not push to GitHub, no changes (your copy is up to date).`, 'info', 'github push');
+            visualLog(`Up-to-date with Github`, 'info', 'github project');
+            visualLog(`Did not push to GitHub, no changes (your copy is up to date with '${repoName}').`, 'info', 'github push');
         } else {
-            visualLog(`Pushed changes to GitHub.`, 'info', 'github project');
+            visualLog(`Pushed changes to '${repoName}'.`, 'info', 'github progress');
         }
     });
 }
