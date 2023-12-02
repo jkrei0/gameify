@@ -130,6 +130,9 @@ body, html {
 .window .console .log-item.error:nth-child(odd) {
   background: #a55;
 }
+.window #ace-editor-diff {
+  position: relative;
+}
 
 .editor {
   flex-grow: 1;
@@ -223,6 +226,9 @@ body, html {
 .sidebar h3 button:hover {
   background: #648;
 }
+.sidebar h3 button:not(:first-of-type) {
+  margin-right: 5px;
+}
 
 .center {
   padding: 20px;
@@ -279,7 +285,6 @@ body, html {
   margin-bottom: 0;
 }
 .list .list-item > :is(button, input, select) {
-  margin-right: 5px;
   color: white;
   background: #282a36;
   border: none;
@@ -288,6 +293,9 @@ body, html {
   font-size: 1rem;
   cursor: pointer;
   transition: 0.1s;
+}
+.list .list-item > :is(button, input, select):not(:last-child) {
+  margin-right: 5px;
 }
 .list .list-item > :is(button, input, select).icon-button {
   padding: 5px;
@@ -398,6 +406,7 @@ body, html {
 .list .list-item .type {
   opacity: 0.75;
   margin-left: auto;
+  margin-right: 5px;
 }
 .list .list-item summary {
   display: flex;
@@ -521,6 +530,9 @@ body, html {
   flex-direction: row;
   flex-wrap: wrap;
 }
+.editor-controls .legend.centered {
+  justify-content: center;
+}
 .editor-controls .legend button {
   cursor: pointer;
 }
@@ -548,6 +560,10 @@ body, html {
 }
 .editor-controls .legend span:is(input), .editor-controls .legend button:is(input), .editor-controls .legend input:is(input) {
   font-size: 14px;
+}
+.editor-controls .legend span code, .editor-controls .legend span.filename, .editor-controls .legend button code, .editor-controls .legend button.filename, .editor-controls .legend input code, .editor-controls .legend input.filename {
+  font-family: "Roboto Mono";
+  margin-inline: 10px;
 }
 .editor-controls .legend span svg, .editor-controls .legend span img, .editor-controls .legend button svg, .editor-controls .legend button img, .editor-controls .legend input svg, .editor-controls .legend input img {
   height: 16px;

@@ -165,6 +165,10 @@ $transition: 0.1s;
             }
         }
     }
+
+    #ace-editor-diff {
+        position: relative;
+    }
 }
 
 .editor {
@@ -268,6 +272,10 @@ $transition: 0.1s;
             &:hover {
                 background: $highlight;
             }
+
+            &:not(:first-of-type) {
+                margin-right: 5px;
+            }
         }
     }
 }
@@ -337,7 +345,10 @@ $transition: 0.1s;
         }
 
         & > :is(button, input, select) {
-            margin-right: 5px;
+
+            &:not(:last-child) {
+                margin-right: 5px;
+            }
             color: $text;
             background: $dark;
             border: none;
@@ -480,6 +491,7 @@ $transition: 0.1s;
         .type {
             opacity: 0.75;
             margin-left: auto;
+            margin-right: 5px;
         }
 
         summary {
@@ -633,6 +645,10 @@ $transition: 0.1s;
         flex-direction: row;
         flex-wrap: wrap;
 
+        &.centered {
+            justify-content: center;
+        }
+
         button {
             cursor: pointer;
 
@@ -666,6 +682,11 @@ $transition: 0.1s;
 
             &:is(input) {
                 font-size: 14px;
+            }
+
+            code, &.filename {
+                font-family: $monospace;
+                margin-inline: 10px;
             }
             
             svg, img {

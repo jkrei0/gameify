@@ -811,6 +811,27 @@ const pushProjectToGithub = () => {
         }
     });
 }
+const diffGithubProject = () => {
+    const button = document.querySelector('#github-diff-button');
+    button.innerHTML = 'Loading...'
+
+    const repo = engineIntegrations.getRepo();
+    visualLog(`Loading diff from github: '${repo}' ...`, 'info', 'github diff');
+
+    loadGithubRepo(repo, (result) => {
+        engineIntegrations.setDiffContents(result.data);
+        listFiles();
+        visualLog(`Loaded diff from '${repo}'`, 'info', 'github diff');
+        document.querySelector('#diff-objects-button').style.display = '';
+        document.querySelector('#diff-objects-button').addEventListener('click', () => {
+            showWindow('editor-diff');
+            engineIntegrations.showDiff(serializeObjectsList(objects));
+        });
+        button.innerHTML = 'Diff';
+    }, (result) => {
+        button.innerHTML = 'Diff';
+    });
+}
 
 const exportProject = async () => {
     const zipFiles = [];
@@ -913,6 +934,7 @@ OBJECTS:objects.gpj
 
 document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
 document.querySelector('#github-push-button').addEventListener('click', () => { pushProjectToGithub() });
+document.querySelector('#github-diff-button').addEventListener('click', () => { diffGithubProject() });
 document.querySelector('#export-game-button').addEventListener('click', () => { exportProject() });
 document.querySelector('#export-source-button').addEventListener('click', () => { exportProjectSource() });
 document.addEventListener('keydown', e => {
@@ -996,6 +1018,17 @@ const listFiles = (data) => {
             <span class="type">
                 .${file.replace(file.split('.')[0] + '.', '').toUpperCase()}
             </span>`;
+
+        if (engineIntegrations.haveDiff()) {
+            const diffButton = document.createElement('button');
+            diffButton.innerHTML = 'Diff';
+            diffButton.onclick = (evt) => {
+                showWindow('editor-diff');
+                evt.stopPropagation();
+                engineIntegrations.showDiff(file, files);
+            }
+            button.appendChild(diffButton);
+        }
 
         button.__engine_menu = {
             'Open': () => {
@@ -1319,6 +1352,31 @@ listSaves();
 visualLog('Loaded template project', 'debug', 'engine');
 openProject(game_template);
 
+const loadGithubRepo = (repo, callback, errCallback) => {
+    fetch('/api/integrations/github-load-game', {
+        method: 'POST',
+        body: JSON.stringify({
+            // github integration requires a session key
+            username: localStorage.getItem('accountName'),
+            sessionKey: localStorage.getItem('accountSessionKey'),
+            repo: repo,
+            url: 'https://github.com/' + repo
+        })
+    })
+    .then(engineFetch.toJson)
+    .then(result => {
+        if (result.error) {
+            visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
+            engineFetch.checkSessionErrors(result);
+            engineFetch.checkGithubErrors(result, repo);
+            errCallback(result);
+            return;
+        }
+
+        callback(result);
+    });
+}
+
 // Load project from hash
 const loadFromHash = () => {
     if (!window.location.hash) return;
@@ -1329,25 +1387,7 @@ const loadFromHash = () => {
         const repoName = repo.split('/')[1];
         visualLog(`Loading 'github:${repo}' ...`, 'info', 'github progress');
 
-        fetch('/api/integrations/github-load-game', {
-            method: 'POST',
-            body: JSON.stringify({
-                // github integration requires a session key
-                username: localStorage.getItem('accountName'),
-                sessionKey: localStorage.getItem('accountSessionKey'),
-                repo: repo,
-                url: 'https://github.com/' + repo
-            })
-        })
-        .then(engineFetch.toJson)
-        .then(result => {
-            if (result.error) {
-                visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
-                engineFetch.checkSessionErrors(result);
-                engineFetch.checkGithubErrors(result, repo);
-                return;
-            }
-    
+        loadGithubRepo(repo, (result) => {
             currentProjectFilename = 'github:' + repoName;
             openProject(result.data);
             visualLog(`Loaded github repository: '${repo}'`, 'info', 'github');

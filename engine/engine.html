@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="engine.css">
         <link rel="icon" href="images/boxes.svg">
+        <link href="https://unpkg.com/ace-diff@^3.0.0/dist/ace-diff-dark.min.css" rel="stylesheet">
         <title>Gameify Engine</title>
     </head>
     <body>
@@ -25,7 +26,7 @@
 
         <div class="container" id="main">
             <div class="sidebar">
-                <h3>Objects <button id="refresh-objects">Refresh</button></h3>
+                <h3>Objects <button id="refresh-objects">Refresh</button> <button id="diff-objects-button" style="display:none;">Diff</button></h3>
                 <div class="list" id="node-list">
                     <span class="list-item">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
@@ -43,7 +44,8 @@
                     <button class="list-item" id="download-button">Download</button>
                     <span class="list-item" id="github-save-integration">
                         GitHub
-                        <button id="github-push-button" class="right">Push</button>
+                        <button id="github-diff-button" class="right">Diff</button>
+                        <button id="github-push-button">Push</button>
                     </span>
                     <span class="list-item">
                         Export
@@ -60,6 +62,16 @@
             <div class="window editor visible">
 
                 <div id="ace-editor">// No file opened!</div>
+
+            </div>
+            <div class="window editor-diff">
+
+                <div id="ace-editor-diff"></div>
+                <div class="editor-controls diff">
+                    <div class="legend centered">
+                        <span>Your Code &lt;- <code id="diff-filename"></code> - <span id="diff-num-changes"></span> -&gt; GitHub</span>
+                    </div>
+                </div>
 
             </div>
 
@@ -116,6 +128,7 @@
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.16.0/ace.js" type="text/javascript" charset="utf-8"></script>
+        <script src="/engine/lib/ace-diff.js"></script>
         <script src="engine.js" type="module"></script>
 
     </body>
