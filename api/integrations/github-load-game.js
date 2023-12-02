@@ -1,5 +1,6 @@
 
 import { getGithubDetailsSensitive } from '../games-store/mongo.js';
+import { parseGfEngineConfig, gitDirectory, execInDir, fileIsIgnored } from './util.js';
 
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
@@ -17,29 +18,17 @@ export default async function handler(request, response) {
 
     const ghDetails = await getGithubDetailsSensitive(query);
 
-    const dir = path.join(process.cwd(), 'project-dir');
+    const dir = path.join(process.cwd(), gitDirectory);
     // Use auth token to clone anything the user has access to
     // unfortunately, this means we can't pass this off to the client-side
     // If gh.token is undefined, you can still clone public repositories
     const cloneUrl = `https://x-access-token:${ghDetails.token}@github.com/` + query.repo;
-    git.clone({ fs, http, dir, url: cloneUrl }).then(() => {
+    git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
         const configText = fs.readFileSync(path.join(dir, '.gfengine'), 'utf8');
-        const config = {
-            folder: 'game',
-            objects: 'objfile.gpj',
-            ignore: ['.git']
-        }
-        for (const line of configText.split('\n')) {
-            if (line.startsWith('#')) continue;
-            const param = line.split(':')[0].trim();
-            const value = line.split(':')[1].trim();
+        const config = await parseGfEngineConfig(configText, dir);
 
-            if      (param == 'FOLDER')   config.folder = path.join(dir, value);
-            else if (param == 'OBJECTS')  config.objects = value;
-            else if (param == 'IGNORE')   config.ignore.push(value);
-        }
-        // Don't include the objects file
-        config.ignore.push(config.objects);
+        const out = await execInDir('git rev-parse --verify HEAD');
+        const commitHash = out.stdout.split('\n')[0];
 
         // Read objects file as json
         let projectData;
@@ -49,15 +38,18 @@ export default async function handler(request, response) {
             projectData.files = {};
             projectData.integrations = {
                 github: true,
-                githubRepo: query.repo
+                githubRepo: query.repo,
+                git: true,
+                gitUrl: query.url,
+                gitCommitHash: commitHash,
             }
-        } catch {
+        } catch (e) {
             return response.status(400).json({ error: 'invalid or missing objects file' });
         }
 
         const addFiles = (newdir, relpath) => {
             fs.readdirSync(config.folder).forEach(file => {
-                if (config.ignore.includes(file)) return;
+                if (fileIsIgnored(path, file, config)) return;
                 
                 const filepath = path.join(newdir, file);
                 if (fs.lstatSync(filepath).isDirectory()) {
@@ -71,10 +63,10 @@ export default async function handler(request, response) {
 
         return response.status(200).json({ success: true, data: projectData });
     }).catch((e) => {
-        if (e.data.statusMessage = 'Unauthorized') {
+        if (e.data?.statusMessage == 'Unauthorized') {
             console.log('GH unauthorized');
             return response.status(401).json({ error: 'github unauthorized' });
-        }
+        } else console.error(e);
         return response.status(500).json({ error: 'unable to clone repository' });
     });
 }

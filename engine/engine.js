@@ -8,6 +8,7 @@ import { serializeObjectsList } from '/engine/serialize.js';
 import { engineTypes } from '/engine/engine_types.js';
 import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
+import { engineIntegrations } from '/engine/engine_integration.js';
 
 import '/engine/docs.js';
 
@@ -29,7 +30,7 @@ const visualLog = (message, type = 'info', source = 'editor') => {
 
     if (source.includes('progress')) {
         document.querySelector('#cloud-progress').innerHTML = message;
-    } else if (source === 'project') {
+    } else if (source.includes('project')) {
         document.querySelector('#cloud-progress').innerHTML = message;
         return;
     }
@@ -680,6 +681,7 @@ const saveProject = (asName) => {
 
     const saved = {
         objects: serializeObjectsList(objects),
+        integrations: engineIntegrations.getIntegrations(),
         files: {}
     };
     for (const file in files) {
@@ -734,6 +736,64 @@ const saveProject = (asName) => {
     currentProjectFilename = name;
 
     return name;
+}
+const pushProjectToGithub = () => {
+    const saved = {
+        objects: serializeObjectsList(objects),
+        integrations: engineIntegrations.getIntegrations(),
+        files: {}
+    };
+    for (const file in files) {
+        saved.files[file] = files[file].getValue();
+    }
+
+    if (engineIntegrations.getProvider() !== 'github') {
+        visualLog(`Current project does not have GitHub integration.`, 'error', 'github push');
+    }
+
+    const repoName = engineIntegrations.getRepo();
+    const commitMessage = prompt('Describe your changes', 'Update project')?.replaceAll(',', '_');
+    if (!commitMessage) {
+        visualLog(`Github push canceled`, 'warn', 'github push');
+        return;
+    }
+
+    visualLog(`Pushing changes to GitHub...`, 'info', 'github progress');
+
+    fetch('/api/integrations/github-push-game', {
+        method: 'POST',
+        body: JSON.stringify({
+            username: localStorage.getItem('accountName'),
+            sessionKey: localStorage.getItem('accountSessionKey'),
+            repo: repoName,
+            url: 'https://github.com/' + repoName,
+            message: commitMessage,
+            data: saved
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (result.error) {
+            visualLog(`Failed to push '${repoName}' to GitHub.`, 'error', 'github push');
+            if (result.error.includes('session')) {
+                notifySessionExpired();
+            } else if (result.error.includes('merge conflict')) {
+                visualLog(`Merge conflict`, 'info', 'github project');
+                visualLog(`There was a merge conflict while pushing your changes<br>
+                    Your changes were pushed to a new branch, <code>${result.branch}</code><br>
+                    You'll need to resolve these issues on your own.`,
+                    'warn', 'github push');
+
+            } else visualLog(result.error, 'warn', 'github push');
+            return;
+        }
+        if (result.message.includes('no changes')) {
+            visualLog(`Up-to-date with GitHub`, 'info', 'github project');
+            visualLog(`Did not push to GitHub, no changes (your copy is up to date).`, 'info', 'github push');
+        } else {
+            visualLog(`Pushed changes to GitHub.`, 'info', 'github project');
+        }
+    });
 }
 
 const exportProject = async () => {
@@ -836,6 +896,7 @@ OBJECTS:objects.gpj
 }
 
 document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
+document.querySelector('#github-push-button').addEventListener('click', () => { pushProjectToGithub() });
 document.querySelector('#export-game-button').addEventListener('click', () => { exportProject() });
 document.querySelector('#export-source-button').addEventListener('click', () => { exportProjectSource() });
 document.addEventListener('keydown', e => {
@@ -989,6 +1050,14 @@ const listFiles = (data) => {
 }
 
 const openProject = (data) => {
+    engineIntegrations.setIntegrations(data.integrations);
+    console.log(data);
+    if (data.integrations?.github) {
+        document.querySelector('#github-save-integration').style.display = '';
+    } else {
+        document.querySelector('#github-save-integration').style.display = 'none';
+    }
+
     // Clear the visual editor
     clearVisualEditor();
 
