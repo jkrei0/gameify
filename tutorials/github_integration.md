@@ -57,3 +57,9 @@ When you're ready to push your changes, go to the sidebar, scroll down to `GitHu
 You'll be asked to describe your changes. Write a short summary of what you did (i.e "Added a new level"), and select `Ok`. If you changed your mind, select `Cancel`.
 
 If you get an error, read {@tutorial github_errors}
+
+## Git diff (file comparison)
+
+If you'd like to compare the changes you've made against what's currently in GitHub, you do so directly from Gameify (however, it is limited to only the main branch). To do so, find `GitHub` in the sidebar, and click `Diff`. Wait for this to load, and then a `Diff` button should appear next to your code files.
+
+Click on any of these buttons to compare versions of your project. Your copy is on the left, and GitHub is on the right, and it will update in real-time as you make changes. You can also see changes made to objects by selecting `Diff` from above the objects list (although you cannot edit it, and it will not automatically refresh).
