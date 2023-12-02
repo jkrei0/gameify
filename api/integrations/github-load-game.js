@@ -23,7 +23,9 @@ export default async function handler(request, response) {
     // unfortunately, this means we can't pass this off to the client-side
     // If gh.token is undefined, you can still clone public repositories
     const cloneUrl = `https://x-access-token:${ghDetails.token}@github.com/` + query.repo;
-    fs.rmSync(dir, { recursive: true, force: true });
+
+    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
     git.clone({ fs, http, dir, url: cloneUrl }).then(async () => {
         const configText = fs.readFileSync(path.join(dir, '.gfengine'), 'utf8');
         const config = await parseGfEngineConfig(configText, dir);
