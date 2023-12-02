@@ -727,7 +727,7 @@ const saveProject = (asName) => {
                 data: saved
             })
         })
-        .then(res => res.json())
+        .then(engineFetch.toJson)
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to upload to cloud.`, 'error', 'cloud save');
@@ -785,7 +785,7 @@ const pushProjectToGithub = () => {
             data: saved
         })
     })
-    .then(res => res.json())
+    .then(engineFetch.toJson)
     .then(result => {
         if (result.error) {
             visualLog(`Failed to push '${repoName}' to GitHub.`, 'error', 'github push');
@@ -1100,7 +1100,7 @@ const deleteCloudSave = (save) => {
             delete: true
         })
     })
-    .then(res => res.json())
+    .then(engineFetch.toJson)
     .then(result => {
         if (result.error) {
             visualLog(`Failed to delete '${save}' from the cloud.`, 'error', 'cloud save');
@@ -1135,7 +1135,7 @@ const listSaves = () => {
                 sessionKey: localStorage.getItem('accountSessionKey')
             })
         })
-        .then(res => res.json())
+        .then(engineFetch.toJson)
         .then(result => {
             cloudLoadingIndicator.remove();
 
@@ -1161,7 +1161,7 @@ const listSaves = () => {
                             title: game.title
                         })
                     })
-                    .then(res => res.json())
+                    .then(engineFetch.toJson)
                     .then(result => {
                         if (result.error) {
                             visualLog(`Failed to load game '${name}' - ${result.error}`, 'error', 'cloud save');
@@ -1339,7 +1339,7 @@ const loadFromHash = () => {
                 url: 'https://github.com/' + repo
             })
         })
-        .then(res => res.json())
+        .then(engineFetch.toJson)
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
@@ -1368,7 +1368,7 @@ const loadFromHash = () => {
                 title: game
             })
         })
-        .then(res => res.json())
+        .then(engineFetch.toJson)
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to load game '${game}' - ${result.error}`, 'error', 'cloud save');

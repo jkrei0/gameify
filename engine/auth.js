@@ -39,7 +39,7 @@ if (accountName !== null) {
                 sessionKey: localStorage.getItem('accountSessionKey'),
             })
         })
-        .then (res => res.json())
+        .then (engineFetch.toJson)
         .then(result => {
             if (result.error) {
                 engineFetch.checkSessionErrors(result);
@@ -65,7 +65,7 @@ if (accountName !== null) {
             sessionKey: localStorage.getItem('accountSessionKey')
         })
     })
-    .then(res => res.json())
+    .then(engineFetch.toJson)
     .then(result => {
         cloudLoadingIndicator.remove();
 
@@ -112,7 +112,7 @@ if (accountName !== null) {
                 password: password
             })
         })
-        .then(res => res.json())
+        .then(engineFetch.toJson)
         .then(data => {
             if (data.success) {
                 localStorage.setItem('accountName', username);

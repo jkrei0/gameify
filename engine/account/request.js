@@ -1,3 +1,4 @@
+import { engineFetch } from '/engine/engine_fetch.js';
 
 const sendButton = document.querySelector('#send-request-button');
 
@@ -12,7 +13,7 @@ sendButton.onclick = () => {
             reason: document.querySelector('#reason').value,
         })
     })
-    .then(res => res.json())
+    .then(engineFetch.toJson)
     .then(data => {
         if (data.success) {
             document.querySelector('.request-received').style.display = 'block';

@@ -1,5 +1,6 @@
 
 import { serializeObjectsList } from '/engine/serialize.js';
+import { engineFetch } from '/engine/engine_fetch.js';
 
 const gameFrame = document.querySelector('#game-frame');
 const win = gameFrame.contentWindow;
@@ -38,7 +39,7 @@ if (accountName && gameTitle) fetch(`/api/games-store/load-game`, {
         username: accountName,
         title: gameTitle
     })
-}).then(res => res.json()).then(result => {
+}).then(engineFetch.toJson).then(result => {
     if (result.error) {
         // capitalize first letter
         document.querySelector('#loading-text-short').innerText = result.error.charAt(0).toUpperCase() + result.error.slice(1);;

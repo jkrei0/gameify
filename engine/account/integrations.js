@@ -31,7 +31,7 @@ const addGithubIntegration = (code, retry) => {
             sessionKey: localStorage.getItem('accountSessionKey')
         })
     })
-    .then(res => res.json())
+    .then(engineFetch.toJson)
     .then(result => {
         if (result.error) {
             if (result.error.includes('session')) {
@@ -61,7 +61,7 @@ const fetchIntegrationStatus = () => {
             sessionKey: localStorage.getItem('accountSessionKey')
         })
     })
-    .then(res => res.json())
+    .then(engineFetch.toJson)
     .then(result => {
         console.log(result);
         if (result.error) {
@@ -98,7 +98,7 @@ const listAvailableRepos = () => {
             }
         })
     })
-    .then(res => res.json())
+    .then(engineFetch.toJson)
     .then(result => {
         console.log(result);
         if (result.error) {
