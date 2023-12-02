@@ -1,5 +1,5 @@
 
-import { saveGithubToken } from '../../api/mongo.js';
+import { saveGithubToken } from '../../api-util/mongo.js';
 
 export default async function handler(request, response) {
 
