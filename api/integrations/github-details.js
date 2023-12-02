@@ -98,7 +98,10 @@ export default async function handler(request, response) {
                 permissions: repo.permissions
             }});
             done();
-        });
+        }).catch(err => {
+            console.error(err);
+            fail('failed to fetch user repos');
+        });;
     }
 
     start(); done();
