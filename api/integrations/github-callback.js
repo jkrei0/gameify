@@ -1,5 +1,5 @@
 
-import { saveGithubToken } from '../games-store/mongo.js';
+import { saveGithubToken } from '../../api/mongo.js';
 
 export default async function handler(request, response) {
 

@@ -1,5 +1,5 @@
 
-import { getGithubDetailsSensitive } from '../games-store/mongo.js';
+import { getGithubDetailsSensitive } from '../../api-util/mongo.js';
 
 export default async function handler(request, response) {
     let body;

@@ -1,5 +1,5 @@
 
-import { changePassword } from './mongo.js';
+import { changePassword } from '../../api-util/mongo.js';
 
 export default async function handler(request, response) {
 
