@@ -329,6 +329,10 @@ $transition: 0.1s;
 
             &:is(button) {
                 cursor: pointer;
+                overflow-x: hidden;
+            }
+            &.no-margin {
+                margin-bottom: 0;
             }
         }
 

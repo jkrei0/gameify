@@ -105,14 +105,56 @@ const listAvailableRepos = () => {
             loadingEl.innerHTML = 'Error loading repositories';
         }
 
+        const maxRepos = 10;
+
+        const searchItem = document.createElement('input');
+        searchItem.classList.add('list-item');
+        searchItem.classList.add('property');
+        searchItem.style.maxWidth = '100%';
+        searchItem.placeholder = 'Search repositories...';
+        searchItem.oninput = () => {
+            let count = 0;
+            if (searchItem.value === '') {
+                repoList.querySelectorAll('button').forEach(item => {
+                    count += 1;
+                    if (count <= maxRepos) item.style.display = '';
+                    else item.style.display = 'none';
+                });
+                loadingEl.innerText = `Showing ${Math.min(count, maxRepos)} of ${result.repos.length}`;
+                return;
+            }
+
+            repoList.querySelectorAll('button').forEach(item => {
+                if (item.innerText.includes(searchItem.value)) {
+                    count += 1;
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            loadingEl.innerText = `Showing ${count} of ${result.repos.length}`;
+        }
+        repoList.appendChild(searchItem);
+
+
         if (result.repos) {
+            let count = 0;
             for (const repo of result.repos) {
-                const listItem = document.createElement('span');
+                count += 1;
+                const listItem = document.createElement('button');
+                listItem.onclick = () => {
+                    window.location.href = '/engine/engine.html#github:' + repo.full_name;
+                }
                 listItem.classList.add('list-item');
+                listItem.classList.add('property');
+                listItem.classList.add('no-margin');
                 listItem.innerText = repo.full_name;
+                if (count > maxRepos) {
+                    listItem.style.display = 'none';
+                }
                 repoList.appendChild(listItem);
             }
-            loadingEl.remove();
+            loadingEl.innerText = `Showing ${Math.min(result.repos.length, maxRepos)} of ${result.repos.length}`;
         }
 
     });

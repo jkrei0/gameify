@@ -273,6 +273,10 @@ body, html {
 }
 .list .list-item:is(button, span, label):is(button) {
   cursor: pointer;
+  overflow-x: hidden;
+}
+.list .list-item:is(button, span, label).no-margin {
+  margin-bottom: 0;
 }
 .list .list-item > :is(button, input, select) {
   margin-right: 5px;
