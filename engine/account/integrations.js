@@ -6,7 +6,7 @@ if (!accountName)  {
 }
 
 const githubIntegrationLink = 'https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef';
-const githubAppLink = 'https://github.com/apps/gameify-gh';
+const githubAppLink = 'https://github.com/apps/gameify-gh/installations/new';
 
 /** Connect to server to exchange the code for an access token and complete integration
  * On failure, reloads the page for the user to try again
@@ -136,3 +136,9 @@ if (urlParams.get('code')) {
     // only fetch details if we're not adding an integration
     fetchIntegrationStatus();
 }
+
+setTimeout(() => {
+    if (githubIntegrationButton.innerHTML === 'Loading...') {
+        githubIntegrationButton.innerHTML = 'Add Integration';
+    }
+}, 5000);
