@@ -668,7 +668,7 @@ let currentProjectFilename = undefined;
 
 /* Save and load */
 
-const checkGithubErrors = (result, repo) => {
+const checkGithubFetchErrors = (result, repo) => {
     if (result.error === 'github unauthorized') {
         visualLog(`Failed to load '${repo}'. To fix this:<br>
             - <a href="https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef" target="_blank">Log in to GitHub</a><br>
@@ -683,6 +683,13 @@ const checkGithubErrors = (result, repo) => {
                update your github permissions
             </a><br> and try again.<br>`,
         'warn', 'github');
+        return true;
+    }
+    return false;
+}
+const checkSessionFetchErrors = (result) => {
+    if (result.error === 'session expired') {
+        notifySessionExpired();
         return true;
     }
     return false;
@@ -744,9 +751,7 @@ const saveProject = (asName) => {
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to upload to cloud.`, 'error', 'cloud save');
-                if (result.error.includes('session')) {
-                    notifySessionExpired();
-                }
+                checkSessionFetchErrors(result);
             } else {
                 visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'info', 'cloud progress');
             }
@@ -804,8 +809,10 @@ const pushProjectToGithub = () => {
     .then(result => {
         if (result.error) {
             visualLog(`Failed to push '${repoName}' to GitHub.`, 'error', 'github push');
-            if (result.error.includes('session')) {
-                notifySessionExpired();
+            if (checkSessionFetchErrors(result)
+                || checkGithubFetchErrors(result, repoName)
+            ) {
+                return;
             } else if (result.error.includes('merge conflict')) {
                 visualLog(`Merge conflict`, 'info', 'github project');
                 visualLog(`There was a merge conflict while pushing your changes<br>
@@ -813,8 +820,6 @@ const pushProjectToGithub = () => {
                     You'll need to resolve these issues on your own.`,
                     'warn', 'github push');
 
-            } else if (checkGithubErrors(result, repoName)) {
-                return;
             } else visualLog(result.error, 'warn', 'github push');
             return;
         }
@@ -1126,9 +1131,7 @@ const deleteCloudSave = (save) => {
     .then(result => {
         if (result.error) {
             visualLog(`Failed to delete '${save}' from the cloud.`, 'error', 'cloud save');
-            if (result.error.includes('session')) {
-                notifySessionExpired();
-            }
+            checkSessionFetchErrors(result);
         } else {
             visualLog(`Deleted '${cloudAccountName}/${save}' from the cloud.`, 'warn', 'cloud save');
         }
@@ -1165,9 +1168,7 @@ const listSaves = () => {
 
             if (result.error) {
                 visualLog(`Failed to list cloud saves.`, 'warn', 'cloud save');
-                if (result.error.includes('session')) {
-                    notifySessionExpired();
-                }
+                checkSessionFetchErrors(result);
                 return;
             }
 
@@ -1191,9 +1192,7 @@ const listSaves = () => {
                     .then(result => {
                         if (result.error) {
                             visualLog(`Failed to load game '${name}' - ${result.error}`, 'error', 'cloud save');
-                            if (result.error.includes('session')) {
-                                notifySessionExpired();
-                            }
+                            checkSessionFetchErrors(result);
                             return;
                         }
 
@@ -1371,7 +1370,8 @@ const loadFromHash = () => {
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
-                checkGithubErrors(result, repo);
+                checkSessionFetchErrors(result);
+                checkGithubFetchErrors(result, repo);
                 return;
             }
     
@@ -1399,9 +1399,7 @@ const loadFromHash = () => {
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to load game '${game}' - ${result.error}`, 'error', 'cloud save');
-                if (result.error.includes('session')) {
-                    notifySessionExpired();
-                }
+                checkSessionFetchErrors(result);
                 return;
             }
     
