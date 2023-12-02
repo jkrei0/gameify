@@ -9,6 +9,7 @@ import { engineTypes } from '/engine/engine_types.js';
 import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
 import { engineIntegrations } from '/engine/engine_integration.js';
+import { engineFetch } from '/engine/engine_fetch.js';
 
 import '/engine/docs.js';
 
@@ -668,32 +669,11 @@ let currentProjectFilename = undefined;
 
 /* Save and load */
 
-const checkGithubFetchErrors = (result, repo) => {
-    if (result.error === 'github unauthorized') {
-        visualLog(`Failed to load '${repo}'. To fix this:<br>
-            - <a href="https://github.com/login/oauth/authorize?client_id=Iv1.bc0995e7293274ef" target="_blank">Log in to GitHub</a><br>
-            - <a href="https://github.com/apps/gameify-gh/installations/new" target="_blank">Check permissions</a><br>
-            - Make sure the repo URL is correct`,
-        'warn', 'github');
-        return true;
-
-    } else if (result.error === 'need permissions') {
-        visualLog(`Failed to load '${repo}', gameify does not have permission to access it!<br>
-            Please <a href="https://github.com/apps/gameify-gh/installations/new" target="_blank">
-               update your github permissions
-            </a><br> and try again.<br>`,
-        'warn', 'github');
-        return true;
-    }
-    return false;
-}
-const checkSessionFetchErrors = (result) => {
-    if (result.error === 'session expired') {
-        notifySessionExpired();
-        return true;
-    }
-    return false;
-}
+engineFetch.setSessionFunction(() => {
+    document.querySelector('#login-link').innerHTML = 'Log In';
+    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'error', 'account');
+});
+engineFetch.setLogFunction(visualLog);
 
 const saveProject = (asName) => {
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
@@ -751,7 +731,7 @@ const saveProject = (asName) => {
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to upload to cloud.`, 'error', 'cloud save');
-                checkSessionFetchErrors(result);
+                engineFetch.checkSessionErrors(result);
             } else {
                 visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'info', 'cloud progress');
             }
@@ -809,8 +789,8 @@ const pushProjectToGithub = () => {
     .then(result => {
         if (result.error) {
             visualLog(`Failed to push '${repoName}' to GitHub.`, 'error', 'github push');
-            if (checkSessionFetchErrors(result)
-                || checkGithubFetchErrors(result, repoName)
+            if (engineFetch.checkSessionErrors(result)
+                || engineFetch.checkGithubErrors(result, repoName)
             ) {
                 return;
             } else if (result.error.includes('merge conflict')) {
@@ -1105,13 +1085,6 @@ const openProject = (data) => {
     visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'log', 'project');
 }
 
-const notifySessionExpired = () => {
-    localStorage.removeItem('accountName');
-    localStorage.removeItem('accountSessionKey');
-    document.querySelector('#login-link').innerHTML = 'Log In';
-    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'error', 'account');
-}
-
 const deleteCloudSave = (save) => {
     const cloudAccountName = localStorage.getItem('accountName');
     if (!confirm(`Delete cloud save '${cloudAccountName}/${save}'?`)) return;
@@ -1131,7 +1104,7 @@ const deleteCloudSave = (save) => {
     .then(result => {
         if (result.error) {
             visualLog(`Failed to delete '${save}' from the cloud.`, 'error', 'cloud save');
-            checkSessionFetchErrors(result);
+            engineFetch.checkSessionErrors(result);
         } else {
             visualLog(`Deleted '${cloudAccountName}/${save}' from the cloud.`, 'warn', 'cloud save');
         }
@@ -1168,7 +1141,7 @@ const listSaves = () => {
 
             if (result.error) {
                 visualLog(`Failed to list cloud saves.`, 'warn', 'cloud save');
-                checkSessionFetchErrors(result);
+                engineFetch.checkSessionErrors(result);
                 return;
             }
 
@@ -1192,7 +1165,7 @@ const listSaves = () => {
                     .then(result => {
                         if (result.error) {
                             visualLog(`Failed to load game '${name}' - ${result.error}`, 'error', 'cloud save');
-                            checkSessionFetchErrors(result);
+                            engineFetch.checkSessionErrors(result);
                             return;
                         }
 
@@ -1370,8 +1343,8 @@ const loadFromHash = () => {
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
-                checkSessionFetchErrors(result);
-                checkGithubFetchErrors(result, repo);
+                engineFetch.checkSessionErrors(result);
+                engineFetch.checkGithubErrors(result, repo);
                 return;
             }
     
@@ -1399,7 +1372,7 @@ const loadFromHash = () => {
         .then(result => {
             if (result.error) {
                 visualLog(`Failed to load game '${game}' - ${result.error}`, 'error', 'cloud save');
-                checkSessionFetchErrors(result);
+                engineFetch.checkSessionErrors(result);
                 return;
             }
     

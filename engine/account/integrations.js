@@ -1,4 +1,9 @@
 
+import { engineFetch } from '/engine/engine_fetch.js';
+engineFetch.setSessionFunction(() => {
+    window.location.href = '/engine/auth.html';
+});
+
 const accountName = localStorage.getItem('accountName');
 
 if (!accountName)  {
@@ -30,7 +35,7 @@ const addGithubIntegration = (code, retry) => {
     .then(result => {
         if (result.error) {
             if (result.error.includes('session')) {
-                window.location.href = '/engine/auth.html';
+                engineFetch.checkSessionErrors(result);
             } else {
                 document.querySelector('#github-integration-button').innerHTML = 'An error occurred';
                 if (retry) {
@@ -60,9 +65,7 @@ const fetchIntegrationStatus = () => {
     .then(result => {
         console.log(result);
         if (result.error) {
-            if (result.error.includes('session')) {
-                window.location.href = '/engine/auth.html';
-            }
+            engineFetch.checkSessionErrors(result);
         }
 
         if (!result.integration) {
@@ -99,9 +102,7 @@ const listAvailableRepos = () => {
     .then(result => {
         console.log(result);
         if (result.error) {
-            if (result.error.includes('session')) {
-                window.location.href = '/engine/auth.html';
-            }
+            engineFetch.checkSessionErrors(result);
             loadingEl.innerHTML = 'Error loading repositories';
         }
 

@@ -1,4 +1,8 @@
-//    localStorage.setItem('saveNames', savedList.join(','))
+
+import { engineFetch } from '/engine/engine_fetch.js';
+engineFetch.setSessionFunction(() => {
+    document.querySelector('#sign-out-button').click(); 
+});
 
 const accountName = localStorage.getItem('accountName');
 
@@ -38,9 +42,7 @@ if (accountName !== null) {
         .then (res => res.json())
         .then(result => {
             if (result.error) {
-                if (result.error.includes('session')) {
-                    document.querySelector('#sign-out-button').click();
-                }
+                engineFetch.checkSessionErrors(result);
             } else if (result.success) {
                 changePasswordButton.innerHTML = 'Password updated!';
             } else {
@@ -68,9 +70,7 @@ if (accountName !== null) {
         cloudLoadingIndicator.remove();
 
         if (result.error) {
-            if (result.error.includes('session')) {
-                document.querySelector('#sign-out-button').click();
-            }
+            engineFetch.checkSessionErrors(result);
         }
 
         for (const game of result.games) {
