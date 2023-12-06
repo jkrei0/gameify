@@ -26,5 +26,5 @@ Things I would like to add, roughly in order.
   - **Physics** - Integration with an actual physics engine
 - **Audio effects** - More advanced audio controls and effects
 - **Debug tools** - Better integrated console and debugging tools
-- **Version control** - Version management and collaboration tools
+- ~~**Version control** - Version management and collaboration tools~~
 - 
