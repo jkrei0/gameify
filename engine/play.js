@@ -1,6 +1,5 @@
 
-
-const embedURL = 'http://localhost:3001/embed.html';
+const embedURL = 'http://gameify-embed.vercel.app/embed.html';
 
 const gameFrame = document.querySelector('#game-frame');
 const gameWindow = gameFrame.contentWindow;
