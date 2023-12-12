@@ -78,10 +78,10 @@ export let camera = {
         }
 
         /** Translate the camera (using absolute positioning)
-         * @param {Number} x - The x amount, in pixels, to translate
-         * @param {Number} y - The y amount, in pixels, to translate
+         * @param {Number} x - The x position to translate to
+         * @param {Number} y - The y position to translate to
          *//** Translate the camera (using absolute positioning)
-         * @param {gameify.Vector2d} amount - The amount, in pixels, to translate
+         * @param {gameify.Vector2d} position - The position to translate to
          */
         this.translateAbsolute = (x, y) => {
             if (x.x != undefined && x.y != undefined) {
@@ -90,7 +90,7 @@ export let camera = {
                 x = x.x;
             }
             if (typeof x != 'number' || typeof y != 'number') {
-                throw new Error("X and Y position passed to camera.translate are not numbers!");
+                throw new Error("X and Y position passed to camera.translateAbsolute are not numbers!");
             }
             _translationTarget.x = x;
             _translationTarget.y = y;
