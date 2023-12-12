@@ -96,20 +96,55 @@ export let camera = {
             _translationTarget.y = y;
         }
 
-        /** Reset the camera's transformation */
+        /** Position the center of the screen (using absolute position). Useful for following a player/sprite
+         * @param {Number} x - The x position to translate to
+         * @param {Number} y - The y position to translate to
+         * @param {Number} offsetx - Y offset (from given position)
+         * @param {Number} offsety - X offset (from given position)
+         *//** Position the center of the screen (using absolute position). Useful for following a player/sprite
+         * @param {gameify.Vector2d} position - The position to translate to
+         * @param {gameify.Vector2d} [offset=new gameify.Vector2d(0, 0)] - Offset by an amount
+         */
+        this.focus = (x, y, ox = 0, oy = 0) => {
+            let position = new vectors.Vector2d(x);
+            let offset = new vectors.Vector2d(y);
+
+            if (x.x == undefined && x.y == undefined) {
+                // not vectors, convert
+                position = new vectors.Vector2d(x, y);
+                offset = new vectors.Vector2d(ox, oy);
+            }
+
+            const screenSize = new vectors.Vector2d(this.context.canvas.width, this.context.canvas.height);
+            let screenOffset = position.subtract(screenSize.multiply(.5)).truncated();
+            screenOffset = screenOffset.add(offset);
+
+            try {
+                this.translateAbsolute(screenOffset.multiply(-1));
+            } catch (e) {
+                throw new Error(`Bad values passed to camera.focus (could not translate). position=${position} offset=${offset}`);
+            }
+        }
+
+        /** Reset the camera's (canvas's) transformation
+         */
         this.resetTransform = () => {
             this.context.setTransform(1, 0, 0, 1, 0, 0);
         }
 
-        const div = document.createElement('div');
-        document.body.appendChild(div);
-        div.style.position = 'fixed';
-        div.style.top = '0';
-        div.style.left = '0';
-        div.style.zIndex = '100';
-        div.style.pointerEvents = 'none';
-        div.style.fontFamily = 'monospace';
-        div.style.fontWeight = 'bold';
+        /** Sets the camera draw mode.
+         * Set to 'ui' mode before drawing UI elements, set to 'world' for drawing everything else.
+         * (draw mode is reset to 'world' each frame).
+         * Equivalent to calling camera.resetTransform() or camera.update(0)
+         * @tutorial camera
+         * @param {String} mode - 'world' or 'ui'
+         */
+        this.setDrawMode = (mode) => {
+            mode = mode.toLowerCase();
+            if (mode === 'ui') this.resetTransform();
+            else if (mode === 'world') this.update(0); // move to position, without actually moving the camera
+            else console.warn('Unknown draw mode: ' + mode);
+        }
 
         /** Update the camera. If you're using the a gameify.Screen's camera, this will be called automatically.
          * This function rounds translation vectors to whole numbers for better rendering
