@@ -737,7 +737,7 @@ const saveProject = (asName) => {
             }
         });
     } else {
-        visualLog(`Saved as '${name}'`, 'info', 'local save');
+        visualLog(`Saved as '${name}'`, 'info', 'local project');
     }
 
     if (success) {
@@ -788,6 +788,7 @@ const pushProjectToGithub = () => {
     .then(engineFetch.toJson)
     .then(result => {
         if (result.error) {
+            visualLog(`Failed to push to GitHub.`, 'error', 'github project');
             visualLog(`Failed to push '${repoName}' to GitHub.`, 'error', 'github push');
             if (engineFetch.checkSessionErrors(result)
                 || engineFetch.checkGithubErrors(result, repoName)
