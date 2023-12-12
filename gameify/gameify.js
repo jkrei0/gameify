@@ -462,9 +462,7 @@ export let gameify = {
          * @private
          */
         this.height = height;
-    
-        this.element.style.width = width;
-        this.element.style.height = height;
+
         this.element.width = this.width;
         this.element.height = this.height;
 
@@ -566,7 +564,6 @@ export let gameify = {
         this.setWidth = (width) => {
             width = Number(width);
             this.width = width;
-            this.element.style.width = width;
             this.element.width = width;
         }
 
@@ -576,7 +573,6 @@ export let gameify = {
         this.setHeight = (height) => {
             height = Number(height);
             this.height = height;
-            this.element.style.height = height;
             this.element.height = height;
         }
 
