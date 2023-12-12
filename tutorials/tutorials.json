@@ -28,5 +28,8 @@
         "children": {
             "github_errors": {"title": "Github Errors"}
         }
+    },
+    "camera": {
+        "title": "Camera Movement and UI"
     }
 }
