@@ -28,31 +28,7 @@ Gameify (the library)'s source code is in `/gameify/`. See above for generating 
  Add a file to the `tutorials` folder, and register it in `tutorials.json`.
 
 ### Develop the visual engine
-Visual engine source is available in `/engine/`.
-
-To develop the visual engine with accounts and cloud saves enabled, install the vercel CLI, and run using `vercel dev`. Vercel functions are located in `/api/`, and utility/helper/etc files are located in `/api-util/`
-
-Make sure to add the follwing to your `.env.local` file:
-```py
-# Accounts and cloud saves (If left blank, offline will still work but cloud will appear to be broken)
-MONGO_NAME="your_mongodb_username"
-MONGO_PASSWORD="your_mongodb_username"
-
-# Send email notifications (i.e. account requests. If left blank, account requests will appear to be broken)
-# Send and receive addresses can be the same
-EMAIL_REC_ADDR="your_email@domain.com"
-EMAIL_SEND_ADDR="sender_email@domain.com"
-EMAIL_PASSWORD="sender_email_password"
-
-# Github integration.(If left blank, offline will still work but github integration will appear to be broken)
-GITHUB_CLIENT_ID="your_ap_id"
-GITHUB_CLIENT_SECRET="your_app_secret"
-```
-
-The app attempts to connect to a `gameify` database, with the following collections:
-- `accounts`
-- `sessions`
-- `games`
+Visual engine source is available in `/engine/`. Read [README.md](engine/README.md) in that folder for information on developing it.
 
 ### Wishlist
 
