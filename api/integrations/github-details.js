@@ -60,7 +60,7 @@ export default async function handler(request, response) {
                 console.error(userResult);
                 return fail('failed to fetch user details');
             }
-            userResult.user = {
+            result.user = {
                 login: userResult.login,
                 name: userResult.name,
                 avatar_url: userResult.avatar_url
