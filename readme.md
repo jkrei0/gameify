@@ -5,7 +5,7 @@ Documentation is available at [gameify.vercel.app](https://gameify.vercel.app/ou
 
 ## Use it yourself
 
-The easiest way to get started with gameify is to use the [gameify engine online](https://gameify.vercel.app/engine/engine.html). Read {@tutorial getting_started} to get familiar with the engine.
+The easiest way to get started with gameify is to use the [gameify engine online](https://gameify.vercel.app/engine/engine.html). Read [the getting started guide](https://gameify.vercel.app/out/tutorial-getting_started.html) to get familiar with the engine.
 
 Or, use the library in your own projects without the engine:
 ```js
@@ -28,8 +28,8 @@ Gameify (the library)'s source code is in `/gameify/`. See above for generating 
  Add a file to the `tutorials` folder, and register it in `tutorials.json`.
 
 ### Develop the visual engine
-Visual engine source is available in `/engine/`. Read [README.md](engine/README.md) in that folder for information on developing it.
+Visual engine source is available in `/engine/`. Read [the readme](https://github.com/jkrei0/gameify/blob/main/engine/README.md) in that folder for information on developing it.
 
 ### Wishlist
 
-Read [wishlist.md](wishlist.md) for a list of things I'd like to add at some point.
+Read [wishlist.md](https://github.com/jkrei0/gameify/blob/main/wishlist.md) for a list of things I'd like to add at some point.
