@@ -3,7 +3,19 @@ This is a browser-based game engine built on top of the Gameify game library.
 
 ## Development
 
-To develop the visual engine with accounts and cloud saves enabled, install the vercel CLI, and run using `vercel dev`. Vercel functions are located in `/api/`, and utility/helper/etc files are located in `/api-util/`
+Most of the visual engine works when run in a simple http server (e.g the `http-server` npm package).
+Simply start a server at the project root (at any port) and open `http://localhost:PORT/engine/engine.html` in your browser.
+
+To develop the visual engine with accounts and cloud saves enabled:
+- Install the Vercel CLI
+- Run `npm install`
+- Run `npm run vars local` to update `play.js` and `embed.js` with local paths
+- Run `npm run serve` to start http-server and the vercel CLI
+- Open `http://localhost:3000/engine/engine.html` in your browser to check everything works
+- Before committing changes, run `npm run vars` to reset the environment
+  (you'll have to `npm run vars local` again afterwords to go back to the local environment)
+
+Vercel functions are located in `/api/`, and utility/helper/etc files are located in `/api-util/`
 
 Make sure to add the follwing to your `.env.local` file:
 ```py
@@ -49,9 +61,7 @@ See [API.md](API.md) for api routes and docs
 
 ## Embedding games
 
-To prevent games from accessing user data and tokens, they are embedded on a separate domain when publicly shared. Everything in `/engine/embed/` is hosted on vercel at `gameify-embed.vercel.app` (but can be run locally with a simple http-server).
-
-The domain is currently hard-coded, which can make development more difficult. (change `originURL` in `/engine/embed/embed.js:8`, and `embedURL` in `/engine/play.js:2`)
+To prevent games from accessing user data and tokens, they are embedded on a separate domain when publicly shared. Everything in `/engine/embed/` is hosted on vercel at `gameify-embed.vercel.app` (but can be run locally with a simple http server, or `npm run serve` - see the instructions for running with the vercel CLI at the top of this file for more info).
 
 **Games are embedded on the same domain when in the editor** to allow offline use, and to allow games to be run without being uploaded to the cloud. This presents a security issue if you open untrusted games in the editor, as they can access user data and tokens, and potentially take actions on behalf of the user. However, there is no way to prevent this without storing the games in the cloud (As far as I know?).
 
