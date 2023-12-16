@@ -2,7 +2,7 @@
     "version": 2,
     "routes": [
         {
-            "src": "/gameify/(.*)|/engine/project/(.*)",
+            "src": "/gameify/(.*)|/engine/project/(.*)|/sample/(.*)",
             "methods": [
                 "GET",
                 "POST",
