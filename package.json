@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "docs": "jsdoc -c jsdoc.json",
+    "vars": "node vars.mjs",
+    "serve": "concurrently --kill-others \"http-server /engine/embed --port=3001\" \"vercel dev\""
+  },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "clean-jsdoc-theme": "^4.2.7",
