@@ -1,9 +1,9 @@
 
-const embedURL = 'https://gameify-embed.vercel.app/embed.html';
+const embedURL = /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */;
 
 const gameFrame = document.querySelector('#game-frame');
 const gameWindow = gameFrame.contentWindow;
-gameWindow.location.href = embedURL + window.location.hash;
+gameWindow.location.href = embedURL + '/embed.html' + window.location.hash;
 
 const accountName = window.location.hash.split('/')[0].replace('#', '');
 const gameTitle = window.location.hash.split('/')[1];
