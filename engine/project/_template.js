@@ -9,7 +9,7 @@ export let game_template = {
             "Main Scene": [false]
         },
         "Tileset": {
-            "Dungeon Tiles": ["/sample/tilesheet.png", 64, 64]
+            "Dungeon Tiles": ["https://gameify.vercel.app/sample/tilesheet.png", 64, 64]
         },
         "Tilemap": {
             "Dungeon Map": [64, 64, {
@@ -237,7 +237,7 @@ export let game_template = {
             }
         },
         "Image": {
-            "Player Image": ["/sample/tilesheet.png"]
+            "Player Image": ["https://gameify.vercel.app/sample/tilesheet.png"]
         }
     },
     "files": {
