@@ -54,7 +54,7 @@ gameFrame.addEventListener('load', () => {
 
     // Add scripts
     const html = win.document.querySelector('html');
-    html.innerHTML = `<head>
+    html.innerHTML = `<!DOCTYPE html><head>
             <title>A Game</title>
         </head>
         <body>
