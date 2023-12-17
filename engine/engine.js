@@ -593,7 +593,7 @@ gameFrame.addEventListener('load', () => {
 const runGame = () => {
     clearVisualEditor();
     showWindow('preview');
-    gameFrameWindow.location.href = /* REPLACE=embedURL */'http://localhost:3001'/* END */+'/embed.html';
+    gameFrameWindow.location.href = /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */+'/embed.html';
 }
 
 /* Tabs */

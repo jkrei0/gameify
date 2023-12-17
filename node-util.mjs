@@ -26,7 +26,7 @@ export const replaceText = (filePath, find, replace, encoding='utf8') => {
  */
 export const replaceVars = (filePath, vars) => {
     console.log('Setting vars in', filePath);
-    replaceText(filePath, /\/\* ?REPLACE=(\w+) ?\*\/(.*?)\/\* ?END ?\*\//, (match, varGroup, stringGroup) => {
+    replaceText(filePath, /\/\* ?REPLACE=(\w+) ?\*\/(.*?)\/\* ?END ?\*\//g, (match, varGroup, stringGroup) => {
         // from this file, then from .env, then from the default
         const resolved = vars[varGroup] || process.env[varGroup] || stringGroup;
         return `/* REPLACE=${varGroup} */${resolved}/* END */`;
