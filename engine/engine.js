@@ -876,17 +876,6 @@ document.addEventListener('keydown', e => {
         // Save project
         e.preventDefault();
         saveProject(currentProjectFilename);
-    } else if (e.ctrlKey && e.key === 'S') {
-        // Ctrl + Shift + S
-        // Screenshot canvas and download
-        var link = document.createElement("a");
-        link.setAttribute('download', 'screenshot.png');
-        link.href = gameFrameWindow.document.querySelector('canvas').toDataURL('image/png');
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        e.preventDefault();
     } else if (e.ctrlKey && !e.shiftKey && e.key === 'Enter') {
         // Ctrl + Enter
         // Run game
@@ -901,6 +890,16 @@ document.addEventListener('keydown', e => {
         // Ctrl + Shift + V
         // Open visual editor
         showWindow('visual');
+        e.preventDefault();
+    } else if (e.ctrlKey && e.key === 'D') {
+        // Ctrl + Shift + D
+        // Open docs tab
+        showWindow('docs');
+        e.preventDefault();
+    } else if (e.ctrlKey && e.key === '!') {
+        // Ctrl + Shift + 1
+        // Jump to sidebar
+        document.querySelector('#refresh-objects').focus()
         e.preventDefault();
     }
 });
