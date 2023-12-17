@@ -4,7 +4,14 @@ This is a browser-based game engine built on top of the Gameify game library.
 ## Development
 
 Most of the visual engine works when run in a simple http server (e.g the `http-server` npm package).
-Simply start a server at the project root (at any port) and open `http://localhost:PORT/engine/engine.html` in your browser.
+To run gameify without any integrations or cloud functionality:
+```sh
+npm install
+npm run vars local
+http-server . --port=3000
+# in a separate terminal
+http-server ./engine/embed --port=3001
+```
 
 To develop the visual engine with accounts and cloud saves enabled:
 - Install the Vercel CLI
@@ -61,9 +68,7 @@ See [API.md](API.md) for api routes and docs
 
 ## Embedding games
 
-To prevent games from accessing user data and tokens, they are embedded on a separate domain when publicly shared. Everything in `/engine/embed/` is hosted on vercel at `gameify-embed.vercel.app` (but can be run locally with a simple http server, or `npm run serve` - see the instructions for running with the vercel CLI at the top of this file for more info).
-
-**Games are embedded on the same domain when in the editor** to allow offline use, and to allow games to be run without being uploaded to the cloud. This presents a security issue if you open untrusted games in the editor, as they can access user data and tokens, and potentially take actions on behalf of the user. However, there is no way to prevent this without storing the games in the cloud (As far as I know?).
+To prevent games from accessing user data and tokens, they are embedded on a separate domain. Everything in `/engine/embed/` is hosted on vercel at `gameify-embed.vercel.app` (but can be run locally with a simple http server, or `npm run serve` - see the instructions for running with the vercel CLI at the top of this file for more info).
 
 ## Custom properties
 
