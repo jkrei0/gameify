@@ -952,6 +952,12 @@ const listFiles = (data) => {
             diffButton.onclick = (evt) => {
                 showWindow('editor-diff');
                 evt.stopPropagation();
+
+                // Set active file
+                const prev = document.querySelector('.file-button-active');
+                if (prev) prev.classList.remove('file-button-active');
+                button.classList.add('file-button-active');
+
                 engineIntegrations.showDiff(file, files);
             }
             button.appendChild(diffButton);
@@ -987,7 +993,6 @@ const listFiles = (data) => {
             editor.setSession(files[file]);
 
             const prev = document.querySelector('.file-button-active');
-            console.log(prev);
             if (prev) prev.classList.remove('file-button-active');
             button.classList.add('file-button-active');
 
