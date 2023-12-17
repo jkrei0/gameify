@@ -17,6 +17,7 @@ export const engineIntegrations = {
     },
     setIntegrations: (data) => {
         intData = data || {};
+        diffData = {};
     },
     setDiffContents: (data) => {
         diffData = data || {};
@@ -64,14 +65,14 @@ export const engineIntegrations = {
         left.on('change', () => {
             files[file]?.setValue(left.getValue());
             const changes = differ.getNumDiffs();
-            document.querySelector('#diff-num-changes').innerText = changes + ' change' + (changes === 1 ? 's' : '');
+            document.querySelector('#diff-num-changes').innerText = changes + ' change' + (changes === 1 ? '' : 's');
         });
         for (const editor of [left, right]) {
             editor.setOptions({fontSize: '16px'})
         }
         setTimeout(() => {
             const changes = differ.getNumDiffs();
-            document.querySelector('#diff-num-changes').innerText = changes + ' change' + (changes === 1 ? 's' : '');
+            document.querySelector('#diff-num-changes').innerText = changes + ' change' + (changes === 1 ? '' : 's');
         });
 
         
