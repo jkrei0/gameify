@@ -28,6 +28,12 @@ export const engineSerialize = {
             files: files
         };
         for (const file in files) {
+            if (!files[file].getValue) {
+                // getValue doesn't exist if ace hasn't loaded yet,
+                // so in this case, just grab the file text this way
+                data.files[file] = files[file];
+                continue;
+            }
             data.files[file] = files[file].getValue();
         }
         return data;
