@@ -517,7 +517,7 @@ document.querySelector('#refresh-objects').addEventListener('click', populateObj
 /* Game preview */
 
 const gameFrame = document.querySelector('#game-frame');
-const win = gameFrame.contentWindow;
+const gameFrameWindow = gameFrame.contentWindow;
 
 const genGameHtml = (scripts = '', styles = '') => {
     const html = `<head>
@@ -552,102 +552,45 @@ window.addEventListener('message', (event) => {
         </span>`;
     }
 
+    const sanitize = (txt) => {
+        // Make sure there's no funny business from an embedded game trying to send
+        // malicious things in console logs. Not sure how viable this actually is,
+        // but better to prevent it than not.
+        return txt.replaceAll(/&/g, '&amp;').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;');
+    }
+
     if (event.data && event.data.type === 'console') {
         const { message, lineNumber, columnNumber, fileName } = event.data.payload;
-        consoleOut.innerHTML += `<span class="log-item ${event.data.logType}">
-            <span class="short">${event.data.logType.toUpperCase()}</span>
-            <span class="message">${message}</span>
-            <span class="source">${fileName.replace(/.* injectedScript.*/, '(project script)')} ${lineNumber}:${columnNumber}</span>
+        consoleOut.innerHTML += `<span class="log-item ${sanitize(event.data.logType)}">
+            <span class="short">${sanitize(event.data.logType.toUpperCase())}</span>
+            <span class="message">${sanitize(message)}</span>
+            <span class="source">
+                ${sanitize(fileName.replace(/.* injectedScript.*/, '(project script)'))}
+                ${sanitize(lineNumber)}:${sanitize(columnNumber)}
+            </span>
         </span>`;
         consoleOut.scrollTo(0, consoleOut.scrollHeight);
     }
 });
 gameFrame.addEventListener('load', () => {
-
     // Clear the console
     consoleOut.innerHTML = `<span class="log-item info"></span>`;
     numMessages = 0;
 
-    // Set up log handlers
-    const log = (t, args, q = {}, pe) => {
-        const error = pe || new Error().stack.split('\n')[2];
-        const split = error.split(':');
-
-        let message = q ? args : args.map(a => JSON.stringify(a)).join(', ');
-
-        try {
-            win.parent.postMessage({
-                type: 'console',
-                logType: t,
-                payload: {
-                    message: message,
-                    lineNumber: q.line || split[split.length - 2],
-                    columnNumber: q.col || split[split.length - 1],
-                    fileName: q.file || split[split.length - 3].replace(/.*?\/(engine\/)?/, '')
-                }
-            }, '*');
-        
-        } catch (e) {
-            // Try to convert the logged object to a string
-            win.parent.postMessage({
-                type: 'console',
-                logType: t,
-                payload: {
-                    message: String(message),
-                    lineNumber: q.line || split[split.length - 2],
-                    columnNumber: q.col || split[split.length - 1],
-                    fileName: q.file || split[split.length - 3].replace(/.*?\/(engine\/)?/, '')
-                }
-            }, '*');
-        }
+    const saved = {
+        objects: serializeObjectsList(objects),
+        files: {}
     };
-
-    win.console.log = (...args) => { log('log', args); }
-    win.console.info = (...args) => { log('info', args); }
-    win.console.debug = (...args) => { log('debug', args); }
-    win.console.warn = (...args) => { log('warn', args); }
-    win.console.error = (...args) => { 
-        if (args[0] && args[0]._gameify_error === 'onerror') {
-            const details = args[0].details
-            // details = [message, file, line, col, error]
-            log('error', [details[0]], {file: details[1].replace(/.*?:\d{4}\//, ''), line: details[2], col: details[3]});
-
-        } else if (args[0] && args[0]._gameify_error === 'promise') {
-            const details = args[0].message;
-            log('error', [details], {}, "::");
-        } else {
-            log('error', args);
-        }
-    }
-
-    win.__s_objects = serializeObjectsList(objects);
-
-    // Add scripts
-    const html = win.document.querySelector('html');
-    html.innerHTML = genGameHtml();
-
-    console.info('GAME START (loading scripts)');
-
     for (const file in files) {
-        if (file.endsWith('.js')) {
-            const script = document.createElement('script');
-            script.type = 'module';
-            script.innerHTML = files[file].getValue();
-            win.document.body.appendChild(script);
-
-        } else if (file.endsWith('.css')) {
-            const style = document.createElement('style');
-            style.innerHTML = files[file].getValue();
-            win.document.head.appendChild(style);
-
-        }
+        saved.files[file] = files[file].getValue();
     }
+    gameFrameWindow.postMessage(saved, /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */);
 });
 
 const runGame = () => {
     clearVisualEditor();
     showWindow('preview');
-    win.location.href = "/engine/project/;";
+    gameFrameWindow.location.href = /* REPLACE=embedURL */'http://localhost:3001'/* END */+'/embed.html';
 }
 
 /* Tabs */
@@ -949,7 +892,7 @@ document.addEventListener('keydown', e => {
         // Screenshot canvas and download
         var link = document.createElement("a");
         link.setAttribute('download', 'screenshot.png');
-        link.href = win.document.querySelector('canvas').toDataURL('image/png');
+        link.href = gameFrameWindow.document.querySelector('canvas').toDataURL('image/png');
         document.body.appendChild(link);
         link.click();
         link.remove();

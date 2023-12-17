@@ -29,6 +29,7 @@ console.log('Running in directory', __dirname);
 console.log('Building for envionment:', environment);
 
 replaceVars('/engine/embed/embed.js', envVars[environment]);
+replaceVars('/engine/engine.js', envVars[environment]);
 replaceVars('/engine/play.js', envVars[environment]);
 
 if (environment !== default_env || modified_vars) {

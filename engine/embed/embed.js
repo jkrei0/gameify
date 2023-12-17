@@ -18,6 +18,14 @@ window.addEventListener('hashchange', () => {
 
 let gameData = {};
 
+
+window.addEventListener('message', (event) => {
+    // We don't care where the origin is, so don't bother checking. If another page embeds this, it's fine.
+    gameData = event.data;
+
+    win.location.href = "/game.html";
+});
+
 // don't bother looking for nothing
 if (accountName && gameTitle) fetch(originURL + `/api/games-store/load-game`, {
     method: 'POST',
@@ -52,6 +60,8 @@ gameFrame.addEventListener('load', () => {
         return;
     }
 
+    addConsoleHook();
+
     // Add scripts
     const html = win.document.querySelector('html');
     html.innerHTML = `<!DOCTYPE html><head>
@@ -82,3 +92,65 @@ gameFrame.addEventListener('load', () => {
     }
     document.querySelector('#loading-indicator').style.display = 'none';
 });
+
+const addConsoleHook = async () => {
+    const newConsole = (function (oldConsole) {
+        // Pass logs to parent window
+        const log = (t, args, q = {}, pe) => {
+            const error = pe || new Error().stack.split('\n')[2];
+            const split = error.split(':');
+
+            let message = q ? args : args.map(a => JSON.stringify(a)).join(', ');
+
+            oldConsole.log(...args);
+
+            try {
+                window.parent.postMessage({
+                    type: 'console',
+                    logType: t,
+                    payload: {
+                        message: message,
+                        lineNumber: q.line || split[split.length - 2],
+                        columnNumber: q.col || split[split.length - 1],
+                        fileName: q.file || split[split.length - 3].replace(/.*?\/(engine\/)?/, '')
+                    }
+                }, '*');
+            
+            } catch (e) {
+                // Try to convert the logged object to a string
+                window.parent.postMessage({
+                    type: 'console',
+                    logType: t,
+                    payload: {
+                        message: String(message),
+                        lineNumber: q.line || split[split.length - 2],
+                        columnNumber: q.col || split[split.length - 1],
+                        fileName: q.file || split[split.length - 3].replace(/.*?\/(engine\/)?/, '')
+                    }
+                }, '*');
+            }
+        };
+
+        return {
+            log: (...args) => { log('log', args); },
+            info: (...args) => { log('info', args); },
+            debug: (...args) => { log('debug', args); },
+            warn: (...args) => { log('warn', args); },
+            error: (...args) => {
+                if (args[0] && args[0]._gameify_error === 'onerror') {
+                    const details = args[0].details
+                    // details = [message, file, line, col, error]
+                    log('error', [details[0]], {file: details[1].replace(/.*?:\d{4}\//, ''), line: details[2], col: details[3]});
+
+                } else if (args[0] && args[0]._gameify_error === 'promise') {
+                    const details = args[0].message;
+                    log('error', [details], {}, "::");
+                } else {
+                    log('error', args);
+                }
+            }
+        }
+    })(gameFrame.contentWindow.console);
+
+    gameFrame.contentWindow.console = newConsole;
+}
