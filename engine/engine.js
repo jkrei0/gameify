@@ -3,7 +3,7 @@ import {game_template} from '/engine/project/_template.js';
 
 import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js";
 
-import { serializeObjectsList } from '/engine/serialize.js';
+import { engineSerialize } from '/engine/serialize.js';
 
 import { engineTypes } from '/engine/engine_types.js';
 import { engineUI } from '/engine/engine_ui.js';
@@ -586,13 +586,7 @@ gameFrame.addEventListener('load', () => {
     consoleOut.innerHTML = `<span class="log-item info"></span>`;
     numMessages = 0;
 
-    const saved = {
-        objects: serializeObjectsList(objects),
-        files: {}
-    };
-    for (const file in files) {
-        saved.files[file] = files[file].getValue();
-    }
+    const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
     gameFrameWindow.postMessage(saved, /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */);
 });
 
@@ -647,14 +641,7 @@ const saveProject = (asName) => {
     if (!overwrite) savedList.push(name);
     localStorage.setItem('saveNames', savedList.join(','))
 
-    const saved = {
-        objects: serializeObjectsList(objects),
-        integrations: engineIntegrations.getIntegrations(),
-        files: {}
-    };
-    for (const file in files) {
-        saved.files[file] = files[file].getValue();
-    }
+    const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
 
     let success = false;
     try {
@@ -704,14 +691,7 @@ const saveProject = (asName) => {
     return name;
 }
 const pushProjectToGithub = () => {
-    const saved = {
-        objects: serializeObjectsList(objects),
-        integrations: engineIntegrations.getIntegrations(),
-        files: {}
-    };
-    for (const file in files) {
-        saved.files[file] = files[file].getValue();
-    }
+    const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
 
     if (engineIntegrations.getProvider() !== 'github') {
         visualLog(`Current project does not have GitHub integration.`, 'error', 'github push');
@@ -778,7 +758,7 @@ const diffGithubProject = () => {
         document.querySelector('#diff-objects-button').style.display = '';
         document.querySelector('#diff-objects-button').addEventListener('click', () => {
             showWindow('editor-diff');
-            engineIntegrations.showDiff(serializeObjectsList(objects));
+            engineIntegrations.showDiff(engineSerialize.objectsList(objects));
         });
         button.innerHTML = 'Diff';
     }, (result) => {
@@ -820,7 +800,7 @@ const exportProject = async () => {
 
     const outJS = await fetch("./project/_out.js");
     const outJSText = await outJS.text();
-    const objListText = 'window.__s_objects = ' + JSON.stringify(serializeObjectsList(objects));
+    const objListText = 'window.__s_objects = ' + JSON.stringify(engineSerialize.objectsList(objects));
 
     zipFiles.push({
         name: '_out.js',
@@ -872,7 +852,7 @@ OBJECTS:objects.gpj
     zipFiles.push({
         name: config.objects,
         // Be nice to version control and format the json
-        input: JSON.stringify({ "objects": serializeObjectsList(objects) }, null, 2)
+        input: JSON.stringify({ "objects": engineSerialize.objectsList(objects) }, null, 2)
     })
 
     const blob = await downloadZip(zipFiles).blob();
@@ -926,13 +906,7 @@ document.addEventListener('keydown', e => {
 });
 
 document.querySelector('#download-button').addEventListener('click', () => {
-    const saved = {
-        objects: serializeObjectsList(objects),
-        files: {}
-    };
-    for (const file in files) {
-        saved.files[file] = files[file].getValue();
-    }
+    const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
 
     var link = document.createElement("a");
     link.setAttribute('download', 'gameify_project.gpj');
