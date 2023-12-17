@@ -167,7 +167,6 @@ export const engineTypes = {
                 parent.appendChild(engineUI.imageItem('Preview', obj.path)[0]);
 
                 parent.appendChild(engineUI.inputItem('Crop', obj.getCrop().cropped, 'checkbox', (v) => {
-                    console.log('Crop set', v)
                     if (v === false) {
                         obj.uncrop();
                     } else if (v === true) {
@@ -177,11 +176,9 @@ export const engineTypes = {
                     } else console.error('Checkbox value is', v);
                 })[0]);
                 parent.appendChild(engineUI.twoInputItem('Crop XY',  [obj.getCrop().x, obj.getCrop().y], 'number', (x, y) => {
-                    console.log('Crop XY', x, y);
                     obj.crop(x, y, obj.getCrop().width || 0, obj.getCrop().height || 0);
                 })[0]);
                 parent.appendChild(engineUI.twoInputItem('Crop WH',  [obj.getCrop().width, obj.getCrop().height], 'number', (x, y) => {
-                    console.log('Crop WH', x, y);
                     obj.crop(obj.getCrop().x || 0, obj.getCrop().y || 0, x, y);
                 })[0]);
             },

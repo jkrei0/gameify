@@ -36,7 +36,6 @@ document.querySelector('#docs-nav-search').onclick = () => {
 
 document.querySelector('#docs-nav-url').onchange = () => {
     const val = document.querySelector('#docs-nav-url').value;
-    console.log(val, val.split('/out/'));
     let split = val.split('/out/')[1] || val;
     if (split == undefined) {
         split = '';
@@ -45,7 +44,6 @@ document.querySelector('#docs-nav-url').onchange = () => {
     if (!url.endsWith('.html')) {
         docsIFrame.contentWindow.document.querySelector('.icon-button.search-button').click();
         setTimeout(() => {
-            console.log(docsIFrame.contentWindow.document.querySelector('.search-box-c'));
             docsIFrame.contentWindow.document.querySelector('.search-box-c input').value = val
         });
     
@@ -66,7 +64,6 @@ docsIFrame.onload = () => {
         docsHistoryPosition += 1;
         docsHistory.splice(docsHistoryPosition, 0, docsIFrame.contentWindow.location.toString());
     }
-    console.log(docsHistory, docsHistoryPosition, modHist);
     modHist = true;
 
     const path = '/out/' + docsIFrame.contentWindow.location.toString().split('/out/')[1];

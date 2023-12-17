@@ -63,7 +63,6 @@ const fetchIntegrationStatus = () => {
     })
     .then(engineFetch.toJson)
     .then(result => {
-        console.log(result);
         if (result.error) {
             engineFetch.checkSessionErrors(result);
         }
@@ -100,7 +99,6 @@ const listAvailableRepos = () => {
     })
     .then(engineFetch.toJson)
     .then(result => {
-        console.log(result);
         if (result.error) {
             engineFetch.checkSessionErrors(result);
             loadingEl.innerHTML = 'Error loading repositories';

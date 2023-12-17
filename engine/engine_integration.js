@@ -41,7 +41,6 @@ export const engineIntegrations = {
         }
         
         let mode;
-        console.log('dol', diffObjectsList);
         if (diffObjectsList) mode = "ace/mode/json";
         else if (file.endsWith('.js')) mode = "ace/mode/javascript";
         else if (file.endsWith('.css')) mode = "ace/mode/css";
