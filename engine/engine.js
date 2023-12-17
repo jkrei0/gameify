@@ -50,6 +50,8 @@ const showWindow = (t) => {
 
     if (t === 'preview') {
         totalMessages = 0;
+    } else if (t === 'docs' && document.querySelector('#docs-iframe').src.endsWith(';')) {
+        document.querySelector('#docs-iframe').contentWindow.location.reload();
     }
 };
 

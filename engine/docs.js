@@ -57,7 +57,6 @@ document.querySelector('#docs-nav-url').onchange = () => {
 
 docsIFrame.onload = () => {
     if ( // stay w/in /out/ directory
-        docsIFrame.contentWindow.location.toString().endsWith('/out/') ||
         !docsIFrame.contentWindow.location.toString().includes('/out/')
     ) {
         docsIFrame.contentWindow.location = '/out/tutorial-engine_home.html';
