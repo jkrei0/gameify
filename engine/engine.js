@@ -555,17 +555,24 @@ window.addEventListener('message', (event) => {
     }
 
     const sanitize = (txt) => {
+        if (txt.join) txt = txt.join(', ');
         // Make sure there's no funny business from an embedded game trying to send
         // malicious things in console logs. Not sure how viable this actually is,
         // but better to prevent it than not.
-        return txt.toString().replaceAll(/&/g, '&amp;').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;');
+        const out = txt.toString()
+            .replaceAll(/&/g, '&amp;')
+            .replaceAll(/</g, '&lt;')
+            .replaceAll(/>/g, '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll('\'', '&#39;');
+        return out;
     }
 
     if (event.data && event.data.type === 'console') {
         const { message, lineNumber, columnNumber, fileName } = event.data.payload;
         consoleOut.innerHTML += `<span class="log-item ${sanitize(event.data.logType)}">
             <span class="short">${sanitize(event.data.logType.toUpperCase())}</span>
-            <span class="message">${sanitize(message.join(', '))}</span>
+            <span class="message">${sanitize(message)}</span>
             <span class="source">
                 ${sanitize(fileName.replace(/.* injectedScript.*/, '(project script)'))}
                 ${sanitize(lineNumber)}:${sanitize(columnNumber)}
