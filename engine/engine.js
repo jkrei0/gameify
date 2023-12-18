@@ -45,6 +45,7 @@ const visualLog = (message, type = 'info', source = 'editor') => {
     visualEl.scrollTo(0, visualEl.scrollHeight);
 }
 const showWindow = (t) => {
+    stopGame();
     document.querySelector(`.window.visible`).classList.remove('visible');
     document.querySelector(`.window.${t}`).classList.add('visible');
 
@@ -581,25 +582,35 @@ window.addEventListener('message', (event) => {
         consoleOut.scrollTo(0, consoleOut.scrollHeight);
     }
 });
+
+const runGameButton = document.querySelector('#play-button')
 gameFrame.addEventListener('load', () => {
+    if (gameFrame.src === 'about:blank') return;
+
     // Clear the console
     consoleOut.innerHTML = `<span class="log-item info"></span>`;
     numMessages = 0;
 
+    runGameButton.innerText = 'Stop Game';
     const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
     gameFrameWindow.postMessage(saved, /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */);
 });
 
+const stopGame = () => {
+    gameFrame.src = 'about:blank';
+    runGameButton.innerText = 'Run Game';
+}
 const runGame = () => {
     clearVisualEditor();
     showWindow('preview');
-    gameFrameWindow.location.href = /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */+'/embed.html';
+    gameFrame.src = /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */+'/embed.html';
 }
 
 /* Tabs */
 
-document.querySelector('#play-button').addEventListener('click', () => {
-    runGame();
+runGameButton.addEventListener('click', () => {
+    if (gameFrame.src === 'about:blank') runGame();
+    else stopGame();
 });
 document.querySelector('#code-button').addEventListener('click', () => {
     showWindow('editor');
