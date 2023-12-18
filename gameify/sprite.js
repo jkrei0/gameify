@@ -1,4 +1,5 @@
 import { vectors } from "./vector.js"
+import { animations } from "./animation.js"
 
 /** Sprite class for use in gameify. Usually you'll access this through the gameify object.
  * @example // Use sprites via gameify
