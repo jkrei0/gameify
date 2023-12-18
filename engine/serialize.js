@@ -25,7 +25,7 @@ export const engineSerialize = {
         const data = {
             objects: engineSerialize.objectsList(objects),
             integrations: integrations,
-            files: files
+            files: {}
         };
         for (const file in files) {
             if (!files[file].getValue) {
