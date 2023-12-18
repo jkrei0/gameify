@@ -6,6 +6,7 @@ import { vectors }  from "./vector.js"
 import { text }     from "./text.js"
 import { audio }    from "./audio.js"
 import { camera }   from "./camera.js"
+import { animation } from "./animation.js"
 "use strict"
 
 console.log("Welcome to Gameify");
@@ -35,6 +36,8 @@ let $share = (sel, obj) => { throw 'How\'d you access this?? (Bad $share)'; }
 export let gameify = {
     getDocs: docs.getDocs,
 
+    Animation: animation.Animation,
+    Animator: animation.Animator,
     Camera: camera.Camera,
     Vector2d: vectors.Vector2d,
     vectors: vectors.vectors,

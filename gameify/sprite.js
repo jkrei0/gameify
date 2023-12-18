@@ -1,5 +1,5 @@
 import { vectors } from "./vector.js"
-import { animations } from "./animation.js"
+import { animation } from "./animation.js"
 
 /** Sprite class for use in gameify. Usually you'll access this through the gameify object.
  * @example // Use sprites via gameify
@@ -79,6 +79,11 @@ export let sprites = {
                 parent: name(this.parent)
             };
         }
+
+        /** The animator for this sprite.
+         * @type {gameify.Animator}
+         */
+        this.animator = new animation.Animator(this);
 
         /** The position of the Sprite on the screen
          * @type {gameify.Vector2d}
@@ -181,6 +186,8 @@ This way speeds and physics are the same regardless of FPS or how good your comp
                     deltaWarned = true;
                 }
             }
+            
+            this.animator.update(delta);
 
             // make the velocity dependant on the update speed
             this.position = this.position.add(this.velocity.multiply(delta/1000));

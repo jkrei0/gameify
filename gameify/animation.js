@@ -4,10 +4,10 @@
  * @example // Use via gameify
  * // This is the most common way
  * import { gameify } from "./gameify/gameify.js"
- * let myAnimation = new gameify.Animation([frames], options);
+ * let myAnimation = new gameify.Animation(frames, options);
  * @example // Import just sprites
  * import { animations } from "./gameify/animation.js"
- * let myAnimation = new animations.Animation([frames], options);
+ * let myAnimation = new animations.Animation(frames, options);
  * @global
  */
 export let animation = {
@@ -18,18 +18,24 @@ export let animation = {
      * 
      * mySprite = new gameify.Sprite(0, 0, new gameify.Image("player.png"));
      *
-     * let myAnimation = new gameify.Animation([frames], { duration: 200, loop: true });
+     * let myAnimation = new gameify.Animation(frames, { duration: 200, loop: true });
      * 
      * mySprite.animator.set('idle', myAnimation);
      * mySprite.animator.play('idle');
+     * 
+     * @arg {Object} parent - The object to animate
      */
-    Animator: function () {
+    Animator: function (parent) {
         /** The animations currently assigned to the animator.
          * Use Animator.set() and Animator.play() to add and play animations
          * @readonly
         */
         this.animations = {};
 
+        /** The object that this animator is attached to
+         * @type {Object}
+         */
+        this.parent = parent;
         
         /** The animation that is currently playing (or undefined if not playing). Use Animator.play() to change the current animation being played. */
         this.currentAnimation = undefined;
@@ -66,16 +72,42 @@ export let animation = {
 
         /** Update the animation
          * @param {Number} delta - The time, in miliseconds, since the last frame
-         * @param {Object} object - The object to update
          */
-        this.update = (delta, object) => {
+        this.update = (delta) => {
             if (!this.playing) return;
 
             this.animationProgress += delta;
-            const frame = this.currentAnimation.getFrameAt(this.animationProgress);
-            this.currentAnimation.applyTo(object, frame);
+            this.currentAnimation.applyTo(this.parent, this.animationProgress);
         }
     },
+
+    /** Animation options
+     * @typedef {Object} AnimationOptions
+     * @property {Number} [duration=1000] - The duration of the animation, in milliseconds (calculated based on frameDuration if frameDuration is set)
+     * @property {Number} [frameDuration] - The duration of each frame (by default, calculated based on duration)
+     * @property {Boolean} [loop=false] - If the animation should loop
+     */
+
+    /** An animation frame
+     * @typedef {Object} AnimationFrame
+     * @property {animationPropertyTypes|string} [type=gameify.animation.types.simple] - An animation type, or the name of an animation type
+     * @property {any} value - The value of the property at the frame
+     * @example
+     * const frames = [{
+     *     image: { type: 'Image', value: new gameify.Image("player_idle1.png") },
+     *     position: { type: 'Vector2d', value: new gameify.Vector2d(0, 2) },
+     * },{
+     *     image: { type: 'Image', value: new gameify.Image("player_idle2.png") },
+     *     position: { type: 'Vector2d', value: new gameify.Vector2d(0, 2) },
+     * },{
+     *     image: { type: 'Image', value: new gameify.Image("player_idle3.png") },
+     *     position: { type: 'Vector2d', value: new gameify.Vector2d(0, -2) },
+     * },{
+     *     image: { type: 'Image', value: new gameify.Image("player_idle4.png") },
+     *     position: { type: 'Vector2d', value: new gameify.Vector2d(0, -2) },
+     * }];
+     * let myAnimation = new gameify.Animation(frames, { duration: 200, loop: true });
+     */
 
     /** Creates an animation
      * @constructor
@@ -84,11 +116,12 @@ export let animation = {
      * // ...
      * 
      * // Create a sprite with the image "player.png" in the top left corner
-     * const frames = [
-     *     new gameify.Image("player_idle1.png"),
-     *     new gameify.Image("player_idle2.png")
+     * const frames = [{
+     *     image: { type: 'Image', value: new gameify.Image("player_idle1.png") },
+     *     position: { type: 'Vector2d', value: new gameify.Vector2d(0, 2) },
+     * }, // ... more frames
      * ];
-     * let myAnimation = new gameify.Animation([frames], { duration: 200, loop: true });
+     * let myAnimation = new gameify.Animation(frames, { duration: 200, loop: true });
      * 
      * mySprite.animator.set('idle', myAnimation);
      * 
@@ -102,12 +135,109 @@ export let animation = {
      *     }
      * });
      * 
-     * @arg {Number} x - The x (horizontal) position of the sprite, left-to-right.
-     * @arg {Number} y - The y (vertical) position of the sprite, top-to-bottom.
-     * @arg {gameify.Image} image - The image the sprite should have.
+     * @arg {Array<AnimationFrame>} frames - The frames of the animation
+     * @arg {AnimationOptions} options - animation options
      */
-    Animation: function (images, options) {
-        
+    Animation: function (frames, options) {
+        /** The frames of the animation
+         * @type {Array<Object>}
+         * @readonly
+         */
+        this.frames = JSON.parse(JSON.stringify(frames));
+
+        /** Update the animation's frames
+         * @arg {Array<AnimationFrame>} frames - The new frames
+         */
+        this.setFrames = (frames) => {
+            this.frames = frames;
+            this.options.duration = this.options.frameDuration * this.frames.length;
+        }
+
+        /** The animation's options
+         * @type {AnimationOptions}
+         */
+        this.options = Object.assign({
+            duration: 1000,
+            frameDuration: undefined,
+            loop: false
+        }, options);
+
+        if (this.options.frameDuration === undefined) {
+            this.options.frameDuration = this.options.duration / this.frames.length;
+        } else {
+            this.options.duration = this.options.frameDuration * this.frames.length;
+        }
+
+        console.log(this.options);
+
+        /** Get the frame number at the given time
+         * @param {Number} time - The time (in milliseconds) to get the frame at
+         * @returns {Number}
+         */
+        this.getFrameNumberAt = (time) => {
+            const framesElapsed = Math.floor(time / this.options.duration);
+            if (this.options.loop) {
+                return framesElapsed % this.frames.length;
+            }
+            return Math.max(framesElapsed, this.frames.length - 1);
+        }
+
+        /** Get the frame at the given time
+         * @param {Number} time - The time (in milliseconds) to get the frame at
+         * @returns {Object}
+        */
+        this.getFrameAt = (time) => {
+            return this.frames[this.getFrameNumberAt(time)];
+        }
+
+        /** Apply an animation frame to an object
+         * @param {Object} object - The object to apply the frame to
+         * @param {Number} time - The time (in milliseconds) to of the frame
+         */
+        this.applyTo = (object, time) => {
+            const frame = this.getFrameAt(time);
+            this.applyFrameTo(object, frame);
+        }
+
+        /** Apply an animation frame to an object
+         * @param {Object} object - The object to apply the frame to
+         * @param {Object} frame - The frame to apply
+         */
+        this.applyFrameTo = (object, frame) => {
+            for (const property in frame) {
+                // Type can be a type, or a string, or blank (in which case, use simple)
+                let type = frame[property].type;
+                if (!type.apply) type = animation.animationPropertyTypes[type];
+                if (!type.apply) type = animation.animationPropertyTypes.simple;
+
+                type.apply(property, frame[property].value, object);
+            }
+        }
+    },
+
+    /** Animation types. Most types replace the value (absolute)
+     * @global
+     * @alias gameify.animation.animationPropertyTypes
+     * @enum
+     */
+    animationPropertyTypes: {
+        // Base types
+        /** Apply the property by overwriting the old value each frame */
+        simple: { apply: (property, value, object) => object[property] = value },
+        /** Apply the property using Object.apply() each frame */
+        object: { apply: (property, value, object) => Object.apply(object[property], value) },
+
+        // Other simple types
+        /** A number */
+        number: { apply: (...args) => animation.animationPropertyTypes.simple.apply(...args) },
+        /** A string */
+        string: { apply: (...args) => animation.animationPropertyTypes.simple.apply(...args) },
+        /** A boolean */
+        boolean: { apply: (...args) => animation.animationPropertyTypes.simple.apply(...args) },
+        /** A gameify.Image (on a sprite, or other object with a setImage method) */
+        'Image': { apply: (property, value, object) => object.setImage(value) },
+        /** A gameify.Vector2d */
+        'Vector2d': { apply: (property, value, object) => { object[property].x = value.x; object[property].y = value.y; } },
     }
 
 }
