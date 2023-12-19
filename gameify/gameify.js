@@ -849,41 +849,91 @@ export let gameify = {
         }
     }, 
 
-    /** Creates a tileset from an image
-     * @constructor
+    /** A Tileset for use with Tilemaps, Sprites, etc
      * @example let myTileset = new gameify.Tileset("images/tileset.png");
      * // Give the coordinates of a tile to retrieve it
      * let grassTile = myTileset.getTile(3, 2);
-     * @arg {String} path - The image/tileset filepath
-     * @arg {Number} twidth - The width of each tile
-     * @arg {Number} theight - The height of each tile
      */
-    Tileset: function (path, twidth, theight) {
-        if (path === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
+    Tileset: class {
+
+        /** Creates a Tileset from an image
+         * @arg {String} path - The image/tileset filepath
+         * @arg {Number} twidth - The width of each tile
+         * @arg {Number} theight - The height of each tile
+         */
+        constructor(path, twidth, theight) {
+            this.path = path;
+            this.twidth = Number(twidth);
+            this.theight = Number(theight);
+            this.texture = document.createElement("img");
+            this.texture.src = path;
+
+            this.#pathName = path;
+            if (path.length > 50) {
+                this.#pathName = this.#pathName = path.slice(0, 40) + '...';
+            }
+            this.texture.onerror = () => {
+                throw new Error(`Your image "${this.#pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
+            }
+            this.texture.onload = () => {
+                console.info(`Loaded image "${this.#pathName}"`)
+                this.loaded = true;
+    
+                if (this.#loadFunction) { this.#loadFunction(); }
+            }
+        }
+
+        path;
+        twidth;
+        theight;
+        loaded = false;
+        /** The tileset's image/texture
+         * @package
+         */
+        texture;
+        #pathName;
+        #loadFunction = undefined;
+
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Tileset}
+        */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Tileset.');
                 const obj = new gameify.Tileset(...data);
                 return obj;
             }
+
+            const obj = new gameify.Tileset(data.path, data.twidth, data.theight);
+            return obj;
         }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.path, this.twidth, this.theight];
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            return {
+                path: this.path,
+                twidth: this.twidth,
+                theight: this.theight
+            };
         }
 
-        this.path = path;
-        this.twidth = Number(twidth);
-        this.theight = Number(theight);
-
-        this.loaded = false;
-
-        /** Get a tile from it's coordinates. Returns a new Image object each time, so if you're getting the same tile a lot you might want to save it to a variable
+        /** Get a tile from it's coordinates. Returns a new Image object each time, so if you're getting =
+         * the same tile a lot you might want to save it to a variable
+         * @method
          * @param {Number} x - The x coordinate of the tile
          * @param {Number} y - The y coordinate of the tile
          * @returns {gameify.Image}
          */
-        this.getTile = (x, y) => {
+        getTile = (x, y) => {
             const tile = new gameify.Image();
             tile.tileData = {
                 tileset: this,
@@ -896,41 +946,23 @@ export let gameify = {
 
         /** Change and load a new image path. Please note this does not clear
          * tilemaps' cached data, and it might retain its the original image.
+         * @method
          * @param {string} path - The new tileset image path
          */
-        this.changePath = (path) => {
+        changePath = (path) => {
             this.path = path;
             const ni = new gameify.Tileset(path, this.twidth, this.theight);
             ni.onLoad(() => {
                 this.texture = ni.texture;
-                if (this.loadFunction) { this.loadFunction(); }
+                if (this.#loadFunction) { this.#loadFunction(); }
             });
         }
 
-        this.loadFunction = undefined;
         /** Set a function to be run when the image is loaded
+         * @method
          * @param {function} callback - The function to be called when the image is loaded.
          */
-        this.onLoad = (callback) => { this.loadFunction = callback; }
-
-        /** The tileset's image/texture
-         * @package
-         */
-        this.texture = document.createElement("img");
-        this.texture.src = path;
-        let pathName = path;
-        if (path.length > 50) {
-            pathName = path.slice(0, 40) + '...';
-        }
-        this.texture.onerror = () => {
-            throw new Error(`Your image "${pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
-        }
-        this.texture.onload = () => {
-            console.info(`Loaded image "${pathName}"`)
-            this.loaded = true;
-
-            if (this.loadFunction) { this.loadFunction(); }
-        }
+        onLoad = (callback) => { this.#loadFunction = callback; }
     },
 
     /** A Tile as part of a Tilemap */
@@ -951,9 +983,9 @@ export let gameify = {
             this.rotation = r;
         }
 
-        /** Creates a Tilemap from JSON data
+        /** Creates a Tile from JSON data
          * @method
-         * @arg {Object|Array} data - Serialized Tilemap data (from Tilemap.toJSON)
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
          * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
          * @returns {gameify.Tile}
         */
@@ -967,7 +999,7 @@ export let gameify = {
             return obj;
         }
         
-        /** Convert the Tilemap to JSON
+        /** Convert the object to JSON
          * @method
          * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
          * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
