@@ -51,8 +51,13 @@ export const $get = (name) => {
                 constructor = gameify[module][name];
             }
 
-            // Deserialize object (call constructor, then call deserializer with data and $get)
-            __objects[type + '::' + oName] = constructor('_deserialize')(window.__s_objects[type][oName], $get);
+            if (gameify[type].fromJSON) {
+                __objects[type + '::' + oName] = constructor.fromJSON(window.__s_objects[type][oName], $get);
+            } else {
+                console.warn(`Object ${type}::${name} is using the old (de)serialization system.`);
+                __objects[type + '::' + oName] = constructor('_deserialize')(window.__s_objects[type][oName], $get);
+            }
+
             console.debug(`Loaded ${name}`);
 
         } else {

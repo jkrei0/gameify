@@ -8,7 +8,15 @@ export const engineSerialize = {
             out[type] = {}
             for (const name in set) {
                 const item = set[name];
-                if (item.serialize) {
+                if (item.toJSON) {
+                    // toJSON(key, ref)
+                    // where key is the key (for us, the name of the object)
+                    // and ref is a function to generate a reference to another object (non-standard function)
+                    out[type][name] = item.toJSON(name, (o) => {
+                        return o?.__engine_name;
+                    });
+                } else if (item.serialize) {
+                    console.warn(`Object ${type}::${name} is using the old serialization system.`);
                     out[type][name] = item.serialize((o) => {
                         return o?.__engine_name;
                     });
