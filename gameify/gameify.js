@@ -933,32 +933,71 @@ export let gameify = {
         }
     },
 
-    /** A tile as part of a tilemap
-     * @constructor
-     * @arg {Number} x - The x coordinate of the tile
-     * @arg {Number} y - The y coordinate of the tile
-     * @arg {Number} sourcex - The source x coordinate of the tile
-     * @arg {Number} sourcey - The source y coordinate of the tile
-     * @arg {Number} [rotation=0] - The rotation of the tile
-     * @arg {gameify.Image} image - The tile's Image (reference)
-    */
-    Tile: function (x, y, sx, sy, r = 0, image) {
+    /** A Tile as part of a Tilemap */
+    Tile: class {
+        
+        /** Creates a Tile
+         * @arg {Number} x - The x coordinate of the tile
+         * @arg {Number} y - The y coordinate of the tile
+         * @arg {Number} sourcex - The source x coordinate of the tile
+         * @arg {Number} sourcey - The source y coordinate of the tile
+         * @arg {Number} [rotation=0] - The rotation of the tile
+         * @arg {gameify.Image} image - The tile's Image (reference)
+         */
+        constructor (x, y, sx, sy, r = 0, image) {
+            this.image = image;
+            this.position = new gameify.Vector2d(x, y);
+            this.source = new gameify.Vector2d(sx, sy);
+            this.rotation = r;
+        }
+
+        /** Creates a Tilemap from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized Tilemap data (from Tilemap.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Tile}
+        */
+        static fromJSON = (data, find) => {
+            const obj = new gameify.Tile(
+                data.position.x, data.position.y,
+                data.source.x, data.source.y,
+                data.rotation,
+                find(data.image)
+            );
+            return obj;
+        }
+        
+        /** Convert the Tilemap to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            return {
+                image: ref(this.image),
+                position: this.position.toJSON(),
+                source: this.source.toJSON(),
+                rotation: this.rotation
+            };
+        }
+        
         /** The tile's Image
          * @type {gameify.Image}
          */
-        this.image = image;
+        image;
         /** The tile's position in the tilemap
          * @type {gameify.Vector2d}
          */
-        this.position = new gameify.Vector2d(x, y);
+        position;
         /** The tile's source coordinates
          * @type {gameify.Vector2d}
          */
-        this.source = new gameify.Vector2d(sx, sy);
+        source;
         /** The tile's rotation
          * @type {Number}
          */
-        this.rotation = r;
+        rotation;
     },
 
     /** Class representing a Tilemap of rectangular tiles
