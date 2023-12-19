@@ -226,6 +226,13 @@ export let vectors = {
         this.toRawString = () => {
             return `<${this.x}, ${this.y}>`;
         }
+        /** Returns a JSON representation of the vector */
+        this.toJSON = () => {
+            return {
+                x: this.x,
+                y: this.y
+            }
+        }
         this.valueOf = this.toString;
     },
     /** Vector helpers
