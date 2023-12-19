@@ -682,84 +682,135 @@ export let gameify = {
         }
     },
 
-    /** Creates an image for use in sprites and other places. 
-     * @constructor
+    /** An image for use in sprites and other places. 
      * @example let playerImage = new gameify.Image("images/player.png");
-     * @arg {String} [path] - The image filepath. (Can also be a dataURI). If not specified, the image is created with no texture
     */
-    Image: function (path) {
-        if (path === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
+    Image: class {
+        /** Creates an Image
+         * @arg {String} [path] - The image filepath. (Can also be a dataURI). If not specified, the image is created with no texture
+         */
+        constructor(path) {
+            this.path = path || "";
+
+            if (path !== undefined) {
+                this.texture = document.createElement("img");
+                this.texture.src = path;
+                let pathName = path;
+                if (path.length > 50) {
+                    pathName = path.slice(0, 40) + '...';
+                }
+                this.texture.onerror = () => {
+                    throw new Error(`Your image "${pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
+                }
+                this.texture.onload = () => {
+                    console.info(`Loaded image "${pathName}"`)
+                    this.loaded = true;
+        
+                    // don't reset the crop if it was already specified.
+                    if (!this.cropData.width) this.cropData.width = this.texture.width;
+                    if (!this.cropData.height) this.cropData.height = this.texture.height;
+        
+                    if (this.#loadFunction) { this.#loadFunction(); }
+                }
+            }
+        }
+
+        /** The image filepath. Modifying this will not do anything.
+         * @readonly
+         */
+        path;
+        /** If the image is loaded */
+        loaded = false;
+        #loadFunction = undefined;
+        // If from a tileset, what and where (for serialization)
+        tileData = {};
+        cropData = { x: 0, y: 0, width: 0, height: 0, cropped: false };
+        texture = undefined;
+
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Image}
+        */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Image.');
                 const obj = new gameify.Image(data[0]);
                 if (data[1]) obj.cropData = data[1];
                 return obj;
             }
+
+            const obj = new gameify.Image(data.path, data.cropData);
+            return obj;
         }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.path, this.getCrop()];
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            console.log('SVI', this.path);
+            return {
+                path: this.path,
+                cropData: this.getCrop()
+            };
         }
 
         /** Change and load a new image path. Reset's the image's crop
+         * @method
          * @param {string} path - The new image path
          */
-        this.changePath = (path) => {
+        changePath = (path) => {
             this.path = path;
             const ni = new gameify.Image(path);
             ni.onLoad(() => {
                 this.texture = ni.texture;
                 this.cropData.width = this.texture.width;
                 this.cropData.height = this.texture.height;
-                if (this.loadFunction) { this.loadFunction(); }
+                if (this.#loadFunction) { this.#loadFunction(); }
             });
         }
 
-        /** The image filepath. Modifying this will not do anything.
-         * @readonly
-         */
-        this.path = path;
-
-        /** If the image is loaded */
-        this.loaded = false;
-
-        this.loadFunction = undefined;
-
         /** Set a function to be run when the image is loaded
+         * @method
          * @param {function} callback - The function to be called when the image is loaded.
          */
-        this.onLoad = (callback) => { this.loadFunction = callback; }
-
-        // If from a tileset, what and where (for serialization)
-        this.tileData = {};
-
-        this.cropData = { x: 0, y: 0, width: 0, height: 0, cropped: false };
+        onLoad = (callback) => { this.loadFunction = callback; }
 
         /** Crop the image 
+         * @method
          * @param {Number} x - how much to crop of the left of the image
          * @param {Number} y - how much to crop of the right of the image
          * @param {Number} width - how wide the resulting image should be
          * @param {Number} height - how tall the resulting image should be
         */
-        this.crop = (x, y, width, height) => {
+        crop = (x, y, width, height) => {
             if (x === undefined || y === undefined || width === undefined || height === undefined) {
                 throw new Error("x, y, width and height must be specified");
             }
             this.cropData = { x: x, y: y, width: width, height: height, cropped: true };
         }
 
-        /** Remove crop from the image */
-        this.uncrop = () => {
+        /** Remove crop from the image 
+         * @method
+         */
+        uncrop = () => {
             this.cropData.cropped = false;
         }
 
-        /** Get the image crop. Returns an object with x, y, width, and height properties. */
-        this.getCrop = () => {
+        /** Get the image crop. Returns an object with x, y, width, and height properties.
+         * @method
+         */
+        getCrop = () => {
             return JSON.parse(JSON.stringify(this.cropData));
         }
 
         /** Draw the image to a context
+         * @method
          * @param {CanvasRenderingContext2D} context - The canvas context to draw to
          * @param {Number} x - The x coordinate to draw at
          * @param {Number} y - The y coordinate to draw at
@@ -767,7 +818,7 @@ export let gameify = {
          * @param {Number} h - Height
          * @param {Number} r - Rotation, in degrees
          */
-        this.draw = (context, x, y, w, h, r) => {
+        draw = (context, x, y, w, h, r) => {
 
             if (r) {
                 // translate the canvas to draw rotated images
@@ -822,29 +873,6 @@ export let gameify = {
 
                 }
 
-            }
-        }
-
-        this.texture = undefined;
-        if (path !== undefined) {
-            this.texture = document.createElement("img");
-            this.texture.src = path;
-            let pathName = path;
-            if (path.length > 50) {
-                pathName = path.slice(0, 40) + '...';
-            }
-            this.texture.onerror = () => {
-                throw new Error(`Your image "${pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
-            }
-            this.texture.onload = () => {
-                console.info(`Loaded image "${pathName}"`)
-                this.loaded = true;
-    
-                // don't reset the crop if it was already specified.
-                if (!this.cropData.width) this.cropData.width = this.texture.width;
-                if (!this.cropData.height) this.cropData.height = this.texture.height;
-    
-                if (this.loadFunction) { this.loadFunction(); }
             }
         }
     }, 
