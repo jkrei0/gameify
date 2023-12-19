@@ -961,7 +961,7 @@ export let gameify = {
         this.rotation = r;
     },
 
-    /** Creates a map of rectangular tiles
+    /** Class representing a Tilemap of rectangular tiles
      * @example // ...
      * // make a new tileset with 8x8 pixels
      * let forestTileset = new gameify.Tileset("images/forest.png", 8, 8);
@@ -978,21 +978,52 @@ export let gameify = {
      *     // Draw the tilemap
      *     forsetMap.draw();
      * });
-     * @constructor
-     * @arg {Number} twidth - The width of the tiles
-     * @arg {Number} theight - The height of the tiles
-     * @arg {Number} [offsetx=0] - X offset of the tiles
-     * @arg {Number} [offsety=0] - Y offset of the tiles
      */
     // Dev's Note: There are a LOT of places in loops where row and col are reversed
     // this.tiles.placed[x][y] means that looping through this.tiles.placed
     // actually loops through each column, and I was dumb and got this backwards.
     // Some are correct, because I realised it -- but be careful
-    Tilemap: function (twidth, theight, offsetx, offsety) {
-        if (twidth === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
+    Tilemap: class {
+
+        /** Creates a Tilemap
+         * @arg {Number} twidth - The width of the tiles
+         * @arg {Number} theight - The height of the tiles
+         * @arg {Number} [offsetx=0] - X offset of the tiles
+         * @arg {Number} [offsety=0] - Y offset of the tiles
+         */
+        constructor (twidth, theight, offsetx, offsety) {
+            this.twidth = Number(twidth);
+            this.theight = Number(theight);
+            this.offset = new vectors.Vector2d(offsetx || 0, offsety || 0);
+        }
+
+        twidth;
+        theight;
+        /** The tile offset (coordinates of tile <0, 0>). Used to translate the map
+         * @type {gameify.Vector2d}
+         */
+        offset;
+        /** The Canvas context to draw to */
+        context = null;
+        /** The parent screen (not used directly) */
+        parent = null;
+        // placed is an object so there can be negative indexes
+        tiles = { placed: {} };
+        tileset = undefined;
+
+        #drawFunction = null;
+        #warnedNotIntegerCoordinates = false;
+
+        /** Creates a Tilemap from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized Tilemap data (from Tilemap.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Tilemap}
+        */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Tilemap.');
                 const obj = new gameify.Tilemap(data[0], data[1], data[2].x, data[2].y);
                 if (data[3]) {
                     obj.setTileset(find(data[3]));
@@ -1001,58 +1032,78 @@ export let gameify = {
                 if (data[5]) find(data[5]).add(obj); // Add to Screen
                 return obj;
             }
-        }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.twidth, this.theight, {x: this.offset.x, y: this.offset.y}, name(this.tileset), this.exportMapData(), name(this.parent)];
-        }
 
-        this.twidth = Number(twidth);
-        this.theight = Number(theight);
-
-        /** The tile offset (coordinates of tile <0, 0>). Used to translate the map
-         * @type {gameify.Vector2d}
+            const obj = new gameify.Tilemap(
+                data.twidth, data.theight,
+                data.offset.x, data.offset.y
+            );
+            if (data.tileset) {
+                obj.setTileset(find(data.tileset));
+                obj.loadMapData(data.mapData);
+            }
+            if (data.parent) find(data.parent).add(obj); // Add to Screen
+            return obj;
+        }
+        
+        /** Convert the Tilemap to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
          */
-        this.offset = new vectors.Vector2d(offsetx || 0, offsety || 0);
-
-        // placed is an object so there can be negative indexes
-        this.tiles = { placed: {} };
-        /** Clear the tilemap. Removes all placed tiles and cached images */
-        this.clear = () => {
+        toJSON = (key, ref) => {
+            return {
+                twidth: this.twidth,
+                theight: this.theight,
+                offset: this.offset.toJSON(),
+                tileset: ref(this.tileset),
+                mapData: this.exportMapData(),
+                parent: ref(this.parent),
+            };
+        }
+        
+        /** Clear the tilemap. Removes all placed tiles and cached images
+         * @method
+        */
+        clear = () => {
             this.tiles = { placed: {} };
         }
 
-        this.tileset = undefined;
         /** What tileset to use. This tileset must include anything you want to use in this tilemap.
+         * @method
          * @param {gameify.Tileset} set - The tileset
         */
-        this.setTileset = (set) => {
+        setTileset = (set) => {
             this.tileset = set;
         }
+
         /** Get the tilemap's tileset
+         * @method
          * @returns {gameify.Tileset} The tileset
          */
-        this.getTileset = () => {
+        getTileset = () => {
             return this.tileset;
         }
 
-        this.drawFunction = null;
         /** Set the draw function for this tilemap
-        * @param {function} callback - The function to be called right before the tilemap is drawn
-        */
-        this.onDraw = (callback) => {
-            this.drawFunction = callback;
+         * @method
+         * @param {function} callback - The function to be called right before the tilemap is drawn
+         */
+        onDraw = (callback) => {
+            this.#drawFunction = callback;
         }
 
         /** Convert screen coordinates to map coordinates 
+         * @method
          * @param {Number} screenx - The screen x coordinate
          * @param {Number} [screeny] - The screen y coordinate
          * @returns {gameify.Vector2d} A vector representing the calculated position
          *//** Convert screen coordinates to map coordinates 
+         * @method
          * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
          * @returns {gameify.Vector2d} A vector representing the calculated position
          */
-        this.screenToMap = (screenx, screeny) => {
+        screenToMap = (screenx, screeny) => {
             // loose comparison because we don't want any null values
             if (screenx.x != undefined && screenx.y != undefined) {
                 screeny = screenx.y;
@@ -1063,15 +1114,18 @@ export let gameify = {
                 Math.floor((screeny - this.offset.y) / this.theight)
             );
         }
+
         /** Convert map coordinates to screen coordinates
+         * @method
          * @param {Number} mapx - The map x coordinate
          * @param {Number} [mapy] - The map y coordinate
          * @returns {Object} {gameify.Vector2d} A vector representing the calculated position
          *//** Convert map coordinates to screen coordinates
+         * @method
          * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
          * @returns {gameify.Vector2d} A vector representing the calculated position
          */
-        this.mapToScreen = (mapx, mapy) => {
+        mapToScreen = (mapx, mapy) => {
             // loose comparison because we don't want any null values
             if (mapx.x != undefined && mapx.y != undefined) {
                 mapy = mapx.y;
@@ -1084,13 +1138,14 @@ export let gameify = {
         }
 
         /** Place a tile on the tilemap
+         * @method
          * @param {Number} originx - The x position of the tile on the tilesheet
          * @param {Number} originy - The y position of the tile on the tilesheet
          * @param {Number} destx - The x position to place the tile
          * @param {Number} desty - The y position to place the tile
          * @param {Number} [rotation=0] - Tile rotation, in degrees
          */
-        this.place = (originx, originy, destx, desty, rotation) => {
+        place = (originx, originy, destx, desty, rotation) => {
             if (!this.tileset) {
                 throw new Error("You can't place a tile before setting a tileset.");
             }
@@ -1114,11 +1169,12 @@ export let gameify = {
         }
 
         /** Get the tile (if it exists) placed at a certain position
+         * @method
          * @param {Number} x - X coordinate of the tile
          * @param {Number} y - Y coordinate of the tile
          * @return {gameify.Tile}
          */
-        this.get = (x, y) => {
+        get = (x, y) => {
             if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
                 return this.tiles.placed[x][y];
 
@@ -1126,9 +1182,10 @@ export let gameify = {
         }
 
         /** Get an array of all the tiles in the map
+         * @method
          * @return {gameify.Tile[]}
          */
-        this.listTiles = () => {
+        listTiles = () => {
             const out = [];
             for (const x in this.tiles.placed) {
                 for (const y in this.tiles.placed[x]) {
@@ -1139,31 +1196,32 @@ export let gameify = {
         }
 
         /** Remove a tile from the tilemap
+         * @method
          * @param {Number} x - The x coord of the tile to remove
          * @param {Number} y - The y coord of the tile to remove
          */
-        this.remove = (x, y) => {
+        remove = (x, y) => {
             if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
                 delete this.tiles.placed[x][y];
             }
         }
 
-        let warnedNotIntegerCoordinates = false;
-
-        /** Draw the tilemap to the screen */
-        this.draw = () => {
-            if (this.drawFunction) {
-                this.drawFunction();
+        /** Draw the tilemap to the screen
+         * @method
+         */
+        draw = () => {
+            if (this.#drawFunction) {
+                this.#drawFunction();
             }
             if (!this.context) {
                 throw new Error(`You need to add this tilemap to a screen before you can draw it. See ${gameify.getDocs("gameify.Tilemap")} for more details`);
             }
 
-            if (!warnedNotIntegerCoordinates &&
+            if (!this.#warnedNotIntegerCoordinates &&
                 ( Math.round(this.offset.x) !== this.offset.x
                 || Math.round(this.offset.y) !== this.offset.y)
             ) {
-                warnedNotIntegerCoordinates = true;
+                this.#warnedNotIntegerCoordinates = true;
                 console.warn(`Timemap offset is not an integer. This can cause images
                     to contain artifacts (eg lines along the edge)`);
             }
@@ -1186,9 +1244,10 @@ export let gameify = {
          * Controls are: Click to place, Right-click to delete, Middle-click to pick, Scroll and Ctrl+Scroll to switch tile, Shift+Scroll to rotate the tile.<br>
          * Once you're finished, call <code>tilemap.exportMapData()</code> to export the map.
          * @deprecated Use the engine editor to build and export your tilemaps. This editor is no longer maintained.
+         * @method
          * @param {gameify.Screen} screen - The screen to show the map builder on. For best results, use the one you've already added it to.
          */
-        this.enableMapBuilder = (screen) => {
+        enableMapBuilder = (screen) => {
             let mainScene = new gameify.Scene(screen);
             mainScene.lock("The Tilemap builder is currently enabled.");
 
@@ -1338,9 +1397,10 @@ export let gameify = {
         }
 
         /** Export this tilemap's map data and layout (load with loadMapData)
+         * @method
          * @returns {object} The map data as JSON
          */
-        this.exportMapData = () => {
+        exportMapData = () => {
             let output = [];
             for (const col in this.tiles.placed) {
                 for (const row in this.tiles.placed[col]) {
@@ -1358,35 +1418,27 @@ export let gameify = {
         }
 
         /** Load saved map data (export using exportMapData)
+         * @method
          * @param {Object} data - The map data to load
          */
-        this.loadMapData = (data) => {
+        loadMapData = (data) => {
             for (const tile of data) {
                 this.place(tile.s[0], tile.s[1], tile.p[0], tile.p[1], tile.r);
             }
         }
 
-        /** The Canvas context to draw to
-         * @private
-         */
-        this.context = null;
-
-        /** The parent screen (not used directly)
-         * @private
-         */
-        this.parent = null;
-
-        /** Get the screen this sprite draws to
+        /** Get the screen this sprite draws 
+         * @method
          * @returns {gameify.Screen}
          */
-        this.getParent = () => {
+        getParent = () => {
             return this.parent;
         }
 
-        /** Set the Canvas context to draw to. This should be called whenever a sprite is added to a Screen
-         * @private
+        /** Set the Canvas context to draw to. Should be called by a screen when the Tilemap is added to it.
+         * @method
          */
-        this.setContext = (context, parent) => {
+        setContext = (context, parent) => {
             this.context = context;
             this.parent = parent;
         }
