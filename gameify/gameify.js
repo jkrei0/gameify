@@ -422,13 +422,11 @@ export let gameify = {
      * let canvas = document.querySelector("#my-canvas");
      * // Create a Screen that is 600 by 400
      * let myScreen = new gameify.Screen(canvas, 600, 400);
+     * @arg {HTMLElement} element - The canvas to draw the screen to
+     * @arg {number} width - The width of the Screen
+     * @arg {number} height - The height of the Screen
      */
     Screen: class {
-        /** Creates a new Screen
-         * @arg {HTMLElement} element - The canvas to draw the screen to
-         * @arg {number} width - The width of the Screen
-         * @arg {number} height - The height of the Screen
-         */
         constructor(element, width, height) {
             // Error if not given the correct parameters
             if (!element) {
@@ -711,11 +709,9 @@ export let gameify = {
 
     /** An image for use in sprites and other places. 
      * @example let playerImage = new gameify.Image("images/player.png");
+     * @arg {String} [path] - The image filepath. (Can also be a dataURI). If not specified, the image is created with no texture
     */
     Image: class {
-        /** Creates an Image
-         * @arg {String} [path] - The image filepath. (Can also be a dataURI). If not specified, the image is created with no texture
-         */
         constructor(path) {
             this.path = path || "";
 
@@ -907,14 +903,11 @@ export let gameify = {
      * @example let myTileset = new gameify.Tileset("images/tileset.png");
      * // Give the coordinates of a tile to retrieve it
      * let grassTile = myTileset.getTile(3, 2);
+     * @arg {String} path - The image/tileset filepath
+     * @arg {Number} twidth - The width of each tile
+     * @arg {Number} theight - The height of each tile
      */
     Tileset: class {
-
-        /** Creates a Tileset from an image
-         * @arg {String} path - The image/tileset filepath
-         * @arg {Number} twidth - The width of each tile
-         * @arg {Number} theight - The height of each tile
-         */
         constructor(path, twidth, theight) {
             this.path = path;
             this.twidth = Number(twidth);
@@ -1019,17 +1012,15 @@ export let gameify = {
         onLoad = (callback) => { this.#loadFunction = callback; }
     },
 
-    /** A Tile as part of a Tilemap */
+    /** A Tile as part of a Tilemap
+     * @arg {Number} x - The x coordinate of the tile
+     * @arg {Number} y - The y coordinate of the tile
+     * @arg {Number} sourcex - The source x coordinate of the tile
+     * @arg {Number} sourcey - The source y coordinate of the tile
+     * @arg {Number} [rotation=0] - The rotation of the tile
+     * @arg {gameify.Image} image - The tile's Image (reference)
+     */
     Tile: class {
-        
-        /** Creates a Tile
-         * @arg {Number} x - The x coordinate of the tile
-         * @arg {Number} y - The y coordinate of the tile
-         * @arg {Number} sourcex - The source x coordinate of the tile
-         * @arg {Number} sourcey - The source y coordinate of the tile
-         * @arg {Number} [rotation=0] - The rotation of the tile
-         * @arg {gameify.Image} image - The tile's Image (reference)
-         */
         constructor (x, y, sx, sy, r = 0, image) {
             this.image = image;
             this.position = new gameify.Vector2d(x, y);
@@ -1103,19 +1094,16 @@ export let gameify = {
      *     // Draw the tilemap
      *     forsetMap.draw();
      * });
+     * @arg {Number} twidth - The width of the tiles
+     * @arg {Number} theight - The height of the tiles
+     * @arg {Number} [offsetx=0] - X offset of the tiles
+     * @arg {Number} [offsety=0] - Y offset of the tiles
      */
     // Dev's Note: There are a LOT of places in loops where row and col are reversed
     // this.tiles.placed[x][y] means that looping through this.tiles.placed
     // actually loops through each column, and I was dumb and got this backwards.
     // Some are correct, because I realised it -- but be careful
     Tilemap: class {
-
-        /** Creates a Tilemap
-         * @arg {Number} twidth - The width of the tiles
-         * @arg {Number} theight - The height of the tiles
-         * @arg {Number} [offsetx=0] - X offset of the tiles
-         * @arg {Number} [offsety=0] - Y offset of the tiles
-         */
         constructor (twidth, theight, offsetx, offsety) {
             this.twidth = Number(twidth);
             this.theight = Number(theight);
