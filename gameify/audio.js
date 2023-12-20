@@ -64,97 +64,137 @@ export let audio = {
      * @example let mySound = new gameify.audio.Sound("my-sound.mp3");
      * @arg {String} path - The path to the sound file
      */
-    Sound: function (path) {
-        if (path === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
-                const obj = new audio.Sound(data[0]);
-                obj.setLoop(data[1]);
-                obj.setVolume(data[2]);
-                return obj;
-            }
-        }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.path, this.getLoop(), this.getVolume()];
+    Sound: class {
+        constructor(path) {
+            this.changePath(path);
         }
 
         /** The sound path. Modifying this will not do anything.
          * @readonly
          */
-        this.path = path;
+        path = path;
+        audioManager = undefined;
+        /** If the sound has loaded yet
+         * @readonly
+         */
+        loaded = false;
+        audio = undefined;
+        
+        #volume = 1;
 
-        this.audioManager = undefined;
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Image}
+         */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Sound.');
+                const obj = new audio.Sound(data[0]);
+                obj.setLoop(data[1]);
+                obj.setVolume(data[2]);
+                return obj;
+            }
 
-        this.loaded = false;
+            const obj = new audio.Sound(data.path);
+            obj.setLoop(data.loop);
+            obj.setVolume(data.volume);
+            return obj;
+        }
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            return {
+                path: this.path,
+                loop: this.getLoop(),
+                volume: this.getVolume()
+            };
+        }
 
-        /** Play the sound. Please be aware some browsers block autoplay by default. */
-        this.play = () => {
+        /** Play the sound. Please be aware some browsers block autoplay by default.
+         * @method
+         */
+        play = () => {
             if (!this.audioManager) {
                 throw new Error('You need to add this song to an AudioManager (i.e. myScreen.audio.add(mySound))');
             }
             this.audio.play();
         }
 
-        /** Pause the sound */
-        this.pause = () => {
+        /** Pause the sound
+         * @method
+         */
+        pause = () => {
             this.audio.pause();
         }
 
-        /** Stop the sound (resets the seek time) */
-        this.stop = () => {
+        /** Stop the sound (resets the seek time)
+         * @method
+         */
+        stop = () => {
             this.pause();
             this.seek(0);
         }
 
         /** Choose whether the sound should loop or not (default is not looping)
+         * @method
          * @param {Boolean} loop - If the sound should loop
          */
-        this.setLoop = (loop) => {
+        setLoop = (loop) => {
             this.audio.loop = loop;
         }
         /** Check if the sound is set to loop
+         * @method
          * @return {Boolean} If the sound is set to loop
          */
-        this.getLoop = () => {
+        getLoop = () => {
             return this.audio.loop;
         }
 
         /** Get the duration of the audio (in seconds)
+         * @method
          * @return {Number} The duration of the sound in seconds
          */
-        this.getDuration = () => {
+        getDuration = () => {
             return this.audio.duration;
         }
 
         /** Get the current seek time of the sound
+         * @method
          * @return {Number} The current seek time, in seconds
          */
-        this.getCurrentTime = () => {
+        getCurrentTime = () => {
             return this.audio.currentTime;
         }
 
         /** Seek to a specific point in the audio
+         * @method
          * @param {Number} time - The time to seek to, in seconds
          */
-        this.seek = (time) => {
+        seek = (time) => {
             this.audio.currentTime = time;
         }
 
         /** Seek a percentage of the way through the audio
+         * @method
          * @param {Number} time - Where to seek to, from 0 to 1
          */
-        this.seekRelative = (time) => {
+        seekRelative = (time) => {
             this.seek(this.getDuration() * time);
         }
 
-        this._volume = 1;
-
         /** Sets the volume of the sound
+         * @method
          * @param {Number} volume - The desired volume level, a number between 0 and 1.
          */
-        this.setVolume = (volume) => {
+        setVolume = (volume) => {
             if (volume < 0 || volume > 1) {
                 console.warn('Volume should be between 0 and 1');
             }
@@ -165,22 +205,25 @@ export let audio = {
          * audioManager's volume to get the actual volume. Use getCalculatedVolume()
          * to get the actual volume the sound will be played at.
          * @see {gameify.audio.Sound.getCalculatedVolume}
+         * @method
          * @return {Number} The volume of the sound, between 0 and 1
          */
-        this.getVolume = () => {
+        getVolume = () => {
             return this._volume;
         }
         /** Get the calculated volume of the sound (after audioManager volume is applied)
+         * @method
          * @return {Number} The calculated volume of the sound, between 0 and 1
          */
-        this.getCalculatedVolume = () => {
+        getCalculatedVolume = () => {
             return this._volume * this.audioManager._volume;
         }
 
         /** Change and load a new image path. Resets the image's crop
+         * @method
          * @param {string} path - The new image path
          */
-        this.changePath = (path) => {
+        changePath = (path) => {
             this.path = path;
             if (path !== undefined) {
                 this.audio = document.createElement('audio');
@@ -193,13 +236,11 @@ export let audio = {
         }
 
         /** Set a function to be run when the sound is loaded (Can be played through w/o buffering)
+         * @method
          * @param {Function} callback - The function to be called when the sound is loaded.
          */
-        this.onLoad = (callback) => {
+        onLoad = (callback) => {
             this.loadFunction = callback;
         }
-
-        this.audio = undefined;
-        this.changePath(path);
     }
 }
