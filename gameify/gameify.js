@@ -417,135 +417,166 @@ export let gameify = {
         }
     },
 
-    /** Creates a screen to draw things to.
-     * @constructor
+    /** A Screen to draw things to and get events from, the base of every game.
      * @example // Get the canvas element
      * let canvas = document.querySelector("#my-canvas");
      * // Create a Screen that is 600 by 400
      * let myScreen = new gameify.Screen(canvas, 600, 400);
-     * @arg {HTMLElement} element - The canvas to draw the screen to
-     * @arg {number} width - The width of the Screen
-     * @arg {number} height - The height of the Screen
      */
-    Screen: function (element, width, height) {
-        if (element === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
-                const obj = new gameify.Screen(document.getElementById(data[0]), data[1], data[2]);
-                if (data[3]) obj.setScene(find(data[3]));
-                obj.setAntialiasing(data[4]);
-                return obj;
+    Screen: class {
+        /** Creates a new Screen
+         * @arg {HTMLElement} element - The canvas to draw the screen to
+         * @arg {number} width - The width of the Screen
+         * @arg {number} height - The height of the Screen
+         */
+        constructor(element, width, height) {
+            // Error if not given the correct parameters
+            if (!element) {
+                throw new Error(`You need to specify a canvas element to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
             }
-        }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.element.id, this.width, this.height, name(this.currentScene), this.getAntialiasing()];
-        }
+            if (!width || !height) {
+                throw new Error(`You need to specify a width and height to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
+            }
 
-        // Error if not given the correct parameters
-        if (!element) {
-            throw new Error(`You need to specify a canvas element to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
-        }
-        if (!width || !height) {
-            throw new Error(`You need to specify a width and height to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
+            this.element = element;
+            this.width = width;
+            this.height = height;
+            this.element.width = this.width;
+            this.element.height = this.height;
+            this.context = this.element.getContext("2d");
+
+            this.keyboard = new gameify.KeyboardEventManager(this.element.parentElement);
+            this.keyboard.setup();
+            this.mouse = new gameify.MouseEventManager(this.element.parentElement, this.element);
+            this.mouse.setup();
+            this.audio = new gameify.audio.AudioManager();
+            this.audio.setVolume(0.5);
+            this.camera = new gameify.Camera(this.context);
         }
 
         /** The HTML5 Canvas element the Screen is attached to 
          * @type HTMLElement
          */
-        this.element = element;
+        element;
         /** The width of the Screen
-         * @type Number 
-         * @private
+         * @type Number
          */
-        this.width = width;
+        width;
         /** The height of the Screen
          * @type Number
-         * @private
          */
-        this.height = height;
-
-        this.element.width = this.width;
-        this.element.height = this.height;
-
-        /** The Canvas Context
-         * @private
-         */
-        this.context = this.element.getContext("2d");
-
-        /** Get the screen's HTML5 canvas context
-         * @returns {CanvasRenderingContext2D} - The canvas context
-         */
-        this.getContext = () => {
-            return this.context;
-        }
-
+        height;
+        /** The Canvas Context */
+        context;
         /** Keyboard events for the Screen. Used to see what keys are pressed.
          * @type {gameify.KeyboardEventManager}
          */
-        this.keyboard = new gameify.KeyboardEventManager(this.element.parentElement);
-        this.keyboard.setup();
-
+        keyboard;
         /** Mouse events for the Screen. Used to what mouse buttons are pressed, and other mouse events (eg scroll)
          * @type {gameify.MouseEventManager}
          */
-        this.mouse = new gameify.MouseEventManager(this.element.parentElement, this.element);
-        this.mouse.setup();
-
+        mouse;
         /** This screen's default AudioManager.
          * @type {gameify.audio.AudioManager}
          */
-        this.audio = new gameify.audio.AudioManager();
-        this.audio.setVolume(0.5);
-
+        audio;
         /** This screen's default Camera.
          * @type {gameify.Camera}
          */ 
-        this.camera = new gameify.Camera(this.context);
+        camera;
+        /** The current game scene */
+        currentScene = null;
+        /** The game's update interval */
+        updateInterval = null;
 
-        /** Get the Screen's canvas context 
-         * @private
+        // Track this seperately (detatched from canvas el), so that if the
+        // canvas for some reason loses its status, it can be restored
+        // (it does this w/ the engine!)
+        #antialiasingEnabled = true;
+        // Timestamp of the last update
+        #lastUpdate = 0;
+        #gameActive = false;
+
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Screen}
+        */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Screen.');
+                const obj = new gameify.Screen(document.getElementById(data[0]), data[1], data[2]);
+                if (data[3]) obj.setScene(find(data[3]));
+                obj.setAntialiasing(data[4]);
+                return obj;
+            }
+
+            const obj = new gameify.Screen(document.getElementById(data.elementId), data.width, data.height);
+            if (data.currentScene) obj.setScene(find(data.currentScene));
+            obj.setAntialiasing(data.antialiasing);
+            return obj;
+        }
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
          */
-        this.getContext = () => {
+        toJSON = (key, ref) => {
+            return {
+                elementId: this.element.id, 
+                width: this.width,
+                height: this.height,
+                currentScene: ref(this.currentScene),
+                antialiasing: this.getAntialiasing()
+            }
+        }
+
+        /** Get the screen's HTML5 canvas context
+         * @method
+         * @returns {CanvasRenderingContext2D} - The canvas context
+         */
+        getContext = () => {
             return this.context;
         }
 
         /** Alias for setAntialiasing
          * @see {gameify.Screen.setAntialiasing}
+         * @method
          * @param {Boolean} enable - Whether smoothing should be enabled or not (true/false)
          * @deprecated
         */
-        this.setSmoothImages = (value) => {
+        setSmoothImages = (value) => {
             this.context.imageSmoothingEnabled = value;
         }
 
-        // Track this seperately (detatched from canvas el), so that if the
-        // canvas for some reason loses its status, it can be restored
-        // (it does this w/ the engine!)
-        let antialiasingEnabled = true;
-
         /** Turn antialiasing on or off (set to off for pixel art)
+         * @method
          * @param {Boolean} enable - Whether antialiasing should be enabled.
          */
-        this.setAntialiasing = (value) => {
-            antialiasingEnabled = value;
+        setAntialiasing = (value) => {
+            this.#antialiasingEnabled = value;
             this.context.imageSmoothingEnabled = value;
         }
 
         /** Check if antialising is enabled (Note, also checks and corrects if
          * the canvas element has the correct antialiasing setting)
+         * @method
          * @returns {Boolean} - Whether antialising is enabled or not
         */
-        this.getAntialiasing = () => {
-            this.context.imageSmoothingEnabled = antialiasingEnabled;
-            return antialiasingEnabled;
+        getAntialiasing = () => {
+            this.context.imageSmoothingEnabled = this.#antialiasingEnabled;
+            return this.#antialiasingEnabled;
         }
 
         /** Clear the screen
+         * @method
          * @arg {String} [color] - The color to clear to, e.g. #472d3c or rgb(123, 123, 123). Default is transparent
         */
-        this.clear = (color) => {
+        clear = (color) => {
             this.context.save();
             this.context.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -562,30 +593,34 @@ export let gameify = {
         }
 
         /** Changes the width of the Screen
+         * @method
          * @param {Number} width - The new width of the Screen
          */
-        this.setWidth = (width) => {
+        setWidth = (width) => {
             width = Number(width);
             this.width = width;
             this.element.width = width;
         }
 
         /** Changes the height of the Screen
+         * @method
          * @param {Number} height - The new height of the screen
          */
-        this.setHeight = (height) => {
+        setHeight = (height) => {
             height = Number(height);
             this.height = height;
             this.element.height = height;
         }
 
         /** Changes the size of the Screen
+         * @method
          * @param {Number} width - The new width of the screen
          * @param {Number} height - The new height of the screen
          *//** Changes the size of the Screen
+         * @method
          * @param {gameify.Vector2d} size - The new size of the screen
          */
-        this.setSize = (width, height) => {
+        setSize = (width, height) => {
             if (width.x != undefined && width.y != undefined) {
                 // Convert vector to 
                 height = width.y;
@@ -596,21 +631,18 @@ export let gameify = {
         }
 
         /** Get the width and height of the screen
+         * @method
          * @returns {gameify.Vector2d} A vector representing the size of the screen
          */
-        this.getSize = () => {
+        getSize = () => {
             return new vectors.Vector2d(this.width, this.height);
         }
 
-        /** The current game scene
-         * @private
-         */
-        this.currentScene = null;
-
         /** Sets the game's scene
+         * @method
          * @param {gameify.Scene} scene - The scene to set the game to.
          */
-        this.setScene = (scene) => {
+        setScene = (scene) => {
             if (this.currentScene && this.currentScene.locked) {
                 console.warn("The current scene is locked and cannot be changed: " + this.currentScene.locked);
                 return;
@@ -621,54 +653,47 @@ export let gameify = {
         }
 
         /** Returns the game's active scene
+         * @method
          * @returns {gameify.Scene} The active scene
          */
-        this.getScene = () => { return this.currentScene; }
+        getScene = () => { return this.currentScene; }
 
         /** Add a Sprite to the Screen. This makes it so that sprite.draw(); draws to this screen.
+         * @method
          * @param {gameify.Sprite | gameify.Tilemap} obj - The object to add to the screen
          */
-        this.add = (obj) => {
+        add = (obj) => {
             obj.setContext(this.getContext(), this);
         }
 
-        /** The game's update interval
-         * @private
-         */
-        this.updateInterval = null;
-
-        // Timestamp of the last update
-        let lastUpdate = 0;
-
-        let gameActive = false;
-
         /** Starts the game.
-        */
-        this.startGame = () => {
+         * @method
+         */
+        startGame = () => {
             if (this.currentScene == null) {
                 throw new Error(`You need to set a Scene before you can start the game. See ${gameify.getDocs("gameify.Scene")} for details`);
             }
             
-            if (gameActive) {
+            if (this.#gameActive) {
                 console.warn('The game is already started!');
                 return;
             }
 
-            gameActive = true;
-            lastUpdate = 0;
+            this.#gameActive = true;
+            this.#lastUpdate = 0;
 
             const eachFrame = async (time) => {
-                if (!lastUpdate) {
-                    lastUpdate = time;
+                if (!this.#lastUpdate) {
+                    this.#lastUpdate = time;
                 }
-                const delta = time - lastUpdate;
-                lastUpdate = time;
+                const delta = time - this.#lastUpdate;
+                this.#lastUpdate = time;
                 // if delta is zero, pass one instead (bc of div-by-zero errors)
                 this.currentScene.update(delta || 1);
                 this.camera.update(delta || 1);
                 this.currentScene.draw();
                 
-                if (gameActive) {
+                if (this.#gameActive) {
                     window.requestAnimationFrame(eachFrame);
                 }
             }
@@ -676,9 +701,11 @@ export let gameify = {
 
         }
 
-        /** Stops (pauses) the game */
-        this.stopGame = () => {
-            gameActive = false;
+        /** Stops (pauses) the game 
+         * @method
+         */
+        stopGame = () => {
+            this.#gameActive = false;
         }
     },
 
@@ -753,7 +780,6 @@ export let gameify = {
          * @returns {Object}
          */
         toJSON = (key, ref) => {
-            console.log('SVI', this.path);
             return {
                 path: this.path,
                 cropData: this.getCrop()
