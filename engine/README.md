@@ -16,11 +16,14 @@ http-server ./engine/embed --port=3001
 To develop the visual engine with accounts and cloud saves enabled:
 - Install the Vercel CLI
 - Run `npm install`
-- Run `npm run vars local` to update `play.js` and `embed.js` with local paths
-- Run `npm run serve` to start http-server and the vercel CLI
+- Run `npm run serve` to set variables, generate docs, and start http-server and the vercel CLI
+  - (you can also do `npm run vars local` to set variables, but not start a server)
 - Open `http://localhost:3000/engine/engine.html` in your browser to check everything works
-- Before committing changes, run `npm run vars` to reset the environment
-  (you'll have to `npm run vars local` again afterwords to go back to the local environment)
+- Before committing changes, stop the server, and run `npm run vars` to reset the environment
+  - (Running `npm run serve` or `npm run vars local` will set variables for local development again)
+
+**CARFEUL: Vercel messes with your files while it's running! Stop the local server before doing git
+operations (merge, checkout, etc...) or you might lose work!**
 
 Vercel functions are located in `/api/`, and utility/helper/etc files are located in `/api-util/`
 
