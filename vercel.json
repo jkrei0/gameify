@@ -19,6 +19,20 @@
             "src": "/engine/embed/(.*)",
             "dest": "/404.html",
             "status": 404
+        },
+        {
+            "src": "/(.*)",
+            "methods": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH",
+                "OPTIONS"
+            ],
+            "headers": {
+                "x-frame-options": ""
+            }
         }
     ]
 }
