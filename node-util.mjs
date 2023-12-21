@@ -41,7 +41,6 @@ export const getCmdArgs = () => {
         if (!optName || !value) {
             continue;
         }
-        modified_vars = true;
         console.log('Set variable', optName, '=', value);
         cmdVars[optName] = value;
     }
