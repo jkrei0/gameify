@@ -11,7 +11,8 @@ export const __dirname = path.dirname(import.meta.url).replace('file:///', '');
  * @param {string} [encoding='utf8'] - The file encoding
  */
 export const replaceText = (filePath, find, replace, encoding='utf8') => {
-    const absPath = path.join(__dirname, filePath);
+    console.log(__dirname, path.cwd());
+    const absPath = path.join(path.cwd(), filePath);
     const fileText = fs.readFileSync(
         absPath,
         encoding
