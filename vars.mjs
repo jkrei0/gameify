@@ -3,7 +3,8 @@ import { replaceVars, getCmdArgs, __dirname } from './node-util.mjs';
 const cmdVars = getCmdArgs();
 
 const vercelEnv = process.env.VERCEL_ENV || undefined;
-const vercelURL = process.env.VERCEL_BRANCH_URL || cmdVars.vercelURL || 'gameify.vercel.app';
+let vercelURL = process.env.VERCEL_BRANCH_URL || cmdVars.vercelURL || 'gameify.vercel.app';
+vercelURL = vercelURL.replace('gameify-embed', 'embed') || cmdVars.vercelEmbedURL || 'gameify-embed.vercel.app';
 const vercelEmbedURL = vercelURL.replace('gameify', 'gameify-embed') || cmdVars.vercelEmbedURL || 'gameify-embed.vercel.app';
 
 const default_env = 'vercel';
