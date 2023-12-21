@@ -88,7 +88,6 @@ export let sprites = {
          * @returns {gameify.Sprite}
         */
         static fromJSON = (data, find) => {
-            console.log(data);
             // Serialization format is the same (Sprites always stored as JSON, yay!)
             const obj = new sprites.Sprite(data.position?.x || 0, data.position?.y || 0, undefined);
             if (data.rotation) obj.rotation = data.rotation;    // Set rotation
