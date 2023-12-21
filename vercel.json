@@ -31,7 +31,9 @@
                 "OPTIONS"
             ],
             "headers": {
-                "x-frame-options": "POTATO"
+                "x-frame-options": "POTATO",
+                "x-vtest1": "POTATO2",
+                "x-kuma-revision": "1085259"
             }
         }
     ]
