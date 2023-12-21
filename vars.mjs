@@ -4,7 +4,7 @@ const cmdVars = getCmdArgs();
 
 const vercelEnv = process.env.VERCEL_ENV || undefined;
 let vercelURL = process.env.VERCEL_BRANCH_URL || cmdVars.vercelURL || 'gameify.vercel.app';
-vercelURL = vercelURL.replace('gameify-embed', 'embed') || cmdVars.vercelEmbedURL || 'gameify-embed.vercel.app';
+vercelURL = vercelURL.replace('gameify-embed', 'gameify') || cmdVars.vercelEmbedURL || 'gameify-embed.vercel.app';
 const vercelEmbedURL = vercelURL.replace('gameify', 'gameify-embed') || cmdVars.vercelEmbedURL || 'gameify-embed.vercel.app';
 
 const default_env = 'vercel';
