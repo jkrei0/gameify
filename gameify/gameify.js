@@ -42,6 +42,11 @@ export let gameify = {
     Vector2d: vectors.Vector2d,
     vectors: vectors.vectors,
 
+    Sprite: sprites.Sprite,
+    Scene: scenes.Scene,
+    Text: text.Text,
+    TextStyle: text.TextStyle,
+
     shapes: shapes,
     audio: audio,
 
@@ -1556,12 +1561,7 @@ export let gameify = {
             this.parent = parent;
         }
         
-    },
-
-    Sprite: sprites.Sprite,
-    Scene: scenes.Scene,
-    Text: text.Text,
-    TextStyle: text.TextStyle
+    }
 };
 
 /** This is a mostly complete list of mouse and keyboard input events supported by gameify. Most event names are case-sensitive
