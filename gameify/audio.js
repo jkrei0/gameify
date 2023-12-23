@@ -66,13 +66,14 @@ export let audio = {
      */
     Sound: class {
         constructor(path) {
+            this.path = path;
             this.changePath(path);
         }
 
         /** The sound path. Modifying this will not do anything.
          * @readonly
          */
-        path = path;
+        path;
         audioManager = undefined;
         /** If the sound has loaded yet
          * @readonly
