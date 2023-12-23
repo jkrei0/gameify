@@ -25,6 +25,14 @@ export const engineTypes = {
             throw 'Cannot find ' + type + '.' + prop;
         }
     },
+    resolve: (type) => {
+        const itm = type.split('.');
+        let obj = gameify[itm[0]];
+        for (let i = 1; i < itm.length; i++) {
+            obj = obj[itm[i]];
+        }
+        return obj;
+    },
     types: {
         'None': {
             icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-box" viewBox="0 0 16 16">
