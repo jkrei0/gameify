@@ -45,8 +45,17 @@ export let audio = {
                 // Sounds take their AudioManager's volume into account
                 // When setting the volume, so we simply use their setVolume
                 // method.
-                sound.setVolume(sound._volume);
+                sound.setVolume(sound.getVolume());
             });
+        }
+
+        /** Get the volume of the AudioManager. Note that this volume is mixed
+         * with the volume of each sound. Use Sound.getCalculatedVolume to get
+         * the actual volume of each sound.
+         * @returns {Number}
+         */
+        this.getVolume = () => {
+            return this._volume;
         }
 
         /** Add a sound to the AudioManager
@@ -55,6 +64,7 @@ export let audio = {
         this.add = (sound) => {
             this.sounds.push(sound);
             sound.audioManager = this;
+            sound.setVolume(sound.getVolume());
         }
     },
 
@@ -199,7 +209,7 @@ export let audio = {
             if (volume < 0 || volume > 1) {
                 console.warn('Volume should be between 0 and 1');
             }
-            this._volume = Math.max(0, Math.min(1, volume));
+            this.#volume = Math.max(0, Math.min(1, volume));
             this.audio.volume = this.getCalculatedVolume();
         }
         /** Get the volume of the sound. Note that this volume is mixed with the
@@ -210,14 +220,14 @@ export let audio = {
          * @return {Number} The volume of the sound, between 0 and 1
          */
         getVolume = () => {
-            return this._volume;
+            return this.#volume;
         }
         /** Get the calculated volume of the sound (after audioManager volume is applied)
          * @method
          * @return {Number} The calculated volume of the sound, between 0 and 1
          */
         getCalculatedVolume = () => {
-            return this._volume * this.audioManager._volume;
+            return this.#volume * (this.audioManager?.getVolume() || .2); // Use .2 default when no audioManager is set
         }
 
         /** Change and load a new image path. Resets the image's crop
