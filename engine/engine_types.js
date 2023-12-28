@@ -3,6 +3,10 @@ import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
 
 export const engineTypes = {
+    /** List all objects of a type
+     * @param {Object} objects - The list of objects to look through
+     * @param {Array} types - The list of types to look for, or a string '*' to return all
+     */
     list: (objects, types) => {
         const array = [];
         if (types === '*') {
@@ -15,6 +19,10 @@ export const engineTypes = {
         }
         return array;
     },
+    /** Get a property of a type (e.g. the icon or buildUI function)
+     * @param {String} type  - The type of the object
+     * @param {String} prop  - The property to get
+     */
     get: (type, prop) => {
         if (!engineTypes.types[type]) {
             throw 'Unknown type ' + type;
@@ -27,6 +35,9 @@ export const engineTypes = {
             throw 'Cannot find ' + type + '.' + prop;
         }
     },
+    /** Get the constructor of an object given the type
+     * @param {String} type  - The type of the object
+     */
     resolve: (type) => {
         const itm = type.split('.');
         let obj = gameify[itm[0]];
