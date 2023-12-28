@@ -9,7 +9,10 @@ const vercelEmbedURL = vercelURL.replace('gameify', 'gameify-embed') || cmdVars.
 
 const default_env = 'vercel';
 let environment = process.argv[2] || vercelEnv || default_env;
+
+// Aliases
 if (environment === 'development') environment = 'local';
+if (environment === 'production') environment = 'vercel';
 let modified_vars = false;
 
 const envVars = {
