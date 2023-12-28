@@ -25,55 +25,95 @@ export let animation = {
      * 
      * @arg {Object} parent - The object to animate
      */
-    Animator: function (parent) {
+    Animator: class {
+        constructor (parent) {
+            this.parent = parent;
+        }
+
         /** The animations currently assigned to the animator.
          * Use Animator.set() and Animator.play() to add and play animations
          * @readonly
         */
-        this.animations = {};
+        animations = {};
 
         /** The object that this animator is attached to
          * @type {Object}
          */
-        this.parent = parent;
+        parent;
         
         /** The animation that is currently playing (or undefined if not playing). Use Animator.play() to change the current animation being played. */
-        this.currentAnimation = undefined;
+        currentAnimation = undefined;
 
         /** If an animation is currently playing */
-        this.playing = false;
+        playing = false;
+
+        /** The time the animation started playing */
+        animationProgress = 0;
+
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Animation}
+        */
+        static fromJSON = (data, find) => {
+            return new animation.Animation(data.frames, data.options);
+        }
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            const out = {
+                currentAnimation: Object.keys(this.animations).find(key => this.animations[key] === value),
+                animationProgress: this.animationProgress,
+                playing: this.playing,
+                parent: ref(this.parent),
+                animations: {}
+            };
+            for (const key in this.animations) {
+                const anim = this.animations[key];
+                out.animations[key] = ref(anim);
+            }
+            return out;
+        }
 
         /** Add an animation to the animations list
+         * @method
          * @param {String} name - The name of the animation
          * @param {gameify.Animation} animation - The animation
          */
-        this.set = (name, animation) => {
+        set = (name, animation) => {
             this.animations[name] = animation;
         }
 
-        /** The time the animation started playing */
-        this.animationProgress = 0;
-
         /** Play an animation
+         * @method
          * @param {String} name - The name of the animation
          */
-        this.play = (name) => {
+        play = (name) => {
             this.currentAnimation = this.animations[name];
             this.animationProgress = 0;
             this.playing = true;
         }
 
-        /** Stop & reset the animation */
-        this.stop = () => {
+        /** Stop & reset the animation
+         * @method
+         */
+        stop = () => {
             this.playing = false;
             this.currentAnimation = undefined;
             this.animationProgress = 0;
         }
 
         /** Update the animation
+         * @method
          * @param {Number} delta - The time, in miliseconds, since the last frame
          */
-        this.update = (delta) => {
+        update = (delta) => {
             if (!this.playing) return;
 
             this.animationProgress += delta;
