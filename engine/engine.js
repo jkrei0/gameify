@@ -695,6 +695,11 @@ const editAnimation = (anim) => {
     let frameListEls = {};
     let drawnFrameDuration = anim.options.frameDuration;
 
+    let previewEl = null;
+    let previewActive = false;
+    let previewAnimator = new gameify.Animator(previewEl);
+    let lastActiveFrameEl = undefined;
+
     const genFrameTable = () => {
         drawnFrameDuration = anim.options.frameDuration;
         if (frameListEls.table) {
@@ -793,12 +798,19 @@ const editAnimation = (anim) => {
             frameListEls.headerRow.appendChild(frameLabel);
 
             frameLabel.__engine_menu = {
-                'Delete Frame': () => {
-                    anim.frames.splice(index, 1);
-                    genFrameTable();
+                'Jump To Frame': () => {
+                    previewAnimator.play('preview');
+                    previewActive = true;
+                    previewAnimator.animationProgress = index * anim.options.frameDuration;
+                    previewAnimator.update(0);
+                    previewAnimator.pause();
                 },
                 'Insert Frame Before': () => {
                     anim.frames.splice(index, 0, {});
+                    genFrameTable();
+                },
+                'Delete Frame': () => {
+                    anim.frames.splice(index, 1);
                     genFrameTable();
                 }
             }
@@ -893,10 +905,6 @@ const editAnimation = (anim) => {
         previewSelector.innerHTML += `<option value="${name}">${name}</option>`;
     });
 
-    let previewEl = null;
-    let previewActive = false;
-    let previewAnimator = new gameify.Animator(previewEl);
-    let lastActiveFrameEl = undefined;
     previewSelector.addEventListener('change', (event) => {
         const name = event.target.value;
         if (name === 'None::None') {
