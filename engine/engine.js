@@ -95,14 +95,22 @@ const openContextMenu = (menu, posX, posY) => {
     });
 }
 window.addEventListener('contextmenu', (event) => {
-    if (event.target.__engine_menu) {
-        event.stopPropagation();
-        event.preventDefault();
-        openContextMenu(event.target.__engine_menu, event.clientX, event.clientY);
-    } else if (event.target.parentElement && event.target.parentElement.__engine_menu) {
-        event.stopPropagation();
-        event.preventDefault();
-        openContextMenu(event.target.parentElement.__engine_menu, event.clientX, event.clientY);
+    let element = event.target;
+    let index = 0;
+    // Check the element and its parents to see
+    // if they have a context menu defined
+    while (element) {
+        index += 1;
+        if (index > 5) break;
+        // only check 5 parents
+
+        if (element.__engine_menu) {
+            event.stopPropagation();
+            event.preventDefault();
+            openContextMenu(element.__engine_menu, event.clientX, event.clientY);
+            break;
+        }
+        element = element.parentElement;
     }
 });
 window.addEventListener('click', (event) => {
