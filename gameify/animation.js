@@ -8,21 +8,21 @@ import { vectors } from "./vector.js"
 let animationPropertyTypes = {
     // Base types
     /** Apply the property by overwriting the old value each frame */
-    simple: { apply: (property, value, object) => object[property] = value, fromString: (value) => value },
+    simple: { apply: (property, value, object) => object[property] = value },
     /** Apply the property using Object.apply() each frame */
-    object: { apply: (property, value, object) => Object.apply(object[property], value), fromString: (value) => JSON.parse(value) },
+    object: { apply: (property, value, object) => Object.apply(object[property], value) },
 
     // Other simple types
     /** A number */
-    number: { apply: (...args) => animationPropertyTypes.simple.apply(...args), fromString: (value) => Number(value) },
+    number: { apply: (...args) => animationPropertyTypes.simple.apply(...args) },
     /** A string */
-    string: { apply: (...args) => animationPropertyTypes.simple.apply(...args), fromString: (value) => String(value) },
+    string: { apply: (...args) => animationPropertyTypes.simple.apply(...args) },
     /** A boolean */
-    boolean: { apply: (...args) => animationPropertyTypes.simple.apply(...args), fromString: (value) => Boolean(value) },
+    boolean: { apply: (...args) => animationPropertyTypes.simple.apply(...args) },
     /** A gameify.Image (on a sprite, or other object with a setImage method) */
     'Image': { apply: (property, value, object) => object.setImage(value) },
     /** A gameify.Vector2d */
-    'Vector2d': { apply: (property, value, object) => { object[property].x = value.x; object[property].y = value.y; }, fromString: (value) => new vectors.Vector2d(value) },
+    'Vector2d': { apply: (property, value, object) => { object[property].x = value.x; object[property].y = value.y; } }
 }
 
 /** Animations for use in gameify. Usually you'll access this through the gameify object.
@@ -254,7 +254,6 @@ export let animation = {
             } else {
                 this.#options.duration = this.#options.frameDuration * this.frames.length;
             }
-            console.log(this.#options);
         }
 
         // Documented above at animationPropertyTypes
