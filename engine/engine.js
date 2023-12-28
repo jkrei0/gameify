@@ -869,8 +869,11 @@ const editAnimation = (anim) => {
 
     controls.innerHTML = `
     <div class="legend">
-        <button id="vi-play-anim"><img src="images/play.svg">Play</button>
-        <button id="vi-stop-anim"><img src="images/stop.svg">Stop</button>
+        <button id="vi-stop-anim"><img src="images/stop.svg" aria-label="Stop"></button>
+        <button id="vi-step-anim-back"><img src="images/step-left.svg" aria-label="Step back 1 frame"></button>
+        <button id="vi-play-anim"><img src="images/play.svg" aria-label="Play"></button>
+        <button id="vi-pause-anim"><img src="images/pause.svg" aria-label="Pause"></button>
+        <button id="vi-step-anim-forward"><img src="images/step-right.svg" aria-label="Step foreward 1 frame"></button>
         <span id="vi-frames-count">${anim.frames.length} frames</span>
         <span class="right">Preview:</span>
         <select id="vi-preview-obj-select">
@@ -893,6 +896,7 @@ const editAnimation = (anim) => {
     let previewEl = null;
     let previewActive = false;
     let previewAnimator = new gameify.Animator(previewEl);
+    let lastActiveFrameEl = undefined;
     previewSelector.addEventListener('change', (event) => {
         const name = event.target.value;
         if (name === 'None::None') {
@@ -918,8 +922,28 @@ const editAnimation = (anim) => {
         previewActive = true;
         frameListEls.table.querySelectorAll(`td, th`).forEach(el => el.classList.remove('error'))
     });
+    document.querySelector('#vi-pause-anim').addEventListener('click', () => {
+        previewAnimator.pause();
+    });
+    document.querySelector('#vi-step-anim-back').addEventListener('click', () => {
+        previewAnimator.animationProgress -= anim.options.frameDuration;
+        // Trick it into updating
+        previewAnimator.resume();
+        previewAnimator.update(0);
+        previewAnimator.pause();
+    });
+    document.querySelector('#vi-step-anim-forward').addEventListener('click', () => {
+        previewAnimator.animationProgress += anim.options.frameDuration;
+        previewAnimator.resume();
+        previewAnimator.update(0);
+        previewAnimator.pause();
+    });
     document.querySelector('#vi-stop-anim').addEventListener('click', () => {
-        previewAnimator.stop();
+        previewAnimator.animationProgress = 0;
+        // Don't actually stop, so the buttons still work
+        previewAnimator.resume();
+        previewAnimator.update(0);
+        previewAnimator.pause();
     });
 
     const dealWithPreviewError = (error) => {
@@ -941,6 +965,11 @@ const editAnimation = (anim) => {
         if (previewEl && previewActive) {
             try {
                 previewAnimator.update(delta);
+                const time = previewAnimator.animationProgress;
+                const frame = anim.getFrameNumberAt(time);
+                lastActiveFrameEl?.classList.remove('active')
+                lastActiveFrameEl = frameListEls.headerRow.querySelector(`th:nth-child(${frame + 3})`);
+                lastActiveFrameEl?.classList.add('active');
             } catch (e) {
                 console.error(e);
                 dealWithPreviewError(e);
