@@ -165,6 +165,16 @@ export let animation = {
         pause = () => {
             this.playing = false;
         }
+        
+        /** Resume the animation
+         * @method
+         */
+        resume = () => {
+            if (!this.currentAnimation) {
+                throw new Error('Cannot resume, no animation is playing.');
+            }
+            this.playing = true;
+        }
 
         /** Update the animation
          * @method
@@ -176,7 +186,9 @@ export let animation = {
                 this.stop();
                 return;
             }
-
+            if (this.animationProgress < 0) {
+                this.animationProgress = this.currentAnimation.options.duration;
+            }
             this.animationProgress += delta;
             this.currentAnimation.applyTo(this.parent, this.animationProgress);
         }
