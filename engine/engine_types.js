@@ -2,17 +2,27 @@ import { gameify } from '/gameify/gameify.js';
 import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
 
-function list(objects, types) {
-    const array = [];
-    for (let type of types) {
-        for (let name in objects[type]) {
-            array.push(type + '::' + name);
-        }
-    }
-    return array;
-}
-
 export const engineTypes = {
+    /** List all objects of a type
+     * @param {Object} objects - The list of objects to look through
+     * @param {Array} types - The list of types to look for, or a string '*' to return all
+     */
+    list: (objects, types) => {
+        const array = [];
+        if (types === '*') {
+            types = Object.keys(objects);
+        }
+        for (let type of types) {
+            for (let name in objects[type]) {
+                array.push(type + '::' + name);
+            }
+        }
+        return array;
+    },
+    /** Get a property of a type (e.g. the icon or buildUI function)
+     * @param {String} type  - The type of the object
+     * @param {String} prop  - The property to get
+     */
     get: (type, prop) => {
         if (!engineTypes.types[type]) {
             throw 'Unknown type ' + type;
@@ -25,6 +35,9 @@ export const engineTypes = {
             throw 'Cannot find ' + type + '.' + prop;
         }
     },
+    /** Get the constructor of an object given the type
+     * @param {String} type  - The type of the object
+     */
     resolve: (type) => {
         const itm = type.split('.');
         let obj = gameify[itm[0]];
@@ -56,7 +69,7 @@ export const engineTypes = {
                 parent.appendChild(engineUI.twoInputItem('Size',  [obj.width, obj.height], 'number', (x, y) => {
                     obj.setSize(x, y);
                 })[0]);
-                parent.appendChild(engineUI.selectItem('Start Scene', list(objects, ['Scene']), (v) => {
+                parent.appendChild(engineUI.selectItem('Start Scene', engineTypes.list(objects, ['Scene']), (v) => {
                     obj.setScene(objects[v.split('::')[0]][v.split('::')[1]]);
                 }, obj.currentScene?.__engine_name)[0]);
 
@@ -71,7 +84,7 @@ export const engineTypes = {
                 <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
             </svg>`,
             buildUI: (parent, obj, objects) => {
-                parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
+                parent.appendChild(engineUI.selectItem('Screen', engineTypes.list(objects, ['Screen']), (v) => {
                     obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
                 }, obj.parent?.__engine_name)[0]);
             },
@@ -126,10 +139,10 @@ export const engineTypes = {
                     obj.twidth  = Number(x);
                     obj.theight = Number(y);
                 })[0]);
-                parent.appendChild(engineUI.selectItem('Tileset', list(objects, ['Tileset']), (v) => {
+                parent.appendChild(engineUI.selectItem('Tileset', engineTypes.list(objects, ['Tileset']), (v) => {
                     obj.setTileset(objects[v.split('::')[0]][v.split('::')[1]]);
                 }, obj.tileset?.__engine_name)[0]);
-                parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
+                parent.appendChild(engineUI.selectItem('Screen', engineTypes.list(objects, ['Screen']), (v) => {
                     // Screen.add(obj)
                     objects[v.split('::')[0]][v.split('::')[1]].add(obj);
                 }, obj.parent?.__engine_name)[0]);
@@ -248,7 +261,7 @@ export const engineTypes = {
             </svg>`,
             buildUI: (parent, obj, objects) => {
 
-                parent.appendChild(engineUI.selectItem('Image', list(objects, ['Image', 'Tileset']), (v) => {
+                parent.appendChild(engineUI.selectItem('Image', engineTypes.list(objects, ['Image', 'Tileset']), (v) => {
                     if (v.split('::')[0] === 'Image') {
                         obj.setImage(objects[v.split('::')[0]][v.split('::')[1]]);
                     } else if (v.split('::')[0] === 'Tileset') {
@@ -284,7 +297,7 @@ export const engineTypes = {
                 parent.appendChild(engineUI.inputItem('Scale', obj.scale, 'number', (v) => {
                     obj.scale = Number(v);
                 })[0]);
-                parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
+                parent.appendChild(engineUI.selectItem('Screen', engineTypes.list(objects, ['Screen']), (v) => {
                     // Screen.add(obj)
                     objects[v.split('::')[0]][v.split('::')[1]].add(obj);
                 }, obj.parent?.__engine_name)[0]);
@@ -292,6 +305,37 @@ export const engineTypes = {
             newObject: (screen) => {
                 const obj = new gameify.Sprite(0, 0, undefined);
                 screen.add(obj);
+                return obj;
+            }
+        },
+        'Animation': {
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-fast-forward-btn" viewBox="0 0 16 16">
+                <path d="M8.79 5.093A.5.5 0 0 0 8 5.5v1.886L4.79 5.093A.5.5 0 0 0 4 5.5v5a.5.5 0 0 0 .79.407L8 8.614V10.5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814z"/>
+                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/>
+            </svg>`,
+            buildUI: (parent, obj, objects) => {
+                parent.appendChild(engineUI.labelItem('Edit animation', 'Edit', () => {
+                    engineEvents.emit('edit animation', obj);
+                }));
+
+                parent.appendChild(engineUI.inputItem('Duration (ms)', obj.options.duration, 'number', (v) => {
+                    obj.options.duration = Number(v);
+                    // This causes changes for other options
+                    engineEvents.emit('refresh objects list');
+                })[0]);
+
+                parent.appendChild(engineUI.inputItem('Frame Duration', obj.options.frameDuration, 'number', (v) => {
+                    obj.options.frameDuration = Number(v);
+                    // This causes changes for other options
+                    engineEvents.emit('refresh objects list');
+                })[0]);
+
+                parent.appendChild(engineUI.selectItem('Loop', ['On', 'Off'], (v) => {
+                    obj.options.loop = (v === 'On');
+                }, obj.options.loop ? 'On' : 'Off')[0]);
+            },
+            newObject: (screen) => {
+                const obj = new gameify.Animation([], {});
                 return obj;
             }
         }

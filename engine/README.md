@@ -17,13 +17,10 @@ To develop the visual engine with accounts and cloud saves enabled:
 - Install the Vercel CLI
 - Run `npm install`
 - Run `npm run serve` to set variables, generate docs, and start http-server and the vercel CLI
-  - (you can also do `npm run vars local` to set variables, but not start a server)
 - Open `http://localhost:3000/engine/engine.html` in your browser to check everything works
-- Before committing changes, stop the server, and run `npm run vars` to reset the environment
-  - (Running `npm run serve` or `npm run vars local` will set variables for local development again)
 
 **CARFEUL: Vercel messes with your files while it's running! Stop the local server before doing git
-operations (merge, checkout, etc...) or you might lose work!**
+operations (merge, checkout, etc...) other than commits or you might lose work!**
 
 Vercel functions are located in `/api/`, and utility/helper/etc files are located in `/api-util/`
 
@@ -44,10 +41,11 @@ GITHUB_CLIENT_ID="your_ap_id"
 GITHUB_CLIENT_SECRET="your_app_secret"
 ```
 
-The app attempts to connect to a `gameify` database, with the following collections:
+The app attempts to connect to a `gameify` database in mongodb, with the following collections:
 - `accounts`
 - `sessions`
 - `games`
+- `github-integrations`
 
 ## File structure
 - `/engine/` - Main engine files
