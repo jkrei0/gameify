@@ -750,7 +750,15 @@ export let gameify = {
         /** If the image is loaded */
         loaded = false;
         #loadFunction = undefined;
-        // If from a tileset, what and where (for serialization)
+        /** If the image was derived from a tileset, details about where it came from.
+         * Mostly used for serialization. See example below for schema.
+         * @example
+         * {   // tileData schema:
+         *     tileset: Tileset,
+         *     position: { x: Number, y: Number }
+         * }
+         * @type {Object}
+         */
         tileData = {};
         cropData = { x: 0, y: 0, width: 0, height: 0, cropped: false };
         texture = undefined;
