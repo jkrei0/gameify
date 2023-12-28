@@ -2,17 +2,19 @@ import { gameify } from '/gameify/gameify.js';
 import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
 
-function list(objects, types) {
-    const array = [];
-    for (let type of types) {
-        for (let name in objects[type]) {
-            array.push(type + '::' + name);
-        }
-    }
-    return array;
-}
-
 export const engineTypes = {
+    list: (objects, types) => {
+        const array = [];
+        if (types === '*') {
+            types = Object.keys(objects);
+        }
+        for (let type of types) {
+            for (let name in objects[type]) {
+                array.push(type + '::' + name);
+            }
+        }
+        return array;
+    },
     get: (type, prop) => {
         if (!engineTypes.types[type]) {
             throw 'Unknown type ' + type;
@@ -56,7 +58,7 @@ export const engineTypes = {
                 parent.appendChild(engineUI.twoInputItem('Size',  [obj.width, obj.height], 'number', (x, y) => {
                     obj.setSize(x, y);
                 })[0]);
-                parent.appendChild(engineUI.selectItem('Start Scene', list(objects, ['Scene']), (v) => {
+                parent.appendChild(engineUI.selectItem('Start Scene', engineTypes.list(objects, ['Scene']), (v) => {
                     obj.setScene(objects[v.split('::')[0]][v.split('::')[1]]);
                 }, obj.currentScene?.__engine_name)[0]);
 
@@ -71,7 +73,7 @@ export const engineTypes = {
                 <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
             </svg>`,
             buildUI: (parent, obj, objects) => {
-                parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
+                parent.appendChild(engineUI.selectItem('Screen', engineTypes.list(objects, ['Screen']), (v) => {
                     obj.parent = objects[v.split('::')[0]][v.split('::')[1]];
                 }, obj.parent?.__engine_name)[0]);
             },
@@ -126,10 +128,10 @@ export const engineTypes = {
                     obj.twidth  = Number(x);
                     obj.theight = Number(y);
                 })[0]);
-                parent.appendChild(engineUI.selectItem('Tileset', list(objects, ['Tileset']), (v) => {
+                parent.appendChild(engineUI.selectItem('Tileset', engineTypes.list(objects, ['Tileset']), (v) => {
                     obj.setTileset(objects[v.split('::')[0]][v.split('::')[1]]);
                 }, obj.tileset?.__engine_name)[0]);
-                parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
+                parent.appendChild(engineUI.selectItem('Screen', engineTypes.list(objects, ['Screen']), (v) => {
                     // Screen.add(obj)
                     objects[v.split('::')[0]][v.split('::')[1]].add(obj);
                 }, obj.parent?.__engine_name)[0]);
@@ -248,7 +250,7 @@ export const engineTypes = {
             </svg>`,
             buildUI: (parent, obj, objects) => {
 
-                parent.appendChild(engineUI.selectItem('Image', list(objects, ['Image', 'Tileset']), (v) => {
+                parent.appendChild(engineUI.selectItem('Image', engineTypes.list(objects, ['Image', 'Tileset']), (v) => {
                     if (v.split('::')[0] === 'Image') {
                         obj.setImage(objects[v.split('::')[0]][v.split('::')[1]]);
                     } else if (v.split('::')[0] === 'Tileset') {
@@ -284,7 +286,7 @@ export const engineTypes = {
                 parent.appendChild(engineUI.inputItem('Scale', obj.scale, 'number', (v) => {
                     obj.scale = Number(v);
                 })[0]);
-                parent.appendChild(engineUI.selectItem('Screen', list(objects, ['Screen']), (v) => {
+                parent.appendChild(engineUI.selectItem('Screen', engineTypes.list(objects, ['Screen']), (v) => {
                     // Screen.add(obj)
                     objects[v.split('::')[0]][v.split('::')[1]].add(obj);
                 }, obj.parent?.__engine_name)[0]);
