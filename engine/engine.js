@@ -64,6 +64,7 @@ const openContextMenu = (menu, posX, posY) => {
     if (posX !== undefined) contextMenu.style.left = posX + 'px';
     if (posY !== undefined) contextMenu.style.top = posY + 'px';
     contextMenu.style.bottom = 'unset';
+    contextMenu.style.right = 'unset';
 
     
     const hiddenButton = document.createElement('button');
@@ -87,9 +88,14 @@ const openContextMenu = (menu, posX, posY) => {
 
     setTimeout(() => {
         // wait for dom update, then check if we need to move the menu
-        if (contextMenu.getBoundingClientRect().bottom > window.innerHeight) {
+        const rect = contextMenu.getBoundingClientRect()
+        if (rect.bottom > window.innerHeight) {
             contextMenu.style.top = 'unset';
             contextMenu.style.bottom = (window.innerHeight - posY) + 'px';
+        }
+        if (rect.right >= window.innerWidth) {
+            contextMenu.style.left = 'unset';
+            contextMenu.style.right = '0px';
         }
         contextMenu.querySelector('button:first-of-type').focus();
     });
