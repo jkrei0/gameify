@@ -44,7 +44,7 @@ replaceVars('./engine/embed/embed.js', envVars[environment]);
 replaceVars('./engine/engine.js', envVars[environment]);
 replaceVars('./engine/play.js', envVars[environment]);
 
-if (environment !== default_env || modified_vars) {
+if (modified_vars) {
     console.log('NOTICE: Not in default environment!');
     console.log('NOTICE: Make sure to reset by running `npm run vars` before committing.');
 }
