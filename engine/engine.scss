@@ -654,6 +654,11 @@ $transition: 0.1s;
         .right {
             margin-left: auto;
         }
+
+        button :is(svg, img) {
+            position: relative;
+            left: 2px;
+        }
     }
 
     &.visual {
@@ -697,6 +702,9 @@ $transition: 0.1s;
                 }
                 &.error {
                     background: #622;
+                }
+                &.active {
+                    background: $highlightsecondary;
                 }
 
                 button {
