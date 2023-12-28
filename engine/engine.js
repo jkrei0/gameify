@@ -959,7 +959,9 @@ const editAnimation = (anim) => {
         const frame = anim.getFrameNumberAt(time);
         // +2 for property + type boxes, + 1 because frame number is zero-indexed)
         frameListEls.table.querySelectorAll(`:is(td, th):nth-child(${frame + 3})`).forEach(el => el.classList.add('error'));
-        visualLog(`Error playing animation at frame ${frame} (${time}ms)`, 'error', 'animation editor');
+        // Truncate to 2 decimal places. Even that's overkill, really
+        const timeStr = String(time).match(/\d*\.\d{0,2}/)[0];
+        visualLog(`Error playing animation at frame ${frame} (${timeStr}ms)`, 'error', 'animation editor');
         visualLog(error, 'error', 'animation editor');
         // Stop *afterwords* (so we can get the frame number above)
         previewAnimator.stop();
