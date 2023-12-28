@@ -33,7 +33,7 @@ export let vectors = {
                 this.y = x.y;
             } else if (typeof(x) === "string" && isNaN(x)) {
                 this.x = parseFloat(x.match(/(\d|\.)+(?=,)/));
-                this.y = parseFloat(x.match(/(\d|\.)+((?!,)|$)/));
+                this.y = parseFloat(x.match(/(\d|\.)+((?!\d*,)|$)/));
             }
             if (isNaN(this.x) || isNaN(this.y)) {
                 throw new Error(`You can use either two numbers, a formatted string, or an existing Vector2d to create a Vector2d. (Given ${x}, ${y})`);
