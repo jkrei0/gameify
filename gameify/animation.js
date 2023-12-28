@@ -138,43 +138,98 @@ export let animation = {
      * @arg {Array<AnimationFrame>} frames - The frames of the animation
      * @arg {AnimationOptions} options - animation options
      */
-    Animation: function (frames, options) {
+    Animation: class {
+        constructor (frames, options) {
+            this.#frames = frames;
+            this.frames = new Proxy(this.#frames, {
+                set: (target, key, value) => {
+                    target[key] = value;
+                    this.#updateOptions(); // Options depend on frames length
+                    return true;
+                }
+            });
+
+            this.#options = Object.assign({
+                duration: 1000,
+                frameDuration: undefined,
+                loop: false
+            }, options);
+            this.options = new Proxy(this.#options, {
+                set: (target, key, value) => {
+                    target[key] = value;
+                    this.#updateOptions();
+                    return true;
+                }
+            });
+
+            this.#updateOptions();
+        }
+
         /** The frames of the animation
          * @type {Array<Object>}
-         * @readonly
          */
-        this.frames = JSON.parse(JSON.stringify(frames));
-
-        /** Update the animation's frames
-         * @arg {Array<AnimationFrame>} frames - The new frames
-         */
-        this.setFrames = (frames) => {
-            this.frames = frames;
-            this.options.duration = this.options.frameDuration * this.frames.length;
-        }
+        frames;
 
         /** The animation's options
          * @type {AnimationOptions}
          */
-        this.options = Object.assign({
-            duration: 1000,
-            frameDuration: undefined,
-            loop: false
-        }, options);
+        options;
 
-        if (this.options.frameDuration === undefined) {
-            this.options.frameDuration = this.options.duration / this.frames.length;
-        } else {
+        #frames;
+
+        #options;
+
+        #updateOptions = () => {
+            if (this.#options.frameDuration === undefined) {
+                this.#options.frameDuration = this.#options.duration / this.frames.length;
+                if (this.frames.length === 0) this.#options.frameDuration = 0;
+            } else {
+                this.#options.duration = this.#options.frameDuration * this.frames.length;
+            }
+            console.log(this.#options);
+        }
+
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Animation}
+        */
+        static fromJSON = (data, find) => {
+            return new animation.Animation(data.frames, data.options);
+        }
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            return {
+                // This works as long as `frames` is easily converted to JSON
+                // Eventually, we'll have images in here and need to save
+                // them separately to prevent storing images twice (or more).
+                frames: this.frames,
+                options: this.options
+            };
+        }
+
+        /** Update the animation's frames
+         * @method
+         * @arg {Array<AnimationFrame>} frames - The new frames
+         */
+        setFrames = (frames) => {
+            this.frames = frames;
             this.options.duration = this.options.frameDuration * this.frames.length;
         }
 
-        console.log(this.options);
-
         /** Get the frame number at the given time
+         * @method
          * @param {Number} time - The time (in milliseconds) to get the frame at
          * @returns {Number}
          */
-        this.getFrameNumberAt = (time) => {
+        getFrameNumberAt = (time) => {
             const framesElapsed = Math.floor(time / this.options.duration);
             if (this.options.loop) {
                 return framesElapsed % this.frames.length;
@@ -183,27 +238,30 @@ export let animation = {
         }
 
         /** Get the frame at the given time
+         * @method
          * @param {Number} time - The time (in milliseconds) to get the frame at
          * @returns {Object}
         */
-        this.getFrameAt = (time) => {
+        getFrameAt = (time) => {
             return this.frames[this.getFrameNumberAt(time)];
         }
 
         /** Apply an animation frame to an object
+         * @method
          * @param {Object} object - The object to apply the frame to
          * @param {Number} time - The time (in milliseconds) to of the frame
          */
-        this.applyTo = (object, time) => {
+        applyTo = (object, time) => {
             const frame = this.getFrameAt(time);
             this.applyFrameTo(object, frame);
         }
 
         /** Apply an animation frame to an object
+         * @method
          * @param {Object} object - The object to apply the frame to
          * @param {Object} frame - The frame to apply
          */
-        this.applyFrameTo = (object, frame) => {
+        applyFrameTo = (object, frame) => {
             for (const property in frame) {
                 // Type can be a type, or a string, or blank (in which case, use simple)
                 let type = frame[property].type;
