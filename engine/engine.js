@@ -912,6 +912,9 @@ const editAnimation = (anim) => {
 
     document.querySelector('#vi-play-anim').addEventListener('click', () => {
         if (previewEl) previewAnimator.play('preview');
+        if (anim.options.duration < 5) {
+            visualLog(`Animation frame duration is very short (${anim.options.duration}ms).`, 'warn', 'animation editor');
+        }
         previewActive = true;
         frameListEls.table.querySelectorAll(`td, th`).forEach(el => el.classList.remove('error'))
     });
