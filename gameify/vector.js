@@ -24,44 +24,50 @@ export let vectors = {
      * @arg {Number|gameify.Vector2d|String} x - x coordinate OR an existing vector
      * @arg {Number} [y] - y coordinate
     */
-    Vector2d: function (x, y) {
+    Vector2d: class {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            if (typeof(x) === "object") {
+                this.x = x.x;
+                this.y = x.y;
+            } else if (typeof(x) === "string") {
+                this.x = parseInt(x.match(/(\d|\.)+(?=,)/));
+                this.y = parseInt(x.match(/(\d|\.)+(?=>)/));
+            } else if (typeof(x) !== "number" && typeof(y) !== "number") {
+                throw new Error(`You can use either two numbers, a formatted string, or an existing Vector2d to create a Vector2d. See ${docs.getDocs("gameify.Vector2d")} for more details`);
+            }
+        }
 
         /** The x (a) point of the vector
          * @type {Number}
          */
-        this.x = x;
+        x = 0;
         /** The y (b) point of the vector
          * @type {Number}
          */
-        this.y = y;
-
-        if (typeof(x) === "object") {
-            this.x = x.x;
-            this.y = x.y;
-        } else if (typeof(x) === "string") {
-            this.x = parseInt(x.match(/(\d|\.)+(?=,)/));
-            this.y = parseInt(x.match(/(\d|\.)+(?=>)/));
-        } else if (typeof(x) !== "number" && typeof(y) !== "number") {
-            throw new Error(`You can use either two numbers, a formatted string, or an existing Vector2d to create a Vector2d. See ${docs.getDocs("gameify.Vector2d")} for more details`);
-        }
+        y = 0;
 
         /** Returns a copy of the vector
+         * @method
          * @returns {gameify.Vector2d} */
-        this.copy = () => {
+        copy = () => {
             return new vectors.Vector2d(this.x, this.y);
         }
 
         /** Calculate the distance between a this and another vector
          * (From this vector's coordinates to the other vector's coordinates)
+         * @method
          * @param {gameify.Vector2d} point - The start of the line segment
          * @return {Number} The distance to the vector
          *//** Calculate the distance between a this and a line segment
          * (From this vector's coordinates to the closest point on the line segment)
+         * @method
          * @param {gameify.Vector2d} segmentStart - The start of the line segment
          * @param {gameify.Vector2d} segmentEnd - The end of the line segment (start/end order does not matter)
          * @return {Number} The distance between this point and the line segment
          */
-        this.distanceTo = (start, end) => {
+        distanceTo = (start, end) => {
 
             if (end === undefined) {
                 // 1st overload, distance to point
@@ -107,17 +113,23 @@ export let vectors = {
             // Distance from original point to projected point
             return Math.sqrt((this.x - proj.x)**2 + (this.y - proj.y)**2);
         }
-        /** Returns the length (magnitude) of the vector. Equivalent to vector.getMagnitude */
-        this.getDistance = () => {
+        /** Returns the length (magnitude) of the vector. Equivalent to vector.getMagnitude
+         * @method
+         */
+        getDistance = () => {
             return Math.sqrt((this.x**2) + (this.y**2));
         }
-        /** Returns the (magnitude) length of the vector. Equivalent to vector.getDistance */
-        this.getMagnitude = () => {
+        /** Returns the (magnitude) length of the vector. Equivalent to vector.getDistance
+         * @method
+         */
+        getMagnitude = () => {
             return Math.sqrt((this.x**2) + (this.y**2));
         }
         /** Returns a normalized copy of the vector (Sets the length equal to one while maintaining the direction)
-         * @returns {gameify.Vector2d} */
-        this.getNormalized = () => {
+         * @returns {gameify.Vector2d}
+         * @method
+         */
+        getNormalized = () => {
             const dist = this.getDistance();
             if (dist === 0) {
                 return new vectors.Vector2d(this.x, this.y);
@@ -125,14 +137,16 @@ export let vectors = {
             return new vectors.Vector2d(this.x / dist, this.y / dist);
         }
         /** Returns a copy of the vector with both coordinates to the nearest integer
+         * @method
          * @return {gameify.Vector2d}
          */
-        this.rounded = () => {
+        rounded = () => {
             return new vectors.Vector2d(Math.round(this.x), Math.round(this.y));
         }
         /** Normalizes the vector (Sets the length equal to one while maintaining the direction)
+         * @method
          */
-        this.normalize = () => {
+        normalize = () => {
             const normalized = this.getNormalized();
             this.x = normalized.x;
             this.y = normalized.y;
@@ -141,10 +155,11 @@ export let vectors = {
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * let vectorB = new gameify.Vector2d(7, -3);
          * let vectorC = vectorA.add(vectorB); // vectorC = <10, -1>
+         * @method
          * @arg {gameify.Vector2d} vectorB - The vector to add
          * @returns {gameify.Vector2d}
          */
-        this.add = (vectorB) => {
+        add = (vectorB) => {
             if (!vectors.vectors.assertIsCompatibleVector(vectorB)) return;
             return new vectors.Vector2d(this.x + vectorB.x, this.y + vectorB.y);
         }
@@ -152,29 +167,32 @@ export let vectors = {
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * let vectorB = new gameify.Vector2d(7, -3);
          * let vectorC = vectorA.add(vectorB); // vectorC = <10, -1>
+         * @method
          * @arg {gameify.Vector2d} vectorB - The vector to subtract
          * @returns {gameify.Vector2d}
          */
-        this.subtract = (vectorB) => {
+        subtract = (vectorB) => {
             if (!vectors.vectors.assertIsCompatibleVector(vectorB)) return;
             return new vectors.Vector2d(this.x - vectorB.x, this.y - vectorB.y);
         }
         /** Multiplies this vector by an amount
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * let vectorB = vectorA.multiply(4); // vectorB = <12, -8>
+         * @method
          * @arg {Number} value - The amount to multiply by
          * @returns {gameify.Vector2d}
          */
-        this.multiply = (value) => {
+        multiply = (value) => {
             return new vectors.Vector2d(this.x * value, this.y * value);
         }
         /** Returns a copy of this vector rotated by an angle, in radians (counterclockwise)
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * vectorA.rotated(Math.PI/2); // vectorA = <-2, 3>
+         * @method
          * @arg {Number} angle - The angle to rotate by, in degrees
          * @returns {gameify.Vector2d}
          */
-        this.rotated = (angle) => {
+        rotated = (angle) => {
             return new vectors.Vector2d(
                 (this.x * Math.cos(angle)) - (this.y * Math.sin(angle)),
                 (this.x * Math.sin(angle)) + (this.y * Math.cos(angle))
@@ -183,10 +201,11 @@ export let vectors = {
         /** Returns a copy of this vector rotated by an angle, in degrees (counterclockwise)
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * vectorA.rotatedDegrees(90); // vectorA = <-2, 3>
+         * @method
          * @arg {Number} angle - The angle to rotate by, in degrees
          * @returns {gameify.Vector2d}
          */
-        this.rotatedDegrees = (angle) => {
+        rotatedDegrees = (angle) => {
             return this.rotated(angle * (Math.PI / 180));
         }
         /** Linear interpolation from this vector to another
@@ -194,19 +213,21 @@ export let vectors = {
          * let vectorB = new gameify.Vector2d(7, 12);
          * // Get a vector half way between A and B
          * let vectorC = vectorA.linearInterpolate(vectorB, 0.5); // vectorC = <5, 7>
+         * @method
          * @arg {gameify.Vector2d} vectorB - The vector to interpolate to
          * @arg {Number} t - A number from 0 to 1, with larger values closer to vectorB
          * @returns {gameify.Vector2d}
         */
-        this.linearInterpolate = (vectorB, t) => {
+        linearInterpolate = (vectorB, t) => {
             // Linear interpolation is A * (1 - t) + B * t
             return new vectors.Vector2d(this.x + (vectorB.x - this.x) * t, this.y + (vectorB.y - this.y) * t);
         }
         /** Truncates the x and y values to a certain precision
+         * @method
          * @param {Number} [precision=0] - Values after the decimal to keep
          * @returns {gameify.Vector2d} The vector with truncated values
          */
-        this.truncated = (precision = 0) => {
+        truncated = (precision = 0) => {
             const amt = 10 ** precision;
             return new vectors.Vector2d(
                 Math.floor(this.x * amt)/amt,
@@ -215,18 +236,31 @@ export let vectors = {
         }
 
         /** Returns a string representing the vector in the form <code>"&lt;x, y&gt;"</code>. Truncated to three decimal places.
+         * @method
          * @returns {String}
          */
-        this.toString = () => {
+        toString = () => {
             return `<${Math.floor(this.x*1000)/1000}, ${Math.floor(this.y*1000)/1000}>`;
         }
-        /** Same as toString, but does not truncate the string. Only for debug use
-         * @package
+        /** Same as toString, but does not truncate the string.
+         * @method
          */
-        this.toRawString = () => {
+        toRawString = () => {
             return `<${this.x}, ${this.y}>`;
         }
-        this.valueOf = this.toString;
+        /** Returns a JSON representation of the vector
+         * @method
+         */
+        toJSON = () => {
+            return {
+                x: this.x,
+                y: this.y
+            }
+        }
+        /** Returns a string representation of the vector, equivalent to toString
+         * @method
+         */
+        valueOf = this.toString;
     },
     /** Vector helpers
      * @member

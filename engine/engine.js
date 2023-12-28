@@ -280,7 +280,13 @@ const loadObjectsList = (data) => {
                 console.warn('Cannot load ' + query + ' (object data is missing)');
                 return undefined;
             }
-            objects[type][name] = gameify[type]('_deserialize')(data[type][name], loadObject);
+            const constructor = engineTypes.resolve(type);
+            if (constructor.fromJSON) {
+                objects[type][name] = constructor.fromJSON(data[type][name], loadObject);
+            } else {
+                console.warn(`Object ${type}::${name} is using the old (de)serialization system.`);
+                objects[type][name] = constructor('_deserialize')(data[type][name], loadObject);
+            }
             objects[type][name].__engine_name = type + '::' + name;
         }
         return objects[type][name];
@@ -290,7 +296,7 @@ const loadObjectsList = (data) => {
     for (const type in data) {
         if (!objects[type]) objects[type] = {};
         for (const name in data[type]) {
-            if (data[type][name] === false || !gameify[type]) {
+            if (data[type][name] === false || !engineTypes.resolve(type)) {
                 console.warn(`Cannot deserialize ${type}::${name}`);
                 continue;
             }

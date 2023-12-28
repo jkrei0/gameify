@@ -1,10 +1,16 @@
 import { replaceVars, getCmdArgs, __dirname } from './node-util.mjs';
 
-const default_env = 'vercel';
-const environment = process.argv[2] || default_env;
-let modified_vars = false;
-
 const cmdVars = getCmdArgs();
+
+const vercelEnv = process.env.VERCEL_ENV || undefined;
+let vercelURL = process.env.VERCEL_BRANCH_URL || cmdVars.vercelURL || 'gameify.vercel.app';
+vercelURL = vercelURL.replace('gameify-embed', 'gameify') || cmdVars.vercelEmbedURL || 'gameify-embed.vercel.app';
+const vercelEmbedURL = vercelURL.replace('gameify', 'gameify-embed') || cmdVars.vercelEmbedURL || 'gameify-embed.vercel.app';
+
+const default_env = 'vercel';
+let environment = process.argv[2] || vercelEnv || default_env;
+if (environment === 'development') environment = 'local';
+let modified_vars = false;
 
 const envVars = {
     local: {
@@ -17,6 +23,10 @@ const envVars = {
     vercel: {
         originURL: `'https://gameify.vercel.app'`,
         embedURL: `'https://gameify-embed.vercel.app'`
+    },
+    preview: {
+        originURL: `'https://${vercelURL}'`,
+        embedURL: `'https://${vercelEmbedURL}'`
     }
 }
 
@@ -28,9 +38,11 @@ console.log('Running in directory', __dirname);
 
 console.log('Building for envionment:', environment);
 
-replaceVars('/engine/embed/embed.js', envVars[environment]);
-replaceVars('/engine/engine.js', envVars[environment]);
-replaceVars('/engine/play.js', envVars[environment]);
+console.log('Using URLs:', envVars[environment].originURL, envVars[environment].embedURL);
+
+replaceVars('./engine/embed/embed.js', envVars[environment]);
+replaceVars('./engine/engine.js', envVars[environment]);
+replaceVars('./engine/play.js', envVars[environment]);
 
 if (environment !== default_env || modified_vars) {
     console.log('NOTICE: Not in default environment!');

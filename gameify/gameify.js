@@ -42,6 +42,11 @@ export let gameify = {
     Vector2d: vectors.Vector2d,
     vectors: vectors.vectors,
 
+    Sprite: sprites.Sprite,
+    Scene: scenes.Scene,
+    Text: text.Text,
+    TextStyle: text.TextStyle,
+
     shapes: shapes,
     audio: audio,
 
@@ -417,8 +422,7 @@ export let gameify = {
         }
     },
 
-    /** Creates a screen to draw things to.
-     * @constructor
+    /** A Screen to draw things to and get events from, the base of every game.
      * @example // Get the canvas element
      * let canvas = document.querySelector("#my-canvas");
      * // Create a Screen that is 600 by 400
@@ -427,125 +431,155 @@ export let gameify = {
      * @arg {number} width - The width of the Screen
      * @arg {number} height - The height of the Screen
      */
-    Screen: function (element, width, height) {
-        if (element === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
-                const obj = new gameify.Screen(document.getElementById(data[0]), data[1], data[2]);
-                if (data[3]) obj.setScene(find(data[3]));
-                obj.setAntialiasing(data[4]);
-                return obj;
+    Screen: class {
+        constructor(element, width, height) {
+            // Error if not given the correct parameters
+            if (!element) {
+                throw new Error(`You need to specify a canvas element to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
             }
-        }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.element.id, this.width, this.height, name(this.currentScene), this.getAntialiasing()];
-        }
+            if (!width || !height) {
+                throw new Error(`You need to specify a width and height to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
+            }
 
-        // Error if not given the correct parameters
-        if (!element) {
-            throw new Error(`You need to specify a canvas element to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
-        }
-        if (!width || !height) {
-            throw new Error(`You need to specify a width and height to create a Screen. See ${gameify.getDocs("gameify.Screen")} for details`);
+            this.element = element;
+            this.width = width;
+            this.height = height;
+            this.element.width = this.width;
+            this.element.height = this.height;
+            this.context = this.element.getContext("2d");
+
+            this.keyboard = new gameify.KeyboardEventManager(this.element.parentElement);
+            this.keyboard.setup();
+            this.mouse = new gameify.MouseEventManager(this.element.parentElement, this.element);
+            this.mouse.setup();
+            this.audio = new gameify.audio.AudioManager();
+            this.audio.setVolume(0.5);
+            this.camera = new gameify.Camera(this.context);
         }
 
         /** The HTML5 Canvas element the Screen is attached to 
          * @type HTMLElement
          */
-        this.element = element;
+        element;
         /** The width of the Screen
-         * @type Number 
-         * @private
+         * @type Number
          */
-        this.width = width;
+        width;
         /** The height of the Screen
          * @type Number
-         * @private
          */
-        this.height = height;
-
-        this.element.width = this.width;
-        this.element.height = this.height;
-
-        /** The Canvas Context
-         * @private
-         */
-        this.context = this.element.getContext("2d");
-
-        /** Get the screen's HTML5 canvas context
-         * @returns {CanvasRenderingContext2D} - The canvas context
-         */
-        this.getContext = () => {
-            return this.context;
-        }
-
+        height;
+        /** The Canvas Context */
+        context;
         /** Keyboard events for the Screen. Used to see what keys are pressed.
          * @type {gameify.KeyboardEventManager}
          */
-        this.keyboard = new gameify.KeyboardEventManager(this.element.parentElement);
-        this.keyboard.setup();
-
+        keyboard;
         /** Mouse events for the Screen. Used to what mouse buttons are pressed, and other mouse events (eg scroll)
          * @type {gameify.MouseEventManager}
          */
-        this.mouse = new gameify.MouseEventManager(this.element.parentElement, this.element);
-        this.mouse.setup();
-
+        mouse;
         /** This screen's default AudioManager.
          * @type {gameify.audio.AudioManager}
          */
-        this.audio = new gameify.audio.AudioManager();
-        this.audio.setVolume(0.5);
-
+        audio;
         /** This screen's default Camera.
          * @type {gameify.Camera}
          */ 
-        this.camera = new gameify.Camera(this.context);
+        camera;
+        /** The current game scene */
+        currentScene = null;
+        /** The game's update interval */
+        updateInterval = null;
 
-        /** Get the Screen's canvas context 
-         * @private
+        // Track this seperately (detatched from canvas el), so that if the
+        // canvas for some reason loses its status, it can be restored
+        // (it does this w/ the engine!)
+        #antialiasingEnabled = true;
+        // Timestamp of the last update
+        #lastUpdate = 0;
+        #gameActive = false;
+
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Screen}
+        */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Screen.');
+                const obj = new gameify.Screen(document.getElementById(data[0]), data[1], data[2]);
+                if (data[3]) obj.setScene(find(data[3]));
+                obj.setAntialiasing(data[4]);
+                return obj;
+            }
+
+            const obj = new gameify.Screen(document.getElementById(data.elementId), data.width, data.height);
+            if (data.currentScene) obj.setScene(find(data.currentScene));
+            obj.setAntialiasing(data.antialiasing);
+            return obj;
+        }
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
          */
-        this.getContext = () => {
+        toJSON = (key, ref) => {
+            return {
+                elementId: this.element.id, 
+                width: this.width,
+                height: this.height,
+                currentScene: ref(this.currentScene),
+                antialiasing: this.getAntialiasing()
+            }
+        }
+
+        /** Get the screen's HTML5 canvas context
+         * @method
+         * @returns {CanvasRenderingContext2D} - The canvas context
+         */
+        getContext = () => {
             return this.context;
         }
 
         /** Alias for setAntialiasing
          * @see {gameify.Screen.setAntialiasing}
+         * @method
          * @param {Boolean} enable - Whether smoothing should be enabled or not (true/false)
          * @deprecated
         */
-        this.setSmoothImages = (value) => {
+        setSmoothImages = (value) => {
             this.context.imageSmoothingEnabled = value;
         }
 
-        // Track this seperately (detatched from canvas el), so that if the
-        // canvas for some reason loses its status, it can be restored
-        // (it does this w/ the engine!)
-        let antialiasingEnabled = true;
-
         /** Turn antialiasing on or off (set to off for pixel art)
+         * @method
          * @param {Boolean} enable - Whether antialiasing should be enabled.
          */
-        this.setAntialiasing = (value) => {
-            antialiasingEnabled = value;
+        setAntialiasing = (value) => {
+            this.#antialiasingEnabled = value;
             this.context.imageSmoothingEnabled = value;
         }
 
         /** Check if antialising is enabled (Note, also checks and corrects if
          * the canvas element has the correct antialiasing setting)
+         * @method
          * @returns {Boolean} - Whether antialising is enabled or not
         */
-        this.getAntialiasing = () => {
-            this.context.imageSmoothingEnabled = antialiasingEnabled;
-            return antialiasingEnabled;
+        getAntialiasing = () => {
+            this.context.imageSmoothingEnabled = this.#antialiasingEnabled;
+            return this.#antialiasingEnabled;
         }
 
         /** Clear the screen
+         * @method
          * @arg {String} [color] - The color to clear to, e.g. #472d3c or rgb(123, 123, 123). Default is transparent
         */
-        this.clear = (color) => {
+        clear = (color) => {
             this.context.save();
             this.context.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -562,30 +596,34 @@ export let gameify = {
         }
 
         /** Changes the width of the Screen
+         * @method
          * @param {Number} width - The new width of the Screen
          */
-        this.setWidth = (width) => {
+        setWidth = (width) => {
             width = Number(width);
             this.width = width;
             this.element.width = width;
         }
 
         /** Changes the height of the Screen
+         * @method
          * @param {Number} height - The new height of the screen
          */
-        this.setHeight = (height) => {
+        setHeight = (height) => {
             height = Number(height);
             this.height = height;
             this.element.height = height;
         }
 
         /** Changes the size of the Screen
+         * @method
          * @param {Number} width - The new width of the screen
          * @param {Number} height - The new height of the screen
          *//** Changes the size of the Screen
+         * @method
          * @param {gameify.Vector2d} size - The new size of the screen
          */
-        this.setSize = (width, height) => {
+        setSize = (width, height) => {
             if (width.x != undefined && width.y != undefined) {
                 // Convert vector to 
                 height = width.y;
@@ -596,21 +634,18 @@ export let gameify = {
         }
 
         /** Get the width and height of the screen
+         * @method
          * @returns {gameify.Vector2d} A vector representing the size of the screen
          */
-        this.getSize = () => {
+        getSize = () => {
             return new vectors.Vector2d(this.width, this.height);
         }
 
-        /** The current game scene
-         * @private
-         */
-        this.currentScene = null;
-
         /** Sets the game's scene
+         * @method
          * @param {gameify.Scene} scene - The scene to set the game to.
          */
-        this.setScene = (scene) => {
+        setScene = (scene) => {
             if (this.currentScene && this.currentScene.locked) {
                 console.warn("The current scene is locked and cannot be changed: " + this.currentScene.locked);
                 return;
@@ -621,54 +656,47 @@ export let gameify = {
         }
 
         /** Returns the game's active scene
+         * @method
          * @returns {gameify.Scene} The active scene
          */
-        this.getScene = () => { return this.currentScene; }
+        getScene = () => { return this.currentScene; }
 
         /** Add a Sprite to the Screen. This makes it so that sprite.draw(); draws to this screen.
+         * @method
          * @param {gameify.Sprite | gameify.Tilemap} obj - The object to add to the screen
          */
-        this.add = (obj) => {
+        add = (obj) => {
             obj.setContext(this.getContext(), this);
         }
 
-        /** The game's update interval
-         * @private
-         */
-        this.updateInterval = null;
-
-        // Timestamp of the last update
-        let lastUpdate = 0;
-
-        let gameActive = false;
-
         /** Starts the game.
-        */
-        this.startGame = () => {
+         * @method
+         */
+        startGame = () => {
             if (this.currentScene == null) {
                 throw new Error(`You need to set a Scene before you can start the game. See ${gameify.getDocs("gameify.Scene")} for details`);
             }
             
-            if (gameActive) {
+            if (this.#gameActive) {
                 console.warn('The game is already started!');
                 return;
             }
 
-            gameActive = true;
-            lastUpdate = 0;
+            this.#gameActive = true;
+            this.#lastUpdate = 0;
 
             const eachFrame = async (time) => {
-                if (!lastUpdate) {
-                    lastUpdate = time;
+                if (!this.#lastUpdate) {
+                    this.#lastUpdate = time;
                 }
-                const delta = time - lastUpdate;
-                lastUpdate = time;
+                const delta = time - this.#lastUpdate;
+                this.#lastUpdate = time;
                 // if delta is zero, pass one instead (bc of div-by-zero errors)
                 this.currentScene.update(delta || 1);
                 this.camera.update(delta || 1);
                 this.currentScene.draw();
                 
-                if (gameActive) {
+                if (this.#gameActive) {
                     window.requestAnimationFrame(eachFrame);
                 }
             }
@@ -676,90 +704,140 @@ export let gameify = {
 
         }
 
-        /** Stops (pauses) the game */
-        this.stopGame = () => {
-            gameActive = false;
+        /** Stops (pauses) the game 
+         * @method
+         */
+        stopGame = () => {
+            this.#gameActive = false;
         }
     },
 
-    /** Creates an image for use in sprites and other places. 
-     * @constructor
+    /** An image for use in sprites and other places. 
      * @example let playerImage = new gameify.Image("images/player.png");
      * @arg {String} [path] - The image filepath. (Can also be a dataURI). If not specified, the image is created with no texture
     */
-    Image: function (path) {
-        if (path === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
+    Image: class {
+        constructor(path) {
+            this.path = path || "";
+
+            if (path !== undefined) {
+                this.texture = document.createElement("img");
+                this.texture.src = path;
+                let pathName = path;
+                if (path.length > 50) {
+                    pathName = path.slice(0, 40) + '...';
+                }
+                this.texture.onerror = () => {
+                    throw new Error(`Your image "${pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
+                }
+                this.texture.onload = () => {
+                    console.info(`Loaded image "${pathName}"`)
+                    this.loaded = true;
+        
+                    // don't reset the crop if it was already specified.
+                    if (!this.cropData.width) this.cropData.width = this.texture.width;
+                    if (!this.cropData.height) this.cropData.height = this.texture.height;
+        
+                    if (this.#loadFunction) { this.#loadFunction(); }
+                }
+            }
+        }
+
+        /** The image filepath. Modifying this will not do anything.
+         * @readonly
+         */
+        path;
+        /** If the image is loaded */
+        loaded = false;
+        #loadFunction = undefined;
+        // If from a tileset, what and where (for serialization)
+        tileData = {};
+        cropData = { x: 0, y: 0, width: 0, height: 0, cropped: false };
+        texture = undefined;
+
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Image}
+        */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Image.');
                 const obj = new gameify.Image(data[0]);
                 if (data[1]) obj.cropData = data[1];
                 return obj;
             }
+
+            const obj = new gameify.Image(data.path, data.cropData);
+            return obj;
         }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.path, this.getCrop()];
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            return {
+                path: this.path,
+                cropData: this.getCrop()
+            };
         }
 
         /** Change and load a new image path. Reset's the image's crop
+         * @method
          * @param {string} path - The new image path
          */
-        this.changePath = (path) => {
+        changePath = (path) => {
             this.path = path;
             const ni = new gameify.Image(path);
             ni.onLoad(() => {
                 this.texture = ni.texture;
                 this.cropData.width = this.texture.width;
                 this.cropData.height = this.texture.height;
-                if (this.loadFunction) { this.loadFunction(); }
+                if (this.#loadFunction) { this.#loadFunction(); }
             });
         }
 
-        /** The image filepath. Modifying this will not do anything.
-         * @readonly
-         */
-        this.path = path;
-
-        /** If the image is loaded */
-        this.loaded = false;
-
-        this.loadFunction = undefined;
-
         /** Set a function to be run when the image is loaded
+         * @method
          * @param {function} callback - The function to be called when the image is loaded.
          */
-        this.onLoad = (callback) => { this.loadFunction = callback; }
-
-        // If from a tileset, what and where (for serialization)
-        this.tileData = {};
-
-        this.cropData = { x: 0, y: 0, width: 0, height: 0, cropped: false };
+        onLoad = (callback) => { this.loadFunction = callback; }
 
         /** Crop the image 
+         * @method
          * @param {Number} x - how much to crop of the left of the image
          * @param {Number} y - how much to crop of the right of the image
          * @param {Number} width - how wide the resulting image should be
          * @param {Number} height - how tall the resulting image should be
         */
-        this.crop = (x, y, width, height) => {
+        crop = (x, y, width, height) => {
             if (x === undefined || y === undefined || width === undefined || height === undefined) {
                 throw new Error("x, y, width and height must be specified");
             }
             this.cropData = { x: x, y: y, width: width, height: height, cropped: true };
         }
 
-        /** Remove crop from the image */
-        this.uncrop = () => {
+        /** Remove crop from the image 
+         * @method
+         */
+        uncrop = () => {
             this.cropData.cropped = false;
         }
 
-        /** Get the image crop. Returns an object with x, y, width, and height properties. */
-        this.getCrop = () => {
+        /** Get the image crop. Returns an object with x, y, width, and height properties.
+         * @method
+         */
+        getCrop = () => {
             return JSON.parse(JSON.stringify(this.cropData));
         }
 
         /** Draw the image to a context
+         * @method
          * @param {CanvasRenderingContext2D} context - The canvas context to draw to
          * @param {Number} x - The x coordinate to draw at
          * @param {Number} y - The y coordinate to draw at
@@ -767,7 +845,7 @@ export let gameify = {
          * @param {Number} h - Height
          * @param {Number} r - Rotation, in degrees
          */
-        this.draw = (context, x, y, w, h, r) => {
+        draw = (context, x, y, w, h, r) => {
 
             if (r) {
                 // translate the canvas to draw rotated images
@@ -824,33 +902,9 @@ export let gameify = {
 
             }
         }
-
-        this.texture = undefined;
-        if (path !== undefined) {
-            this.texture = document.createElement("img");
-            this.texture.src = path;
-            let pathName = path;
-            if (path.length > 50) {
-                pathName = path.slice(0, 40) + '...';
-            }
-            this.texture.onerror = () => {
-                throw new Error(`Your image "${pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
-            }
-            this.texture.onload = () => {
-                console.info(`Loaded image "${pathName}"`)
-                this.loaded = true;
-    
-                // don't reset the crop if it was already specified.
-                if (!this.cropData.width) this.cropData.width = this.texture.width;
-                if (!this.cropData.height) this.cropData.height = this.texture.height;
-    
-                if (this.loadFunction) { this.loadFunction(); }
-            }
-        }
     }, 
 
-    /** Creates a tileset from an image
-     * @constructor
+    /** A Tileset for use with Tilemaps, Sprites, etc
      * @example let myTileset = new gameify.Tileset("images/tileset.png");
      * // Give the coordinates of a tile to retrieve it
      * let grassTile = myTileset.getTile(3, 2);
@@ -858,32 +912,80 @@ export let gameify = {
      * @arg {Number} twidth - The width of each tile
      * @arg {Number} theight - The height of each tile
      */
-    Tileset: function (path, twidth, theight) {
-        if (path === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
+    Tileset: class {
+        constructor(path, twidth, theight) {
+            this.path = path;
+            this.twidth = Number(twidth);
+            this.theight = Number(theight);
+            this.texture = document.createElement("img");
+            this.texture.src = path;
+
+            this.#pathName = path;
+            if (path.length > 50) {
+                this.#pathName = this.#pathName = path.slice(0, 40) + '...';
+            }
+            this.texture.onerror = () => {
+                throw new Error(`Your image "${this.#pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
+            }
+            this.texture.onload = () => {
+                console.info(`Loaded image "${this.#pathName}"`)
+                this.loaded = true;
+    
+                if (this.#loadFunction) { this.#loadFunction(); }
+            }
+        }
+
+        path;
+        twidth;
+        theight;
+        loaded = false;
+        /** The tileset's image/texture
+         * @package
+         */
+        texture;
+        #pathName;
+        #loadFunction = undefined;
+
+        /** Creates a object from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Tileset}
+        */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Tileset.');
                 const obj = new gameify.Tileset(...data);
                 return obj;
             }
+
+            const obj = new gameify.Tileset(data.path, data.twidth, data.theight);
+            return obj;
         }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.path, this.twidth, this.theight];
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            return {
+                path: this.path,
+                twidth: this.twidth,
+                theight: this.theight
+            };
         }
 
-        this.path = path;
-        this.twidth = Number(twidth);
-        this.theight = Number(theight);
-
-        this.loaded = false;
-
-        /** Get a tile from it's coordinates. Returns a new Image object each time, so if you're getting the same tile a lot you might want to save it to a variable
+        /** Get a tile from it's coordinates. Returns a new Image object each time, so if you're getting =
+         * the same tile a lot you might want to save it to a variable
+         * @method
          * @param {Number} x - The x coordinate of the tile
          * @param {Number} y - The y coordinate of the tile
          * @returns {gameify.Image}
          */
-        this.getTile = (x, y) => {
+        getTile = (x, y) => {
             const tile = new gameify.Image();
             tile.tileData = {
                 tileset: this,
@@ -896,72 +998,91 @@ export let gameify = {
 
         /** Change and load a new image path. Please note this does not clear
          * tilemaps' cached data, and it might retain its the original image.
+         * @method
          * @param {string} path - The new tileset image path
          */
-        this.changePath = (path) => {
+        changePath = (path) => {
             this.path = path;
             const ni = new gameify.Tileset(path, this.twidth, this.theight);
             ni.onLoad(() => {
                 this.texture = ni.texture;
-                if (this.loadFunction) { this.loadFunction(); }
+                if (this.#loadFunction) { this.#loadFunction(); }
             });
         }
 
-        this.loadFunction = undefined;
         /** Set a function to be run when the image is loaded
+         * @method
          * @param {function} callback - The function to be called when the image is loaded.
          */
-        this.onLoad = (callback) => { this.loadFunction = callback; }
-
-        /** The tileset's image/texture
-         * @package
-         */
-        this.texture = document.createElement("img");
-        this.texture.src = path;
-        let pathName = path;
-        if (path.length > 50) {
-            pathName = path.slice(0, 40) + '...';
-        }
-        this.texture.onerror = () => {
-            throw new Error(`Your image "${pathName}" couldn't be loaded. Check the path, and make sure you don't have any typos.`);
-        }
-        this.texture.onload = () => {
-            console.info(`Loaded image "${pathName}"`)
-            this.loaded = true;
-
-            if (this.loadFunction) { this.loadFunction(); }
-        }
+        onLoad = (callback) => { this.#loadFunction = callback; }
     },
 
-    /** A tile as part of a tilemap
-     * @constructor
+    /** A Tile as part of a Tilemap
      * @arg {Number} x - The x coordinate of the tile
      * @arg {Number} y - The y coordinate of the tile
      * @arg {Number} sourcex - The source x coordinate of the tile
      * @arg {Number} sourcey - The source y coordinate of the tile
      * @arg {Number} [rotation=0] - The rotation of the tile
      * @arg {gameify.Image} image - The tile's Image (reference)
-    */
-    Tile: function (x, y, sx, sy, r = 0, image) {
+     */
+    Tile: class {
+        constructor (x, y, sx, sy, r = 0, image) {
+            this.image = image;
+            this.position = new gameify.Vector2d(x, y);
+            this.source = new gameify.Vector2d(sx, sy);
+            this.rotation = r;
+        }
+
+        /** Creates a Tile from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Tile}
+        */
+        static fromJSON = (data, find) => {
+            const obj = new gameify.Tile(
+                data.position.x, data.position.y,
+                data.source.x, data.source.y,
+                data.rotation,
+                find(data.image)
+            );
+            return obj;
+        }
+        
+        /** Convert the object to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+         */
+        toJSON = (key, ref) => {
+            return {
+                image: ref(this.image),
+                position: this.position.toJSON(),
+                source: this.source.toJSON(),
+                rotation: this.rotation
+            };
+        }
+        
         /** The tile's Image
          * @type {gameify.Image}
          */
-        this.image = image;
+        image;
         /** The tile's position in the tilemap
          * @type {gameify.Vector2d}
          */
-        this.position = new gameify.Vector2d(x, y);
+        position;
         /** The tile's source coordinates
          * @type {gameify.Vector2d}
          */
-        this.source = new gameify.Vector2d(sx, sy);
+        source;
         /** The tile's rotation
          * @type {Number}
          */
-        this.rotation = r;
+        rotation;
     },
 
-    /** Creates a map of rectangular tiles
+    /** Class representing a Tilemap of rectangular tiles
      * @example // ...
      * // make a new tileset with 8x8 pixels
      * let forestTileset = new gameify.Tileset("images/forest.png", 8, 8);
@@ -978,7 +1099,6 @@ export let gameify = {
      *     // Draw the tilemap
      *     forsetMap.draw();
      * });
-     * @constructor
      * @arg {Number} twidth - The width of the tiles
      * @arg {Number} theight - The height of the tiles
      * @arg {Number} [offsetx=0] - X offset of the tiles
@@ -988,11 +1108,40 @@ export let gameify = {
     // this.tiles.placed[x][y] means that looping through this.tiles.placed
     // actually loops through each column, and I was dumb and got this backwards.
     // Some are correct, because I realised it -- but be careful
-    Tilemap: function (twidth, theight, offsetx, offsety) {
-        if (twidth === '_deserialize') {
-            // data - saved data
-            // find - a function to find an object based on a saved name
-            return (data, find) => {
+    Tilemap: class {
+        constructor (twidth, theight, offsetx, offsety) {
+            this.twidth = Number(twidth);
+            this.theight = Number(theight);
+            this.offset = new vectors.Vector2d(offsetx || 0, offsety || 0);
+        }
+
+        twidth;
+        theight;
+        /** The tile offset (coordinates of tile <0, 0>). Used to translate the map
+         * @type {gameify.Vector2d}
+         */
+        offset;
+        /** The Canvas context to draw to */
+        context = null;
+        /** The parent screen (not used directly) */
+        parent = null;
+        // placed is an object so there can be negative indexes
+        tiles = { placed: {} };
+        tileset = undefined;
+
+        #drawFunction = null;
+        #warnedNotIntegerCoordinates = false;
+
+        /** Creates a Tilemap from JSON data
+         * @method
+         * @arg {Object|Array} data - Serialized Tilemap data (from Tilemap.toJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {gameify.Tilemap}
+        */
+        static fromJSON = (data, find) => {
+            if (Array.isArray(data)) {
+                // Be backwards compatible
+                console.warn('Save is using the old (de)serialization format for Tilemap.');
                 const obj = new gameify.Tilemap(data[0], data[1], data[2].x, data[2].y);
                 if (data[3]) {
                     obj.setTileset(find(data[3]));
@@ -1001,58 +1150,78 @@ export let gameify = {
                 if (data[5]) find(data[5]).add(obj); // Add to Screen
                 return obj;
             }
-        }
-        // name - a function to generate a name for an object to be restored later
-        this.serialize = (name) => {
-            return [this.twidth, this.theight, {x: this.offset.x, y: this.offset.y}, name(this.tileset), this.exportMapData(), name(this.parent)];
-        }
 
-        this.twidth = Number(twidth);
-        this.theight = Number(theight);
-
-        /** The tile offset (coordinates of tile <0, 0>). Used to translate the map
-         * @type {gameify.Vector2d}
+            const obj = new gameify.Tilemap(
+                data.twidth, data.theight,
+                data.offset.x, data.offset.y
+            );
+            if (data.tileset) {
+                obj.setTileset(find(data.tileset));
+                obj.loadMapData(data.mapData);
+            }
+            if (data.parent) find(data.parent).add(obj); // Add to Screen
+            return obj;
+        }
+        
+        /** Convert the Tilemap to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
          */
-        this.offset = new vectors.Vector2d(offsetx || 0, offsety || 0);
-
-        // placed is an object so there can be negative indexes
-        this.tiles = { placed: {} };
-        /** Clear the tilemap. Removes all placed tiles and cached images */
-        this.clear = () => {
+        toJSON = (key, ref) => {
+            return {
+                twidth: this.twidth,
+                theight: this.theight,
+                offset: this.offset.toJSON(),
+                tileset: ref(this.tileset),
+                mapData: this.exportMapData(),
+                parent: ref(this.parent),
+            };
+        }
+        
+        /** Clear the tilemap. Removes all placed tiles and cached images
+         * @method
+        */
+        clear = () => {
             this.tiles = { placed: {} };
         }
 
-        this.tileset = undefined;
         /** What tileset to use. This tileset must include anything you want to use in this tilemap.
+         * @method
          * @param {gameify.Tileset} set - The tileset
         */
-        this.setTileset = (set) => {
+        setTileset = (set) => {
             this.tileset = set;
         }
+
         /** Get the tilemap's tileset
+         * @method
          * @returns {gameify.Tileset} The tileset
          */
-        this.getTileset = () => {
+        getTileset = () => {
             return this.tileset;
         }
 
-        this.drawFunction = null;
         /** Set the draw function for this tilemap
-        * @param {function} callback - The function to be called right before the tilemap is drawn
-        */
-        this.onDraw = (callback) => {
-            this.drawFunction = callback;
+         * @method
+         * @param {function} callback - The function to be called right before the tilemap is drawn
+         */
+        onDraw = (callback) => {
+            this.#drawFunction = callback;
         }
 
         /** Convert screen coordinates to map coordinates 
+         * @method
          * @param {Number} screenx - The screen x coordinate
          * @param {Number} [screeny] - The screen y coordinate
          * @returns {gameify.Vector2d} A vector representing the calculated position
          *//** Convert screen coordinates to map coordinates 
+         * @method
          * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
          * @returns {gameify.Vector2d} A vector representing the calculated position
          */
-        this.screenToMap = (screenx, screeny) => {
+        screenToMap = (screenx, screeny) => {
             // loose comparison because we don't want any null values
             if (screenx.x != undefined && screenx.y != undefined) {
                 screeny = screenx.y;
@@ -1063,15 +1232,18 @@ export let gameify = {
                 Math.floor((screeny - this.offset.y) / this.theight)
             );
         }
+
         /** Convert map coordinates to screen coordinates
+         * @method
          * @param {Number} mapx - The map x coordinate
          * @param {Number} [mapy] - The map y coordinate
          * @returns {Object} {gameify.Vector2d} A vector representing the calculated position
          *//** Convert map coordinates to screen coordinates
+         * @method
          * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
          * @returns {gameify.Vector2d} A vector representing the calculated position
          */
-        this.mapToScreen = (mapx, mapy) => {
+        mapToScreen = (mapx, mapy) => {
             // loose comparison because we don't want any null values
             if (mapx.x != undefined && mapx.y != undefined) {
                 mapy = mapx.y;
@@ -1084,13 +1256,14 @@ export let gameify = {
         }
 
         /** Place a tile on the tilemap
+         * @method
          * @param {Number} originx - The x position of the tile on the tilesheet
          * @param {Number} originy - The y position of the tile on the tilesheet
          * @param {Number} destx - The x position to place the tile
          * @param {Number} desty - The y position to place the tile
          * @param {Number} [rotation=0] - Tile rotation, in degrees
          */
-        this.place = (originx, originy, destx, desty, rotation) => {
+        place = (originx, originy, destx, desty, rotation) => {
             if (!this.tileset) {
                 throw new Error("You can't place a tile before setting a tileset.");
             }
@@ -1114,11 +1287,12 @@ export let gameify = {
         }
 
         /** Get the tile (if it exists) placed at a certain position
+         * @method
          * @param {Number} x - X coordinate of the tile
          * @param {Number} y - Y coordinate of the tile
          * @return {gameify.Tile}
          */
-        this.get = (x, y) => {
+        get = (x, y) => {
             if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
                 return this.tiles.placed[x][y];
 
@@ -1126,9 +1300,10 @@ export let gameify = {
         }
 
         /** Get an array of all the tiles in the map
+         * @method
          * @return {gameify.Tile[]}
          */
-        this.listTiles = () => {
+        listTiles = () => {
             const out = [];
             for (const x in this.tiles.placed) {
                 for (const y in this.tiles.placed[x]) {
@@ -1139,31 +1314,32 @@ export let gameify = {
         }
 
         /** Remove a tile from the tilemap
+         * @method
          * @param {Number} x - The x coord of the tile to remove
          * @param {Number} y - The y coord of the tile to remove
          */
-        this.remove = (x, y) => {
+        remove = (x, y) => {
             if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
                 delete this.tiles.placed[x][y];
             }
         }
 
-        let warnedNotIntegerCoordinates = false;
-
-        /** Draw the tilemap to the screen */
-        this.draw = () => {
-            if (this.drawFunction) {
-                this.drawFunction();
+        /** Draw the tilemap to the screen
+         * @method
+         */
+        draw = () => {
+            if (this.#drawFunction) {
+                this.#drawFunction();
             }
             if (!this.context) {
                 throw new Error(`You need to add this tilemap to a screen before you can draw it. See ${gameify.getDocs("gameify.Tilemap")} for more details`);
             }
 
-            if (!warnedNotIntegerCoordinates &&
+            if (!this.#warnedNotIntegerCoordinates &&
                 ( Math.round(this.offset.x) !== this.offset.x
                 || Math.round(this.offset.y) !== this.offset.y)
             ) {
-                warnedNotIntegerCoordinates = true;
+                this.#warnedNotIntegerCoordinates = true;
                 console.warn(`Timemap offset is not an integer. This can cause images
                     to contain artifacts (eg lines along the edge)`);
             }
@@ -1186,9 +1362,10 @@ export let gameify = {
          * Controls are: Click to place, Right-click to delete, Middle-click to pick, Scroll and Ctrl+Scroll to switch tile, Shift+Scroll to rotate the tile.<br>
          * Once you're finished, call <code>tilemap.exportMapData()</code> to export the map.
          * @deprecated Use the engine editor to build and export your tilemaps. This editor is no longer maintained.
+         * @method
          * @param {gameify.Screen} screen - The screen to show the map builder on. For best results, use the one you've already added it to.
          */
-        this.enableMapBuilder = (screen) => {
+        enableMapBuilder = (screen) => {
             let mainScene = new gameify.Scene(screen);
             mainScene.lock("The Tilemap builder is currently enabled.");
 
@@ -1338,9 +1515,10 @@ export let gameify = {
         }
 
         /** Export this tilemap's map data and layout (load with loadMapData)
+         * @method
          * @returns {object} The map data as JSON
          */
-        this.exportMapData = () => {
+        exportMapData = () => {
             let output = [];
             for (const col in this.tiles.placed) {
                 for (const row in this.tiles.placed[col]) {
@@ -1358,45 +1536,32 @@ export let gameify = {
         }
 
         /** Load saved map data (export using exportMapData)
+         * @method
          * @param {Object} data - The map data to load
          */
-        this.loadMapData = (data) => {
+        loadMapData = (data) => {
             for (const tile of data) {
                 this.place(tile.s[0], tile.s[1], tile.p[0], tile.p[1], tile.r);
             }
         }
 
-        /** The Canvas context to draw to
-         * @private
-         */
-        this.context = null;
-
-        /** The parent screen (not used directly)
-         * @private
-         */
-        this.parent = null;
-
-        /** Get the screen this sprite draws to
+        /** Get the screen this sprite draws 
+         * @method
          * @returns {gameify.Screen}
          */
-        this.getParent = () => {
+        getParent = () => {
             return this.parent;
         }
 
-        /** Set the Canvas context to draw to. This should be called whenever a sprite is added to a Screen
-         * @private
+        /** Set the Canvas context to draw to. Should be called by a screen when the Tilemap is added to it.
+         * @method
          */
-        this.setContext = (context, parent) => {
+        setContext = (context, parent) => {
             this.context = context;
             this.parent = parent;
         }
         
-    },
-
-    Sprite: sprites.Sprite,
-    Scene: scenes.Scene,
-    Text: text.Text,
-    TextStyle: text.TextStyle
+    }
 };
 
 /** This is a mostly complete list of mouse and keyboard input events supported by gameify. Most event names are case-sensitive
