@@ -628,15 +628,66 @@ const editAnimation = (anim) => {
         },
         Image: {
             createInput: (property) => {
+                const container = document.createElement('div');
                 const input = document.createElement('select');
-                engineTypes.list(objects, ['Image']).forEach((name) => {
-                    const selected = name === property.value.__engine_name || name === property.value ? 'selected' : '';
-                    input.innerHTML += `<option value="${name}" ${selected}>${name}</option>`;
+                input.innerHTML = '<option value="None::None" selected disabled>None</option>';
+                engineTypes.list(objects, ['Image', 'Tileset']).forEach((name) => {
+                    const selectedName = property.value?.__engine_name || property.value?.tileData?.tileset?.__engine_name
+                    const selected = name === selectedName || name === property.value ? 'selected' : '';
+                    const shortName = name.replace('Image::', 'I::').replace('Tileset::', 'T::');
+                    input.innerHTML += `<option value="${name}" ${selected}>${shortName}</option>`;
+                });
+                input.addEventListener('change', () => {
+                    const v = input.value;
+                    const type = v.split('::')[0];
+                    const name = v.split('::')[1];
+                    if (type === 'Image') {
+                        property.value = objects[type][name];
+                    } else if (type === 'Tileset') {
+                        const tileset = objects[type][name];
+                        property.value = tileset.getTile(tilePos.value.x, tilePos.value.y)
+                    }
+                    updateTsPos();
                 });
 
-                // TODO complete images
+                const tileLabel = document.createElement('span');
+                const tilePos = {
+                    // property.value is of type Image
+                    value: property.value?.tileData?.position || new gameify.Vector2d(0, 0)
+                }
+                const tilePosProxy = new Proxy(tilePos, { set: (target, prop, value) => {
+                    // When tile position is changed
+                    if (prop === 'value') {
+                        target.value = value;
+                        // property.value is of type Image
+                        property.value = property.value.tileData.tileset.getTile(value.x, value.y);
+                        return true;
+                    }
+                }, get: (target, prop) => {
+                    if (prop === 'value') {
+                        const val = target[prop];
+                        let pref = '';
+                        if (!val.x) val.x = 0;
+                        if (!val.y) val.y = 0;
+                        return pref + (new gameify.Vector2d(val).toString());
+                    }
+                }});
+                // Create this input with a proxy
+                // So we can catch changes and apply them properly
+                const tileInput = propertyTypes.Vector2d.createInput(tilePosProxy);
+                const updateTsPos = () => {
+                    if (property.value?.tileData?.tileset) {
+                        tileLabel.style.display = '';
+                    } else {
+                        tileLabel.style.display = 'none';
+                    }
+                }
+                tileLabel.appendChild(tileInput);
+                updateTsPos();
 
-                return input;
+                container.appendChild(input);
+                container.appendChild(tileLabel);
+                return container;
             }
         }
     }
@@ -671,22 +722,7 @@ const editAnimation = (anim) => {
 
         if (document.querySelector('#vi-frames-count')) {
             document.querySelector('#vi-frames-count').innerHTML = anim.frames.length + ' frames';
-        } 
-
-        /* const anim.frames = [{
-            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 100) },
-            rotation: { type: 'number',   value: 0 }
-        },{
-            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 110) },
-        },{
-            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 120) },
-        },{
-            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 130) },
-        },{
-            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 120) },
-        },{
-            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 110) },
-        }]; */
+        }
 
         // Add each property to the table
         for (const index in anim.frames) {
@@ -839,7 +875,6 @@ const editAnimation = (anim) => {
         <span class="right">Preview:</span>
         <select id="vi-preview-obj-select">
             <option value="None::None">No Preview</option>
-            <option value="None::Error" style="display:none;" id="prev-sel-error" disabled>Error</option>
         </select>
     </div>
     `;
@@ -849,18 +884,16 @@ const editAnimation = (anim) => {
     genFrameTable();
 
     const previewSelector = controls.querySelector('#vi-preview-obj-select');
-    engineTypes.list(objects, '*').forEach((name) => {
-        const type = name.split('::')[0];
-        const oName = name.split('::')[1];
-        const obj = objects[type][oName];
-        if (!obj.draw) return; // We can only preview drawables
-        previewSelector.innerHTML += `<option value="${name}::None">${name}</option>`;
+    // You can technically apply animations to anything, but
+    // we're only supporting sprites and tilemaps for previews.
+    engineTypes.list(objects, ['Sprite', 'Tilemap']).forEach((name) => {
+        previewSelector.innerHTML += `<option value="${name}">${name}</option>`;
     });
 
     let previewEl = null;
+    let previewActive = false;
     let previewAnimator = new gameify.Animator(previewEl);
     previewSelector.addEventListener('change', (event) => {
-        previewSelector.querySelector('#prev-sel-error').style.display = 'none';
         const name = event.target.value;
         if (name === 'None::None') {
             previewEl = null;
@@ -874,46 +907,51 @@ const editAnimation = (anim) => {
         // Make a new animator for the new preview el
         previewAnimator = new gameify.Animator(previewEl);
         previewAnimator.set('preview', anim);
+        visualLog(`Previewing animation on ${type}::${oName}`, 'info', 'animation editor');
     });
 
     document.querySelector('#vi-play-anim').addEventListener('click', () => {
         if (previewEl) previewAnimator.play('preview');
+        previewActive = true;
+        frameListEls.table.querySelectorAll(`td, th`).forEach(el => el.classList.remove('error'))
     });
     document.querySelector('#vi-stop-anim').addEventListener('click', () => {
         previewAnimator.stop();
     });
 
+    const dealWithPreviewError = (error) => {
+        const time = previewAnimator.animationProgress;
+        const frame = anim.getFrameNumberAt(time);
+        // +2 for property + type boxes, + 1 because frame number is zero-indexed)
+        frameListEls.table.querySelectorAll(`:is(td, th):nth-child(${frame + 3})`).forEach(el => el.classList.add('error'));
+        visualLog(`Error playing animation at frame ${frame} (${time}ms)`, 'error', 'animation editor');
+        visualLog(error, 'error', 'animation editor');
+        // Stop *afterwords* (so we can get the frame number above)
+        previewAnimator.stop();
+        previewActive = false;
+    }
+
     editScene.onUpdate((delta) => {
         if (anim.options.frameDuration !== drawnFrameDuration) {
             genFrameTable();
         }
-        if (previewEl) {
+        if (previewEl && previewActive) {
             try {
                 previewAnimator.update(delta);
             } catch (e) {
                 console.error(e);
-                // Show the error in the sel. box
-                previewSelector.querySelector('#prev-sel-error').style.display = 'inline';
-                previewSelector.querySelector('#prev-sel-error').innerText = '(Error) ' + previewSelector.value;
-                // Remove the preview
-                previewEl = null;
-                previewSelector.value = 'None::Error';
+                dealWithPreviewError(e);
             }
         }
     });
     editScene.onDraw(() => {
         editorScreen.clear();
-        if (previewEl) {
+        if (previewEl && previewActive) {
             try {
                 previewEl.draw();
             } catch (e) {
                 console.error(e);
-                // Show the error in the sel. box
-                previewSelector.querySelector('#prev-sel-error').style.display = 'inline';
-                previewSelector.querySelector('#prev-sel-error').innerText = '(Error) ' + previewSelector.value;
-                // Remove the preview
-                previewEl = null;
-                previewSelector.value = 'None::Error';
+                dealWithPreviewError(e);
             }
         }
     });

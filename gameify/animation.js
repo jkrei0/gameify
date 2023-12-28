@@ -1,4 +1,5 @@
 import { vectors } from "./vector.js"
+import { images } from "./image.js"
 
 /** Animation types. Most types replace the value (absolute)
  * @member
@@ -22,8 +23,17 @@ let animationPropertyTypes = {
     /** A gameify.Image (on a sprite, or other object with a setImage method) */
     'Image': {
         apply: (property, value, object) => object.setImage(value),
-        toJSON: (obj, ref) => ref(obj),
-        fromJSON: (dat, find) => find(dat)
+        toJSON: (obj, ref) => {
+            const reference = ref(obj);
+            if (reference) return reference;
+            else if (obj.toJSON) return obj.toJSON('AnimationTsImage', ref);
+            else return undefined;
+        },
+        fromJSON: (dat, find) => {
+            if (dat === undefined) return undefined;
+            if (typeof dat === 'string') return find(dat);
+            return images.Image.fromJSON(dat, find); // it should be an object
+        }
     },
     /** A gameify.Vector2d */
     'Vector2d': {
@@ -292,7 +302,7 @@ export let animation = {
          */
         toJSON = (key, ref) => {
             return {
-                frames: this.framesToJSON(),
+                frames: this.framesToJSON(key, ref),
                 options: this.#options
             };
         }

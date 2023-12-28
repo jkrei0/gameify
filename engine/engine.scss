@@ -695,6 +695,9 @@ $transition: 0.1s;
                 &:nth-child(2) {
                     width: 100px;
                 }
+                &.error {
+                    background: #622;
+                }
 
                 button {
                     display: flex;

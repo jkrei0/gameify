@@ -571,6 +571,9 @@ body, html {
 .editor-controls .frame-list table th:nth-child(2), .editor-controls .frame-list table td:nth-child(2), .editor-controls .frame-list:is(table) th:nth-child(2), .editor-controls .frame-list:is(table) td:nth-child(2) {
   width: 100px;
 }
+.editor-controls .frame-list table th.error, .editor-controls .frame-list table td.error, .editor-controls .frame-list:is(table) th.error, .editor-controls .frame-list:is(table) td.error {
+  background: #622;
+}
 .editor-controls .frame-list table th button, .editor-controls .frame-list table td button, .editor-controls .frame-list:is(table) th button, .editor-controls .frame-list:is(table) td button {
   display: flex;
   align-items: center;
