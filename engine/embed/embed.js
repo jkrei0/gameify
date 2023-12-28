@@ -5,7 +5,7 @@ const win = gameFrame.contentWindow;
 const accountName = window.location.hash.split('/')[0].replace('#', '');
 const gameTitle = window.location.hash.split('/')[1];
 
-const originURL = /* REPLACE=originURL */'https://gameify.vercel.app'/* END */;
+const originURL = /* REPLACE=originURL */'http://localhost:3000'/* END */;
 
 if (!accountName || !gameTitle) {
     document.querySelector('#loading-text-short').innerText = 'Invalid link';

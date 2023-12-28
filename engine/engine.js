@@ -1052,7 +1052,7 @@ gameFrame.addEventListener('load', () => {
 
     runGameButton.innerText = 'Stop Game';
     const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
-    gameFrameWindow.postMessage(saved, /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */);
+    gameFrameWindow.postMessage(saved, /* REPLACE=embedURL */'http://localhost:3001'/* END */);
 });
 
 const stopGame = () => {
@@ -1062,7 +1062,7 @@ const stopGame = () => {
 const runGame = () => {
     clearVisualEditor();
     showWindow('preview');
-    gameFrame.src = /* REPLACE=embedURL */'https://gameify-embed.vercel.app'/* END */+'/embed.html';
+    gameFrame.src = /* REPLACE=embedURL */'http://localhost:3001'/* END */+'/embed.html';
 }
 
 /* Tabs */
