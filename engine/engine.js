@@ -383,7 +383,7 @@ const editTileMap = (map) => {
         <span><img src="images/mouse_right.svg">Delete tiles</span>
         <span><img src="images/mouse_middle.svg">Pick tile</span>
         <span><img src="images/arrows_scroll.svg">Rotate tile</span>
-        <button id="vi-zoom-out"><img src="images/zoom_out.svg">Smaller</button>
+        <button id="vi-zoom-out" class="right"><img src="images/zoom_out.svg">Smaller</button>
         <button id="vi-zoom-in"><img src="images/zoom_in.svg">Larger</button>
     </div>
     `;
@@ -517,6 +517,390 @@ const editTileMap = (map) => {
     });
 }
 engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
+
+const editAnimation = (anim) => {
+    clearVisualEditor();
+    showWindow('visual');
+    visualLog(`Editing ${anim.__engine_name}.`, 'log', 'animation editor');
+
+    // Update antialiasing to be consistent
+    const defaultScreen = Object.values(objects['Screen'])[0];
+    editorScreen.setAntialiasing(defaultScreen.getAntialiasing());
+
+    const editScene = new gameify.Scene(editorScreen);
+    editorScreen.setScene(editScene);
+
+    const controls = document.createElement('div');
+    controls.classList.add('editor-controls');
+    controls.classList.add('visual');
+
+    const propertyTypes = {
+        simple: {
+            createInput: (property, modifier = (v) => v) => {
+                const input = document.createElement('input');
+                input.setAttribute('type', 'text');
+                input.value = property.value.toString();
+                if (modifier(property.value) === undefined) {
+                    input.classList.add('invalid');
+                }
+                input.addEventListener('change', () => {
+                    const parsedValue = modifier(input.value);
+                    if (parsedValue === undefined) {
+                        // If the value is invalid, don't change it
+                        // and reset the input to the old value
+                        input.value = property.value;
+                        return;
+                    }
+                    input.classList.remove('invalid');
+                    property.value = parsedValue;
+                    input.value = parsedValue;
+                }); 
+                return input;
+            }
+        },
+        object: {
+            createInput: (property) => {
+                const input = document.createElement('span');
+                input.innerText = '[Object]'
+                return input;
+            }
+        },
+        string: {
+            createInput: (property) => {
+                return propertyTypes.simple.createInput(property);
+            }
+        },
+        number: {
+            createInput: (property) => {
+                return propertyTypes.simple.createInput(property, (value) => {
+                    if (isNaN(value)) return undefined;
+                    return Number(value);
+                });
+            }
+        },
+        boolean: {
+            createInput: (property) => {
+                return propertyTypes.simple.createInput(property, (value) => {
+                    return Boolean(value);
+                });
+            }
+        },
+        Vector2d: {
+            createInput: (property) => {
+                const input = document.createElement('input');
+                input.setAttribute('type', 'text');
+                // Make sure the property is a vector
+                try {
+                    property.value = new gameify.Vector2d(property.value);
+                } catch (e) {
+                    input.classList.add('invalid');
+                }
+                input.value = property.value.toString();
+                input.addEventListener('change', () => {
+                    let parsedValue;
+                    try {
+                        parsedValue = new gameify.Vector2d(input.value);
+                    } catch (e) {
+                        // If the input is invalid, don't change it
+                        // and reset the input to the old value
+                        input.value = property.value.toString();
+                        return;
+                    }
+                    input.classList.remove('invalid');
+                    property.value = parsedValue;
+                    input.value = parsedValue;
+                });
+                return input;
+            }
+        },
+        Image: {
+            createInput: (property) => {
+                const input = document.createElement('select');
+                engineTypes.list(objects, ['Image']).forEach((name) => {
+                    const selected = name === property.value.__engine_name || name === property.value ? 'selected' : '';
+                    input.innerHTML += `<option value="${name}" ${selected}>${name}</option>`;
+                });
+
+                // TODO complete images
+
+                return input;
+            }
+        }
+    }
+    
+    let frameListEls = {};
+    let drawnFrameDuration = anim.options.frameDuration;
+
+    const genFrameTable = () => {
+        drawnFrameDuration = anim.options.frameDuration;
+        if (frameListEls.table) {
+            frameListEls.table.remove();
+        }
+
+        frameListEls.table = document.createElement('table'),
+        frameListEls.body = document.createElement('tbody'),
+        frameListEls.header = document.createElement('thead'),
+        frameListEls.headerRow = document.createElement('tr'),
+        frameListEls.propLabelTh = document.createElement('th'),
+        frameListEls.propTypeTh = document.createElement('th'),
+        frameListEls.propRows = {};
+
+        controls.appendChild(frameListEls.table);
+
+        frameListEls.table.classList.add('frame-list');
+        frameListEls.table.appendChild(frameListEls.header);
+        frameListEls.table.appendChild(frameListEls.body);
+        frameListEls.header.appendChild(frameListEls.headerRow);
+        frameListEls.headerRow.appendChild(frameListEls.propLabelTh);
+        frameListEls.headerRow.appendChild(frameListEls.propTypeTh);
+        frameListEls.propLabelTh.innerHTML = 'Property';
+        frameListEls.propTypeTh.innerHTML = 'Type';
+
+        /* const anim.frames = [{
+            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 100) },
+            rotation: { type: 'number',   value: 0 }
+        },{
+            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 110) },
+        },{
+            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 120) },
+        },{
+            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 130) },
+        },{
+            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 120) },
+        },{
+            position: { type: 'Vector2d', value: new gameify.Vector2d(100, 110) },
+        }]; */
+
+        // Add each property to the table
+        for (const index in anim.frames) {
+            const frame = anim.frames[index];
+            for (const propName in frame) {
+                if (!frameListEls.propRows[propName]) {
+                    const propRow = document.createElement('tr');
+                    frameListEls.propRows[propName] = {
+                        defaultType: frame[propName].type,
+                        element: propRow
+                    }
+
+                    // Property name (1st column)
+                    const propLabel = document.createElement('td');
+                    propLabel.__engine_menu = {
+                        'Delete Property': () => {
+                            for (const frame of anim.frames) {
+                                if (frame[propName]) {
+                                    delete frame[propName];
+                                }
+                            }
+                            genFrameTable();
+                        }
+                    };
+                    const propInput = document.createElement('input');
+                    propInput.value = propName;
+                    propInput.addEventListener('change', () => {
+                        for (const frame of anim.frames) {
+                            if (frame[propName]) {
+                                // Rename the property, by Object.assign-ing it, then deleting the old property
+                                // delete Object.assign(obj, {[newKey]: obj[oldKey] })[oldKey];
+                                delete Object.assign(frame, { [propInput.value]: frame[propName] })[propName];
+                            }
+                        }
+                        genFrameTable();
+                    });
+                    propLabel.appendChild(propInput);
+                    propRow.appendChild(propLabel);
+                    
+                    // Property type (2nd column)
+                    const propType = document.createElement('td');
+                    const propSelect = document.createElement('select');
+                    for (const type in gameify.Animation.propertyTypes) {
+                        const selected = type === frameListEls.propRows[propName].defaultType ? 'selected' : '';
+                        propSelect.innerHTML += `<option value="${type}" ${selected}>${type}</option>`;
+                    }
+                    propSelect.addEventListener('change', () => {
+                        const newType = propSelect.value;
+                        frameListEls.propRows[propName].defaultType = newType;
+                        for (const frame of anim.frames) {
+                            if (frame[propName]) {
+                                frame[propName].type = newType;
+                            }
+                        }
+                        genFrameTable();
+                    });
+                    propType.appendChild(propSelect);
+                    propRow.appendChild(propType);
+
+                    frameListEls.body.appendChild(propRow);
+                }
+            }
+        }
+        // Add each frame to the table
+        for (const index in anim.frames) {
+            const frameLabel = document.createElement('th');
+            frameLabel.innerText = (index * anim.options.frameDuration)/1000 + 's';
+            frameListEls.headerRow.appendChild(frameLabel);
+
+            frameLabel.__engine_menu = {
+                'Delete Frame': () => {
+                    anim.frames.splice(index, 1);
+                    genFrameTable();
+                },
+                'Insert Frame Before': () => {
+                    anim.frames.splice(index, 0, {});
+                    genFrameTable();
+                }
+            }
+
+            const frame = anim.frames[index];
+            for (const propName in frameListEls.propRows) {
+                const propTd = document.createElement('td');
+                propTd.__engine_menu = Object.assign({}, frameLabel.__engine_menu);
+
+                if (frame[propName]) {
+                    // Property value
+                    const propInput = propertyTypes[frame[propName].type].createInput(frame[propName]);
+                    propTd.appendChild(propInput);
+                    propTd.__engine_menu['Clear Property'] = () => {
+                        delete frame[propName];
+                        genFrameTable();
+                    }
+                } else {
+                    // Add property to frame
+                    const addButton = document.createElement('button');
+                    addButton.innerText = '+ Add';
+                    addButton.addEventListener('click', () => {
+                        frame[propName] = {
+                            type: frameListEls.propRows[propName].defaultType, value: 0
+                        };
+                        genFrameTable();
+                    });
+                    propTd.appendChild(addButton);
+                    propTd.__engine_menu['Add Property'] = () => {
+                        addButton.click();
+                    }
+                }
+                frameListEls.propRows[propName].element.appendChild(propTd);
+            }
+        }
+
+        // New frame button
+        const addLabel = document.createElement('th');
+        const addFrameButton = document.createElement('button');
+        addFrameButton.innerText = '+ Frame';
+        addFrameButton.addEventListener('click', () => {
+            anim.frames.push({});
+            genFrameTable();
+        });
+        addLabel.appendChild(addFrameButton);
+        frameListEls.headerRow.appendChild(addLabel);
+
+        // New property button
+        const addPropTr = document.createElement('tr');
+        const addPropTd = document.createElement('td');
+        const addPropButton = document.createElement('button');
+        addPropButton.innerText = '+ Property';
+        addPropButton.addEventListener('click', () => {
+            const randomPropName = 'property' + Math.floor(Math.random()*1000);
+            frameListEls.propRows[randomPropName] = {
+                defaultType: 'number',
+                element: document.createElement('td')
+            }
+            if (!anim.frames[0]) anim.frames.push({});
+            anim.frames[0][randomPropName] = { type: 'number', value: 0 };
+            genFrameTable();
+            console.log(anim.frames);
+        });
+        addPropTr.appendChild(addPropTd);
+        addPropTd.appendChild(addPropButton);
+        frameListEls.body.appendChild(addPropTr);
+    }
+
+    controls.innerHTML = `
+    <div class="legend">
+    <button id="vi-play-anim"><img src="images/play.svg">Play</button>
+    <button id="vi-stop-anim"><img src="images/stop.svg">Stop</button>
+        <span class="right">Preview:</span>
+        <select id="vi-preview-obj-select">
+            <option value="None::None">No Preview</option>
+            <option value="None::Error" style="display:none;" id="prev-sel-error" disabled>Error</option>
+        </select>
+    </div>
+    `;
+
+    editorCanvas.parentElement.after(controls);
+
+    genFrameTable();
+
+    const previewSelector = controls.querySelector('#vi-preview-obj-select');
+    engineTypes.list(objects, '*').forEach((name) => {
+        const type = name.split('::')[0];
+        const oName = name.split('::')[1];
+        const obj = objects[type][oName];
+        if (!obj.draw) return; // We can only preview drawables
+        previewSelector.innerHTML += `<option value="${name}::None">${name}</option>`;
+    });
+
+    let previewEl = null;
+    let previewAnimator = new gameify.Animator(previewEl);
+    previewSelector.addEventListener('change', (event) => {
+        previewSelector.querySelector('#prev-sel-error').style.display = 'none';
+        const name = event.target.value;
+        if (name === 'None::None') {
+            previewEl = null;
+            return;
+        }
+        const type = name.split('::')[0];
+        const oName = name.split('::')[1];
+        // Copy the object that we apply the preview to.
+        const obj = objects[type][oName].toJSON(oName, (v)=>v); // Simple ref function, since we're not modifying any referenced objects
+        previewEl = engineTypes.resolve(type).fromJSON(obj, (v)=>v);
+        // Make a new animator for the new preview el
+        previewAnimator = new gameify.Animator(previewEl);
+        previewAnimator.set('preview', anim);
+    });
+
+    document.querySelector('#vi-play-anim').addEventListener('click', () => {
+        if (previewEl) previewAnimator.play('preview');
+    });
+    document.querySelector('#vi-stop-anim').addEventListener('click', () => {
+        previewAnimator.stop();
+    });
+
+    editScene.onUpdate((delta) => {
+        if (anim.options.frameDuration !== drawnFrameDuration) {
+            genFrameTable();
+        }
+        if (previewEl) {
+            try {
+                previewAnimator.update(delta);
+            } catch (e) {
+                console.error(e);
+                // Show the error in the sel. box
+                previewSelector.querySelector('#prev-sel-error').style.display = 'inline';
+                previewSelector.querySelector('#prev-sel-error').innerText = '(Error) ' + previewSelector.value;
+                // Remove the preview
+                previewEl = null;
+                previewSelector.value = 'None::Error';
+            }
+        }
+    });
+    editScene.onDraw(() => {
+        editorScreen.clear();
+        if (previewEl) {
+            try {
+                previewEl.draw();
+            } catch (e) {
+                console.error(e);
+                // Show the error in the sel. box
+                previewSelector.querySelector('#prev-sel-error').style.display = 'inline';
+                previewSelector.querySelector('#prev-sel-error').innerText = '(Error) ' + previewSelector.value;
+                // Remove the preview
+                previewEl = null;
+                previewSelector.value = 'None::Error';
+            }
+        }
+    });
+}
+engineEvents.listen('edit animation', (_event, anim) => editAnimation(anim));
 
 const clearVisualEditor = () => {
     visualLog(`Cleared tilemap editor`, 'debug', 'tilemap editor');

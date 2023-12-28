@@ -307,6 +307,37 @@ export const engineTypes = {
                 screen.add(obj);
                 return obj;
             }
+        },
+        'Animation': {
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-fast-forward-btn" viewBox="0 0 16 16">
+                <path d="M8.79 5.093A.5.5 0 0 0 8 5.5v1.886L4.79 5.093A.5.5 0 0 0 4 5.5v5a.5.5 0 0 0 .79.407L8 8.614V10.5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814z"/>
+                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/>
+            </svg>`,
+            buildUI: (parent, obj, objects) => {
+                parent.appendChild(engineUI.labelItem('Edit animation', 'Edit', () => {
+                    engineEvents.emit('edit animation', obj);
+                }));
+
+                parent.appendChild(engineUI.inputItem('Duration (ms)', obj.options.duration, 'number', (v) => {
+                    obj.options.duration = Number(v);
+                    // This causes changes for other options
+                    engineEvents.emit('refresh objects list');
+                })[0]);
+
+                parent.appendChild(engineUI.inputItem('Frame Duration', obj.options.frameDuration, 'number', (v) => {
+                    obj.options.frameDuration = Number(v);
+                    // This causes changes for other options
+                    engineEvents.emit('refresh objects list');
+                })[0]);
+
+                parent.appendChild(engineUI.selectItem('Loop', ['On', 'Off'], (v) => {
+                    obj.options.loop = (v === 'On');
+                }, obj.options.loop ? 'On' : 'Off')[0]);
+            },
+            newObject: (screen) => {
+                const obj = new gameify.Animation([], {});
+                return obj;
+            }
         }
     }
 }

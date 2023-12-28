@@ -284,56 +284,6 @@ body, html {
 .list .list-item:is(button, span, label).no-margin {
   margin-bottom: 0;
 }
-.list .list-item > :is(button, input, select) {
-  color: white;
-  background: #282a36;
-  border: none;
-  padding: 5px 15px;
-  font-family: Lato, sans-serif;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: 0.1s;
-}
-.list .list-item > :is(button, input, select):not(:last-child) {
-  margin-right: 5px;
-}
-.list .list-item > :is(button, input, select).icon-button {
-  padding: 5px;
-}
-.list .list-item > :is(button, input, select).icon-button svg {
-  margin-inline: 3px;
-}
-.list .list-item > :is(button, input, select):hover {
-  background: #3a3d4f;
-}
-.list .list-item > :is(button, input, select):is(input, select) {
-  max-width: 140px;
-  padding: 5px;
-}
-.list .list-item > :is(button, input, select):is(input, select):focus {
-  outline: 2px solid white;
-}
-.list .list-item > :is(button, input, select)[type=text] {
-  cursor: text;
-}
-.list .list-item > :is(button, input, select)[type=number] {
-  max-width: 70px;
-}
-.list .list-item > :is(button, input, select)[type=file] {
-  max-width: 180px;
-  cursor: pointer;
-  padding: 0px;
-  padding-right: 7px;
-}
-.list .list-item > :is(button, input, select)[type=file]::file-selector-button {
-  background: #282a36;
-  padding: 5px 7px;
-  border: none;
-  color: #ebe;
-}
-.list .list-item > :is(button, input, select):first-child, .list .list-item > :is(button, input, select).right {
-  margin-left: auto;
-}
 .list .list-item textarea {
   margin-left: auto;
   background: #282a36;
@@ -497,6 +447,57 @@ body, html {
   background: #648;
 }
 
+.list .list-item > :is(button, input, select), .editor-controls > :is(button, input, select), .editor-controls * > :is(button, input, select) {
+  color: white;
+  background: #282a36;
+  border: none;
+  padding: 5px 15px;
+  font-family: Lato, sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.1s;
+}
+.list .list-item > :is(button, input, select):not(:last-child), .editor-controls > :is(button, input, select):not(:last-child), .editor-controls * > :is(button, input, select):not(:last-child) {
+  margin-right: 5px;
+}
+.list .list-item > :is(button, input, select).icon-button, .editor-controls > :is(button, input, select).icon-button, .editor-controls * > :is(button, input, select).icon-button {
+  padding: 5px;
+}
+.list .list-item > :is(button, input, select).icon-button svg, .editor-controls > :is(button, input, select).icon-button svg, .editor-controls * > :is(button, input, select).icon-button svg {
+  margin-inline: 3px;
+}
+.list .list-item > :is(button, input, select):hover, .editor-controls > :is(button, input, select):hover, .editor-controls * > :is(button, input, select):hover {
+  background: #3a3d4f;
+}
+.list .list-item > :is(button, input, select):is(input, select), .editor-controls > :is(button, input, select):is(input, select), .editor-controls * > :is(button, input, select):is(input, select) {
+  max-width: 140px;
+  padding: 5px;
+}
+.list .list-item > :is(button, input, select):is(input, select):focus, .editor-controls > :is(button, input, select):is(input, select):focus, .editor-controls * > :is(button, input, select):is(input, select):focus {
+  outline: 2px solid white;
+}
+.list .list-item > :is(button, input, select)[type=text], .editor-controls > :is(button, input, select)[type=text], .editor-controls * > :is(button, input, select)[type=text] {
+  cursor: text;
+}
+.list .list-item > :is(button, input, select)[type=number], .editor-controls > :is(button, input, select)[type=number], .editor-controls * > :is(button, input, select)[type=number] {
+  max-width: 70px;
+}
+.list .list-item > :is(button, input, select)[type=file], .editor-controls > :is(button, input, select)[type=file], .editor-controls * > :is(button, input, select)[type=file] {
+  max-width: 180px;
+  cursor: pointer;
+  padding: 0px;
+  padding-right: 7px;
+}
+.list .list-item > :is(button, input, select)[type=file]::file-selector-button, .editor-controls > :is(button, input, select)[type=file]::file-selector-button, .editor-controls * > :is(button, input, select)[type=file]::file-selector-button {
+  background: #282a36;
+  padding: 5px 7px;
+  border: none;
+  color: #ebe;
+}
+.list .list-item > :is(button, input, select):first-child, .list .list-item > :is(button, input, select).right, .editor-controls > :is(button, input, select):first-child, .editor-controls > :is(button, input, select).right, .editor-controls * > :is(button, input, select):first-child, .editor-controls * > :is(button, input, select).right {
+  margin-left: auto;
+}
+
 .contextmenu {
   position: fixed;
   display: none;
@@ -519,55 +520,76 @@ body, html {
 
 .editor-controls {
   flex-grow: 0;
-  padding: 5px;
+  padding: 0;
   background: #335;
-}
-.editor-controls:not(.docs) {
-  padding-bottom: 10px;
 }
 .editor-controls .legend {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  padding: 5px;
 }
 .editor-controls .legend.centered {
   justify-content: center;
 }
-.editor-controls .legend button {
-  cursor: pointer;
+.editor-controls .legend :not(.right) {
+  margin-left: unset;
 }
-.editor-controls .legend button:first-of-type {
+.editor-controls .legend .right {
   margin-left: auto;
 }
-.editor-controls .legend input:hover, .editor-controls .legend button:hover {
-  background: #448;
-  transition: 0.1s;
+.editor-controls.visual {
+  overflow-x: auto;
 }
-.editor-controls .legend input.wide, .editor-controls .legend button.wide {
-  flex-grow: 1;
+.editor-controls .frame-list table, .editor-controls .frame-list:is(table) {
+  margin-top: 5px;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
-.editor-controls .legend span, .editor-controls .legend button, .editor-controls .legend input {
-  border: none;
+.editor-controls .frame-list table tr, .editor-controls .frame-list:is(table) tr {
+  background: #3a3d4f;
+}
+.editor-controls .frame-list table thead tr, .editor-controls .frame-list table tr:nth-child(2n), .editor-controls .frame-list:is(table) thead tr, .editor-controls .frame-list:is(table) tr:nth-child(2n) {
+  background: #282a36;
+}
+.editor-controls .frame-list table tbody tr:last-of-type, .editor-controls .frame-list:is(table) tbody tr:last-of-type {
   background: transparent;
-  padding: 5px 10px;
+}
+.editor-controls .frame-list table thead th:not(:last-child), .editor-controls .frame-list:is(table) thead th:not(:last-child) {
+  padding-inline: 7px;
+}
+.editor-controls .frame-list table th, .editor-controls .frame-list table td, .editor-controls .frame-list:is(table) th, .editor-controls .frame-list:is(table) td {
+  text-align: left;
   font-family: Poppins, sans-serif;
-  font-size: 15px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  white-space: nowrap;
   color: white;
+  padding: 0;
 }
-.editor-controls .legend span:is(input), .editor-controls .legend button:is(input), .editor-controls .legend input:is(input) {
-  font-size: 14px;
+.editor-controls .frame-list table th:first-of-type, .editor-controls .frame-list table td:first-of-type, .editor-controls .frame-list:is(table) th:first-of-type, .editor-controls .frame-list:is(table) td:first-of-type {
+  width: 100px;
 }
-.editor-controls .legend span code, .editor-controls .legend span.filename, .editor-controls .legend button code, .editor-controls .legend button.filename, .editor-controls .legend input code, .editor-controls .legend input.filename {
-  font-family: "Roboto Mono";
-  margin-inline: 10px;
+.editor-controls .frame-list table th:nth-child(2), .editor-controls .frame-list table td:nth-child(2), .editor-controls .frame-list:is(table) th:nth-child(2), .editor-controls .frame-list:is(table) td:nth-child(2) {
+  width: 100px;
 }
-.editor-controls .legend span svg, .editor-controls .legend span img, .editor-controls .legend button svg, .editor-controls .legend button img, .editor-controls .legend input svg, .editor-controls .legend input img {
-  height: 16px;
-  margin-right: 5px;
+.editor-controls .frame-list table th button, .editor-controls .frame-list table td button, .editor-controls .frame-list:is(table) th button, .editor-controls .frame-list:is(table) td button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 2px 7px;
+}
+.editor-controls .frame-list table th input, .editor-controls .frame-list table th select, .editor-controls .frame-list table th span, .editor-controls .frame-list table td input, .editor-controls .frame-list table td select, .editor-controls .frame-list table td span, .editor-controls .frame-list:is(table) th input, .editor-controls .frame-list:is(table) th select, .editor-controls .frame-list:is(table) th span, .editor-controls .frame-list:is(table) td input, .editor-controls .frame-list:is(table) td select, .editor-controls .frame-list:is(table) td span {
+  width: 100%;
+  max-width: unset;
+  padding: 2px 7px;
+  background: transparent;
+}
+.editor-controls .frame-list table th input:hover, .editor-controls .frame-list table th select:hover, .editor-controls .frame-list table th span:hover, .editor-controls .frame-list table td input:hover, .editor-controls .frame-list table td select:hover, .editor-controls .frame-list table td span:hover, .editor-controls .frame-list:is(table) th input:hover, .editor-controls .frame-list:is(table) th select:hover, .editor-controls .frame-list:is(table) th span:hover, .editor-controls .frame-list:is(table) td input:hover, .editor-controls .frame-list:is(table) td select:hover, .editor-controls .frame-list:is(table) td span:hover {
+  background: #648;
+}
+.editor-controls .frame-list table th input.invalid, .editor-controls .frame-list table th select.invalid, .editor-controls .frame-list table th span.invalid, .editor-controls .frame-list table td input.invalid, .editor-controls .frame-list table td select.invalid, .editor-controls .frame-list table td span.invalid, .editor-controls .frame-list:is(table) th input.invalid, .editor-controls .frame-list:is(table) th select.invalid, .editor-controls .frame-list:is(table) th span.invalid, .editor-controls .frame-list:is(table) td input.invalid, .editor-controls .frame-list:is(table) td select.invalid, .editor-controls .frame-list:is(table) td span.invalid {
+  background: #622;
 }
 .editor-controls .tile-list {
   display: flex;
@@ -592,4 +614,39 @@ body, html {
 }
 .editor-controls .tile-list .row-break {
   width: 100%;
+}
+.editor-controls input, .editor-controls button, .editor-controls select {
+  background: #448;
+}
+.editor-controls input.wide, .editor-controls button.wide, .editor-controls select.wide {
+  flex-grow: 1;
+  max-width: unset;
+}
+.editor-controls input:hover, .editor-controls button:hover, .editor-controls select:hover {
+  background: #648;
+}
+.editor-controls span, .editor-controls button, .editor-controls input, .editor-controls select {
+  border: none;
+  padding: 5px 10px;
+  font-family: Poppins, sans-serif;
+  font-size: 15px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  color: white;
+}
+.editor-controls span:is(input, select), .editor-controls button:is(input, select), .editor-controls input:is(input, select), .editor-controls select:is(input, select) {
+  padding: 5px 10px;
+}
+.editor-controls span:is(input), .editor-controls button:is(input), .editor-controls input:is(input), .editor-controls select:is(input) {
+  font-size: 14px;
+}
+.editor-controls span code, .editor-controls span.filename, .editor-controls button code, .editor-controls button.filename, .editor-controls input code, .editor-controls input.filename, .editor-controls select code, .editor-controls select.filename {
+  font-family: "Roboto Mono";
+  margin-inline: 10px;
+}
+.editor-controls span svg, .editor-controls span img, .editor-controls button svg, .editor-controls button img, .editor-controls input svg, .editor-controls input img, .editor-controls select svg, .editor-controls select img {
+  height: 16px;
+  margin-right: 5px;
 }/*# sourceMappingURL=engine.css.map */

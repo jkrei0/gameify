@@ -344,66 +344,6 @@ $transition: 0.1s;
             }
         }
 
-        & > :is(button, input, select) {
-
-            &:not(:last-child) {
-                margin-right: 5px;
-            }
-            color: $text;
-            background: $dark;
-            border: none;
-            padding: 5px 15px;
-
-            &.icon-button {
-                padding: 5px;
-
-                svg {
-                    margin-inline: 3px;
-                }
-            }
-
-            font-family: $labeltext;
-            font-size: 1rem;
-            cursor: pointer;
-
-            transition: $transition;
-
-            &:hover {
-                background: $faded;
-            }
-            &:is(input, select) {
-                max-width: 140px;
-                padding: 5px;
-
-                &:focus {
-                    outline: 2px solid $text;
-                }
-            }
-
-            &[type=text] {
-                cursor: text;
-            }
-            &[type=number] {
-                max-width: 70px;
-            }
-            &[type=file] {
-                max-width: 180px;
-                cursor: pointer;
-                padding: 0px;
-                padding-right: 7px;
-                &::file-selector-button {
-                    background: $dark;
-                    padding: 5px 7px;
-                    border: none;
-                    color: $highlightbright;
-                }
-            }
-
-            &:first-child, &.right {
-                margin-left: auto;
-            }
-        }
-
         textarea {
             margin-left: auto;
             background: $dark;
@@ -605,6 +545,68 @@ $transition: 0.1s;
     }
 }
 
+.list .list-item, .editor-controls, .editor-controls * {
+    & > :is(button, input, select) {
+
+        &:not(:last-child) {
+            margin-right: 5px;
+        }
+        color: $text;
+        background: $dark;
+        border: none;
+        padding: 5px 15px;
+
+        &.icon-button {
+            padding: 5px;
+
+            svg {
+                margin-inline: 3px;
+            }
+        }
+
+        font-family: $labeltext;
+        font-size: 1rem;
+        cursor: pointer;
+
+        transition: $transition;
+
+        &:hover {
+            background: $faded;
+        }
+        &:is(input, select) {
+            max-width: 140px;
+            padding: 5px;
+
+            &:focus {
+                outline: 2px solid $text;
+            }
+        }
+
+        &[type=text] {
+            cursor: text;
+        }
+        &[type=number] {
+            max-width: 70px;
+        }
+        &[type=file] {
+            max-width: 180px;
+            cursor: pointer;
+            padding: 0px;
+            padding-right: 7px;
+            &::file-selector-button {
+                background: $dark;
+                padding: 5px 7px;
+                border: none;
+                color: $highlightbright;
+            }
+        }
+
+        &:first-child, &.right {
+            margin-left: auto;
+        }
+    }
+}
+
 .contextmenu {
     position: fixed;
     display: none;
@@ -633,65 +635,90 @@ $transition: 0.1s;
 
 .editor-controls {
     flex-grow: 0;
-    padding: 5px;
-    &:not(.docs){
-        padding-bottom: 10px;
-    }
+    padding: 0;
     background: $background;
-
 
     .legend {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
 
+        padding: 5px;
+
         &.centered {
             justify-content: center;
         }
-
-        button {
-            cursor: pointer;
-
-            &:first-of-type {
-                margin-left: auto;
-            }
+        :not(.right) {
+            margin-left: unset;
         }
-
-        input, button {
-            &:hover {
-                background: $secondary;
-                transition: 0.1s;
-            }
-
-            &.wide {
-                flex-grow: 1;
-            }
+        .right {
+            margin-left: auto;
         }
+    }
 
-        span, button, input {
-            border: none;
-            background: transparent;
-            padding: 5px 10px;
-            font-family: $font;
-            font-size: 15px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            white-space: nowrap;
-            color: $text;
+    &.visual {
+        overflow-x: auto;
+    }
 
-            &:is(input) {
-                font-size: 14px;
+    .frame-list {
+        table, &:is(table) {
+            margin-top: 5px;
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+
+            tr {
+                background: $faded;
             }
 
-            code, &.filename {
-                font-family: $monospace;
-                margin-inline: 10px;
+            thead tr, tr:nth-child(2n) {
+                background: $dark;
             }
-            
-            svg, img {
-                height: 16px;
-                margin-right: 5px;
+
+            tbody tr:last-of-type {
+                background: transparent;
+            }
+
+            thead th:not(:last-child) {
+                padding-inline: 7px;
+            }
+
+            th, td {
+                text-align: left;
+                font-family: $font;
+                color: $text;
+                padding: 0;
+
+                &:first-of-type {
+                    width: 100px;
+                }
+                &:nth-child(2) {
+                    width: 100px;
+                }
+
+                button {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    margin: 0;
+                    padding: 2px 7px;
+                }
+
+                input, select, span {
+                    width: 100%;
+                    max-width: unset;
+                    padding: 2px 7px;
+                    background: transparent;
+
+                    &:hover {
+                        background: $highlight;
+                    }
+
+                    &.invalid {
+                        background: #622;
+                    }
+                }
             }
         }
     }
@@ -723,5 +750,47 @@ $transition: 0.1s;
             width: 100%;
         }
         
+    }
+
+    input, button, select {
+        &.wide {
+            flex-grow: 1;
+            max-width: unset;
+        }
+
+        background: $secondary;
+        &:hover {
+            background: $highlight;
+        }
+    }
+
+    span, button, input, select {
+        border: none;
+        padding: 5px 10px;
+        font-family: $font;
+        font-size: 15px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        white-space: nowrap;
+        color: $text;
+
+        &:is(input, select) {
+            padding: 5px 10px;
+        }
+
+        &:is(input) {
+            font-size: 14px;
+        }
+
+        code, &.filename {
+            font-family: $monospace;
+            margin-inline: 10px;
+        }
+        
+        svg, img {
+            height: 16px;
+            margin-right: 5px;
+        }
     }
 }
