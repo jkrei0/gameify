@@ -538,6 +538,10 @@ body, html {
 .editor-controls .legend .right {
   margin-left: auto;
 }
+.editor-controls .legend button :is(svg, img) {
+  position: relative;
+  left: 2px;
+}
 .editor-controls.visual {
   overflow-x: auto;
 }
@@ -573,6 +577,9 @@ body, html {
 }
 .editor-controls .frame-list table th.error, .editor-controls .frame-list table td.error, .editor-controls .frame-list:is(table) th.error, .editor-controls .frame-list:is(table) td.error {
   background: #622;
+}
+.editor-controls .frame-list table th.active, .editor-controls .frame-list table td.active, .editor-controls .frame-list:is(table) th.active, .editor-controls .frame-list:is(table) td.active {
+  background: #668;
 }
 .editor-controls .frame-list table th button, .editor-controls .frame-list table td button, .editor-controls .frame-list:is(table) th button, .editor-controls .frame-list:is(table) td button {
   display: flex;
