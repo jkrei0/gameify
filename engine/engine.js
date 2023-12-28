@@ -581,6 +581,7 @@ const editAnimation = (anim) => {
         boolean: {
             createInput: (property) => {
                 return propertyTypes.simple.createInput(property, (value) => {
+                    if (value === "0" || value[0]?.toLowerCase() === "f") return false;
                     return Boolean(value);
                 });
             }
@@ -655,6 +656,10 @@ const editAnimation = (anim) => {
         frameListEls.headerRow.appendChild(frameListEls.propTypeTh);
         frameListEls.propLabelTh.innerHTML = 'Property';
         frameListEls.propTypeTh.innerHTML = 'Type';
+
+        if (document.querySelector('#vi-frames-count')) {
+            document.querySelector('#vi-frames-count').innerHTML = anim.frames.length + ' frames';
+        } 
 
         /* const anim.frames = [{
             position: { type: 'Vector2d', value: new gameify.Vector2d(100, 100) },
@@ -816,8 +821,9 @@ const editAnimation = (anim) => {
 
     controls.innerHTML = `
     <div class="legend">
-    <button id="vi-play-anim"><img src="images/play.svg">Play</button>
-    <button id="vi-stop-anim"><img src="images/stop.svg">Stop</button>
+        <button id="vi-play-anim"><img src="images/play.svg">Play</button>
+        <button id="vi-stop-anim"><img src="images/stop.svg">Stop</button>
+        <span id="vi-frames-count">${anim.frames.length} frames</span>
         <span class="right">Preview:</span>
         <select id="vi-preview-obj-select">
             <option value="None::None">No Preview</option>
