@@ -1,4 +1,29 @@
+import { vectors } from "./vector.js"
 
+/** Animation types. Most types replace the value (absolute)
+ * @member
+ * @alias gameify.Animation.propertyTypes
+ * @enum
+ */
+let animationPropertyTypes = {
+    // Base types
+    /** Apply the property by overwriting the old value each frame */
+    simple: { apply: (property, value, object) => object[property] = value, fromString: (value) => value },
+    /** Apply the property using Object.apply() each frame */
+    object: { apply: (property, value, object) => Object.apply(object[property], value), fromString: (value) => JSON.parse(value) },
+
+    // Other simple types
+    /** A number */
+    number: { apply: (...args) => animationPropertyTypes.simple.apply(...args), fromString: (value) => Number(value) },
+    /** A string */
+    string: { apply: (...args) => animationPropertyTypes.simple.apply(...args), fromString: (value) => String(value) },
+    /** A boolean */
+    boolean: { apply: (...args) => animationPropertyTypes.simple.apply(...args), fromString: (value) => Boolean(value) },
+    /** A gameify.Image (on a sprite, or other object with a setImage method) */
+    'Image': { apply: (property, value, object) => object.setImage(value) },
+    /** A gameify.Vector2d */
+    'Vector2d': { apply: (property, value, object) => { object[property].x = value.x; object[property].y = value.y; }, fromString: (value) => new vectors.Vector2d(value) },
+}
 
 /** Animations for use in gameify. Usually you'll access this through the gameify object.
  * @example // Use via gameify
@@ -95,6 +120,9 @@ export let animation = {
          * @param {String} name - The name of the animation
          */
         play = (name) => {
+            if (!this.animations[name]) {
+                throw new Error(`Animation '${name}' not found or was not added to this animator.`);
+            }
             this.currentAnimation = this.animations[name];
             this.animationProgress = 0;
             this.playing = true;
@@ -229,6 +257,9 @@ export let animation = {
             console.log(this.#options);
         }
 
+        // Documented above at animationPropertyTypes
+        static propertyTypes = animationPropertyTypes;
+
         /** Creates a object from JSON data
          * @method
          * @arg {Object|Array} data - Serialized object data (from object.toJSON)
@@ -305,37 +336,11 @@ export let animation = {
             for (const property in frame) {
                 // Type can be a type, or a string, or blank (in which case, use simple)
                 let type = frame[property].type;
-                if (!type.apply) type = animation.animationPropertyTypes[type];
-                if (!type.apply) type = animation.animationPropertyTypes.simple;
+                if (!type.apply) type = animationPropertyTypes[type];
+                if (!type.apply) type = animationPropertyTypes.simple;
 
                 type.apply(property, frame[property].value, object);
             }
         }
-    },
-
-    /** Animation types. Most types replace the value (absolute)
-     * @global
-     * @alias gameify.animation.animationPropertyTypes
-     * @enum
-     */
-    animationPropertyTypes: {
-        // Base types
-        /** Apply the property by overwriting the old value each frame */
-        simple: { apply: (property, value, object) => object[property] = value },
-        /** Apply the property using Object.apply() each frame */
-        object: { apply: (property, value, object) => Object.apply(object[property], value) },
-
-        // Other simple types
-        /** A number */
-        number: { apply: (...args) => animation.animationPropertyTypes.simple.apply(...args) },
-        /** A string */
-        string: { apply: (...args) => animation.animationPropertyTypes.simple.apply(...args) },
-        /** A boolean */
-        boolean: { apply: (...args) => animation.animationPropertyTypes.simple.apply(...args) },
-        /** A gameify.Image (on a sprite, or other object with a setImage method) */
-        'Image': { apply: (property, value, object) => object.setImage(value) },
-        /** A gameify.Vector2d */
-        'Vector2d': { apply: (property, value, object) => { object[property].x = value.x; object[property].y = value.y; } },
     }
-
 }
