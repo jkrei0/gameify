@@ -77,8 +77,16 @@ export let images = {
                 return obj;
             }
 
-            const obj = new images.Image(data.path, data.cropData);
-            return obj;
+            if (data.tileData) {
+                const tileset = find(data.tileData.tileset);
+                // Don't apply crop data, getTile sets the crop, and in most cases
+                // you would want the image to reflect changes to the tileset,
+                // not the specific crop it was originally created with.
+                const pos = data.tileData.position;
+                return tileset.getTile(pos.x, pos.y);
+            } else {
+                return new images.Image(data.path, data.cropData);
+            }
         }
         
         /** Convert the object to JSON
@@ -88,9 +96,18 @@ export let images = {
          * @returns {Object}
          */
         toJSON = (key, ref) => {
+            let tileData = undefined;
+            if (this.tileData.tileset) {
+                tileData = {
+                    tileset: ref(this.tileData.tileset),
+                    position: this.tileData.position
+                }
+                console.log('SVT', tileData, this.tileData);
+            }
             return {
                 path: this.path,
-                cropData: this.getCrop()
+                cropData: this.getCrop(),
+                tileData: tileData
             };
         }
 
