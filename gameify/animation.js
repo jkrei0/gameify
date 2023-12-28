@@ -143,8 +143,10 @@ export let animation = {
             if (!this.animations[name]) {
                 throw new Error(`Animation '${name}' not found or was not added to this animator.`);
             }
-            this.currentAnimation = this.animations[name];
-            this.animationProgress = 0;
+            if (!this.currentAnimation) {
+                this.currentAnimation = this.animations[name];
+                this.animationProgress = 0;
+            }
             this.playing = true;
         }
 
@@ -155,6 +157,13 @@ export let animation = {
             this.playing = false;
             this.currentAnimation = undefined;
             this.animationProgress = 0;
+        }
+
+        /** Pause the animation
+         * @method
+         */
+        pause = () => {
+            this.playing = false;
         }
 
         /** Update the animation
