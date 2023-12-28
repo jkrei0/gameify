@@ -65,6 +65,14 @@ const openContextMenu = (menu, posX, posY) => {
     if (posY !== undefined) contextMenu.style.top = posY + 'px';
     contextMenu.style.bottom = 'unset';
 
+    
+    const hiddenButton = document.createElement('button');
+    hiddenButton.setAttribute('aria-hidden', true);
+    hiddenButton.classList.add('list-item');
+    hiddenButton.style.height = '0';
+    hiddenButton.style.padding = '0';
+    contextMenu.appendChild(hiddenButton);
+
     for (const option in menu) {
         const button = document.createElement('button');
         button.classList.add('list-item');
@@ -83,6 +91,7 @@ const openContextMenu = (menu, posX, posY) => {
             contextMenu.style.top = 'unset';
             contextMenu.style.bottom = (window.innerHeight - posY) + 'px';
         }
+        contextMenu.querySelector('button:first-of-type').focus();
     });
 }
 window.addEventListener('contextmenu', (event) => {
@@ -90,6 +99,10 @@ window.addEventListener('contextmenu', (event) => {
         event.stopPropagation();
         event.preventDefault();
         openContextMenu(event.target.__engine_menu, event.clientX, event.clientY);
+    } else if (event.target.parentElement && event.target.parentElement.__engine_menu) {
+        event.stopPropagation();
+        event.preventDefault();
+        openContextMenu(event.target.parentElement.__engine_menu, event.clientX, event.clientY);
     }
 });
 window.addEventListener('click', (event) => {
