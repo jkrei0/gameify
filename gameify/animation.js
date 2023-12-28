@@ -28,8 +28,10 @@ let animationPropertyTypes = {
     /** A gameify.Vector2d */
     'Vector2d': {
         apply: (property, value, object) => { object[property].x = value.x; object[property].y = value.y; },
-        toJSON: (obj, ref) => obj.toJSON(),
-        fromJSON: (dat, find) => new gameify.Vector2d(dat)
+        toJSON: (obj, ref) => {
+            return new vectors.Vector2d(obj).toJSON()
+        },
+        fromJSON: (dat, find) => new vectors.Vector2d(dat)
     }
 }
 
@@ -278,7 +280,8 @@ export let animation = {
          * @returns {gameify.Animation}
         */
         static fromJSON = (data, find) => {
-            return new animation.Animation(data.frames, data.options);
+            const frames = animation.Animation.framesFromJSON(data.frames, find);
+            return new animation.Animation(frames, data.options);
         }
         
         /** Convert the object to JSON
@@ -311,7 +314,7 @@ export let animation = {
                     newFrames[index][propName] = Object.assign({}, prop);
                     // If applicable, convert from JSON
                     if (animationPropertyTypes[prop.type].fromJSON) {
-                        newFrames[index][propName].value = animationPropertyTypes[prop.type].fromJSON(prop.value, ref);
+                        newFrames[index][propName].value = animationPropertyTypes[prop.type].fromJSON(prop.value, find);
                     }
                 }
             }
@@ -326,8 +329,8 @@ export let animation = {
         */
         framesToJSON = (key, ref) => {
             const newFrames = [];
-            for (const index in this.frames) {
-                const frame = this.frames[index];
+            for (const index in this.#frames) {
+                const frame = this.#frames[index];
                 newFrames[index] = {};
                 for (const propName in frame) {
                     const prop = frame[propName];
