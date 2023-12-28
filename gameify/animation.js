@@ -300,11 +300,11 @@ export let animation = {
          * @returns {Number}
          */
         getFrameNumberAt = (time) => {
-            const framesElapsed = Math.floor(time / this.options.duration);
+            const framesElapsed = Math.floor(time / this.options.frameDuration);
             if (this.options.loop) {
                 return framesElapsed % this.frames.length;
             }
-            return Math.max(framesElapsed, this.frames.length - 1);
+            return Math.min(framesElapsed, this.frames.length - 1);
         }
 
         /** Get the frame at the given time
