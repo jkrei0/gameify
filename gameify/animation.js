@@ -143,6 +143,10 @@ export let animation = {
          */
         update = (delta) => {
             if (!this.playing) return;
+            if (this.currentAnimation.isAfterCompletion()) {
+                this.stop();
+                return;
+            }
 
             this.animationProgress += delta;
             this.currentAnimation.applyTo(this.parent, this.animationProgress);
@@ -340,6 +344,20 @@ export let animation = {
 
                 type.apply(property, frame[property].value, object);
             }
+        }
+
+        /** Check if a the animation is completed after a specific time
+         * If options.loop is true, always returns false
+         * @method
+         * @param {Number} time - The time (in milliseconds) to check if the animation is completed at
+         */
+        isAfterCompletion = (time) => {
+            if (this.#options.loop) return false;
+            const framesElapsed = Math.floor(time / this.#options.frameDuration);
+            // Compare to length (not length - 1), b/c the animation isn't
+            // done until it's the whole way through the last frame
+            if (framesElapsed >= this.frames.length) return true;
+            return false;
         }
     }
 }
