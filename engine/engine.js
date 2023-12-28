@@ -285,6 +285,10 @@ engineEvents.listen('refresh objects list', () => populateObjectsList());
 
 const loadObjectsList = (data) => {
     const loadObject = (query) => {
+        if (!query) {
+            console.error('Cannot load object! (query is undefined)');
+            return undefined;
+        }
         const type = query.split('::')[0];
         const name = query.split('::')[1];
         if (!objects[type]) objects[type] = {};
