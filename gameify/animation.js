@@ -20,9 +20,17 @@ let animationPropertyTypes = {
     /** A boolean */
     boolean: { apply: (...args) => animationPropertyTypes.simple.apply(...args) },
     /** A gameify.Image (on a sprite, or other object with a setImage method) */
-    'Image': { apply: (property, value, object) => object.setImage(value) },
+    'Image': {
+        apply: (property, value, object) => object.setImage(value),
+        toJSON: (obj, ref) => ref(obj),
+        fromJSON: (dat, find) => find(dat)
+    },
     /** A gameify.Vector2d */
-    'Vector2d': { apply: (property, value, object) => { object[property].x = value.x; object[property].y = value.y; } }
+    'Vector2d': {
+        apply: (property, value, object) => { object[property].x = value.x; object[property].y = value.y; },
+        toJSON: (obj, ref) => obj.toJSON(),
+        fromJSON: (dat, find) => new gameify.Vector2d(dat)
+    }
 }
 
 /** Animations for use in gameify. Usually you'll access this through the gameify object.
@@ -281,12 +289,57 @@ export let animation = {
          */
         toJSON = (key, ref) => {
             return {
-                // This works as long as `frames` is easily converted to JSON
-                // Eventually, we'll have images in here and need to save
-                // them separately to prevent storing images twice (or more).
-                frames: this.frames,
-                options: this.options
+                frames: this.framesToJSON(),
+                options: this.#options
             };
+        }
+
+        /** Creates frames from their JSON representation
+         * @method
+         * @arg {Array} data - Serialized frame data (from object.framesToJSON)
+         * @arg {Function} ref - A function that returns a name for other objects, so they can be restored
+         * @returns {Array<AnimationFrame>}
+        */
+        static framesFromJSON = (data, find) => {
+            const newFrames = [];
+            for (const index in data) {
+                const frame = data[index];
+                newFrames[index] = {};
+                for (const propName in frame) {
+                    const prop = frame[propName];
+                    // Copy property
+                    newFrames[index][propName] = Object.assign({}, prop);
+                    // If applicable, convert from JSON
+                    if (animationPropertyTypes[prop.type].fromJSON) {
+                        newFrames[index][propName].value = animationPropertyTypes[prop.type].fromJSON(prop.value, ref);
+                    }
+                }
+            }
+            return newFrames;
+        }
+
+        /** Converts this animation's frames to JSON
+         * @method
+         * @arg {string} [key] - Key object is stored under (unused, here for consistency with e.g. Date.toJSON, etc.)
+         * @arg {function} ref - A function that returns a name for other objects, so they can be restored later
+         * @returns {Object}
+        */
+        framesToJSON = (key, ref) => {
+            const newFrames = [];
+            for (const index in this.frames) {
+                const frame = this.frames[index];
+                newFrames[index] = {};
+                for (const propName in frame) {
+                    const prop = frame[propName];
+                    // Copy property
+                    newFrames[index][propName] = Object.assign({}, prop);
+                    // If applicable, convert to JSON
+                    if (animationPropertyTypes[prop.type].toJSON) {
+                        newFrames[index][propName].value = animationPropertyTypes[prop.type].toJSON(prop.value, ref);
+                    }
+                }
+            }
+            return newFrames;
         }
 
         /** Update the animation's frames
