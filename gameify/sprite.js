@@ -100,7 +100,10 @@ export let sprites = {
                     console.warn('Could load sprite image (tileset not found)');
                 } else {
                     // Found tilemap
-                    obj.setImage(set.getTile(data.image.position.x, data.image.position.y));
+                    obj.setImage(set.getTile(
+                        data.image.position.x, data.image.position.y,
+                        data.image.size?.x || 1, data.image.size?.y || 1
+                    ));
                 }
             } else if (data.image) {
                 obj.setImage(find(data.image.name));        // Set image
@@ -124,7 +127,8 @@ export let sprites = {
                 image: {
                     name: ref(this.image),
                     parent: ref(this.image.tileData?.tileset),
-                    position: this.image.tileData?.position
+                    position: this.image.tileData?.position,
+                    size: this.image.tileData?.size
                 },
                 shape: ref(this.shape),
                 parent: ref(this.parent)

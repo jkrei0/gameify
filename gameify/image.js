@@ -55,6 +55,7 @@ export let images = {
          * {   // tileData schema:
          *     tileset: Tileset,
          *     position: { x: Number, y: Number }
+         *     size: { x: Number, y: Number }
          * }
          * @type {Object}
          */
@@ -83,7 +84,8 @@ export let images = {
                 // you would want the image to reflect changes to the tileset,
                 // not the specific crop it was originally created with.
                 const pos = data.tileData.position;
-                return tileset.getTile(pos.x, pos.y);
+                const size = data.tileData.size;
+                return tileset.getTile(pos.x, pos.y, size.x, size.y);
             } else {
                 return new images.Image(data.path, data.cropData);
             }
@@ -100,7 +102,8 @@ export let images = {
             if (this.tileData.tileset) {
                 tileData = {
                     tileset: ref(this.tileData.tileset),
-                    position: this.tileData.position
+                    position: this.tileData.position,
+                    size: this.tileData.size
                 }
                 console.log('SVT', tileData, this.tileData);
             }

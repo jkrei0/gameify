@@ -788,21 +788,24 @@ export let gameify = {
             };
         }
 
-        /** Get a tile from it's coordinates. Returns a new Image object each time, so if you're getting =
+        /** Get a tile (or section of tiles) from the tileset. Returns a new Image object each time, so if you're getting
          * the same tile a lot you might want to save it to a variable
          * @method
          * @param {Number} x - The x coordinate of the tile
          * @param {Number} y - The y coordinate of the tile
+         * @param {Number} [width=1] - How many tiles wide
+         * @param {Number} [height=1] - How many tiles tall
          * @returns {gameify.Image}
          */
-        getTile = (x, y) => {
+        getTile = (x, y, width = 1, height = 1) => {
             const tile = new gameify.Image();
             tile.tileData = {
                 tileset: this,
-                position: { x: x, y: y }
+                position: { x: x, y: y },
+                size: { x: width, y: height }
             }
             tile.texture = this.texture;
-            tile.crop(x * this.twidth, y * this.theight, this.twidth, this.theight);
+            tile.crop(x * this.twidth, y * this.theight, this.twidth*width, this.theight*height);
             return tile;
         }
 
@@ -827,19 +830,22 @@ export let gameify = {
         onLoad = (callback) => { this.#loadFunction = callback; }
     },
 
-    /** A Tile as part of a Tilemap
+    /** A Tile as part of a Tilemap (not a tile from a Tileset)
      * @arg {Number} x - The x coordinate of the tile
      * @arg {Number} y - The y coordinate of the tile
      * @arg {Number} sourcex - The source x coordinate of the tile
      * @arg {Number} sourcey - The source y coordinate of the tile
-     * @arg {Number} [rotation=0] - The rotation of the tile
      * @arg {gameify.Image} image - The tile's Image (reference)
+     * @arg {Number} [rotation=0] - The rotation of the tile
+     * @arg {Number} [width=1] - The width (in tiles) of the tile
+     * @arg {Number} [height=1] - The height (in tiles) of the tile
      */
     Tile: class {
-        constructor (x, y, sx, sy, r = 0, image) {
+        constructor (x, y, sx, sy, image, r = 0, width = 1, height = 1) {
             this.image = image;
             this.position = new gameify.Vector2d(x, y);
             this.source = new gameify.Vector2d(sx, sy);
+            this.size = new gameify.Vector2d(width, height);
             this.rotation = r;
         }
 
@@ -853,8 +859,9 @@ export let gameify = {
             const obj = new gameify.Tile(
                 data.position.x, data.position.y,
                 data.source.x, data.source.y,
+                find(data.image),
                 data.rotation,
-                find(data.image)
+                data.size.x || 1, data.size.y || 1
             );
             return obj;
         }
@@ -1072,15 +1079,17 @@ export let gameify = {
          * @param {Number} destx - The x position to place the tile
          * @param {Number} desty - The y position to place the tile
          * @param {Number} [rotation=0] - Tile rotation, in degrees
+         * @param {Number} [width=1] - Tile width, relative to single tile width
+         * @param {Number} [height=1] - Tile height, relative to single tile height
          */
-        place = (originx, originy, destx, desty, rotation) => {
+        place = (originx, originy, destx, desty, rotation = 0, width = 1, height = 1) => {
             if (!this.tileset) {
                 throw new Error("You can't place a tile before setting a tileset.");
             }
 
             // "cache" tiles as to not create a new Image for every single placed tile.
             if (!this.tiles[`${originx},${originy}`]) {
-                this.tiles[`${originx},${originy}`] = this.tileset.getTile(originx, originy);
+                this.tiles[`${originx},${originy}`] = this.tileset.getTile(originx, originy, width, height);
             }
             if (!this.tiles.placed[destx]) {
                 // an object so there can be negative indexes
@@ -1091,8 +1100,9 @@ export let gameify = {
             this.tiles.placed[destx][desty] = new gameify.Tile(
                 destx, desty,       // destination position
                 originx, originy,   // source position
+                this.tiles[`${originx},${originy}`], // gameify.Image
                 rotation || 0,      // rotation
-                this.tiles[`${originx},${originy}`] // gameify.Image
+                width, height       // size
             )
         }
 
@@ -1160,7 +1170,7 @@ export let gameify = {
 
                     tile.image.draw(this.context,
                                     row * this.twidth + this.offset.x, col * this.theight + this.offset.y,
-                                    this.twidth, this.theight,
+                                    this.twidth*tile.size.x, this.theight*tile.size.y,
                                     tile.rotation );
                 }
             }
