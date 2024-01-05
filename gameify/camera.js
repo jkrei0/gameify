@@ -60,6 +60,31 @@ export let camera = {
             this.translationSpeed = speed;
         }
 
+        /** Get the current position of the camera
+         * @method
+         * @returns {gameify.Vector2d}
+         */
+        getPosition = () => {
+            return this.#currentTranslation
+        }
+
+        /** Convert screen coordinates to world coordinates
+         * @method
+         * @arg {Number} x - The x screen coordinate
+         * @arg {Number} y - The y screen coordinate
+         * @returns {gameify.Vector2d}
+         *//** Convert screen coordinates to world coordinates
+          * @param {gameify.Vector2d} position - The position to convert
+          * @returns {gameify.Vector2d}
+          */
+        screenToWorld = (screenx, screeny) => {
+            if (screenx.x != undefined && screenx.y != undefined) {
+                screeny = screenx.y;
+                screenx = screenx.x;
+            }
+            return new vectors.Vector2d(screenx, screeny).subtract(this.#currentTranslation);
+        }
+
         /** Translate the camera (relative to the current transform)
          * @method
          * @param {Number} x - The x amount, in pixels, to translate
