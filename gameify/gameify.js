@@ -1087,9 +1087,11 @@ export let gameify = {
                 throw new Error("You can't place a tile before setting a tileset.");
             }
 
+            const tileCacheString = `${originx},${originy}/${width},${height}`
+
             // "cache" tiles as to not create a new Image for every single placed tile.
-            if (!this.tiles[`${originx},${originy}`]) {
-                this.tiles[`${originx},${originy}`] = this.tileset.getTile(originx, originy, width, height);
+            if (!this.tiles[tileCacheString]) {
+                this.tiles[tileCacheString] = this.tileset.getTile(originx, originy, width, height);
             }
             if (!this.tiles.placed[destx]) {
                 // an object so there can be negative indexes
@@ -1100,7 +1102,7 @@ export let gameify = {
             this.tiles.placed[destx][desty] = new gameify.Tile(
                 destx, desty,       // destination position
                 originx, originy,   // source position
-                this.tiles[`${originx},${originy}`], // gameify.Image
+                this.tiles[tileCacheString], // gameify.Image
                 rotation || 0,      // rotation
                 width, height       // size
             )
