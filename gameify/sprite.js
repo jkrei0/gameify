@@ -257,6 +257,17 @@ This way speeds and physics are the same regardless of FPS or how good your comp
                              this.rotation );
         }
 
+        /** Get the size of the sprite
+         * @returns {gameify.Vector2d}
+         */
+        getSize = () => {
+            const crop = this.image.getCrop();
+            return new vectors.Vector2d(
+                crop.width * this.scale,
+                crop.height * this.scale,
+            );
+        }
+
         /** Get the screen this sprite draws to
          * @method
          * @returns {gameify.Screen}
