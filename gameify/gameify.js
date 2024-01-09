@@ -352,11 +352,14 @@ export let gameify = {
          *     // do something
          * }
         */
-        this.eventJustHappened = (event) => {
+        this.eventJustHappened = (event, capture) => {
             for (const i in this.eventsJustHappened) {
                 let evt = this.eventsJustHappened[i];
                 if (evt[1] == event || evt[2] == event) {
                     this.eventsJustHappened[i][0] = 99999;
+                    if (capture) {
+                        this.eventsJustHappened.splice(i, 1);
+                    }
                     return true;
                 }
             }
