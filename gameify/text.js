@@ -144,11 +144,18 @@ export let text = {
                 throw new Error("Text size must be a number");
             }
             
+            this.context.font = `${this.size}px sans-serif`;
+
             this.context.textBaseline = 'top';
             this.style.applyTo(this.context);
 
-            if (this.style.fill.paint)   this.context.fillText  (this.string, this.position.x, this.position.y);
-            if (this.style.stroke.paint) this.context.strokeText(this.string, this.position.x, this.position.y);
+            const split = this.string.split('\n');
+            for (const lineNum in split) {
+                const line = split[lineNum];
+                const addedPos = (this.style?.size || this.size) * lineNum;
+                if (this.style.fill.paint)   this.context.fillText  (line, this.position.x, this.position.y + addedPos);
+                if (this.style.stroke.paint) this.context.strokeText(line, this.position.x, this.position.y + addedPos);
+            }
         }
 
         /** The Canvas context to draw to
