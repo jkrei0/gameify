@@ -346,6 +346,7 @@ export let gameify = {
 
         /** Check if a mouse event just happened (eg a button press or scroll)
          * @arg {String} event - The event you want to check
+         * @arg {Boolean} [capture=false] - Capture the event, and stop other checks from seeing it
          * @returns {Boolean} if the event just happened
          * @example // See if the player clicked.
          * if (myScreen.mouse.eventJustHappened("click")) {
