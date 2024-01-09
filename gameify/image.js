@@ -46,7 +46,14 @@ export let images = {
          * @readonly
          */
         path;
-        /** If the image is loaded */
+        /** The opaciy of the image
+         * @type {Number}
+         * @default 1
+         */
+        opacity = 1;
+        /** If the image is loaded
+         * @type {Boolean}
+         */
         loaded = false;
         #loadFunction = undefined;
         /** If the image was derived from a tileset, details about where it came from.
@@ -174,6 +181,8 @@ export let images = {
          */
         draw = (context, x, y, w, h, r) => {
 
+            context.globalAlpha = this.opacity;
+            
             if (r) {
                 // translate the canvas to draw rotated images
                 const transX = x + w / 2;
@@ -228,6 +237,8 @@ export let images = {
                 }
 
             }
+            // reset the alpha
+            context.globalAlpha = 1;
         }
     },
 }
