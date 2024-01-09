@@ -33,6 +33,18 @@ export let text = {
          */
         this.size = size;
 
+        /** The line height, relative to the font size
+         * @type {Number}
+         * @default 1
+         */
+        this.lineHeight = 1;
+
+        /** The opacity of the text
+         * @type {Number}
+         * @default 1
+         */
+        this.opacity = 1;
+
         this.fill = {
             paint: true,
             color: fillColor
@@ -149,12 +161,15 @@ export let text = {
             this.context.textBaseline = 'top';
             this.style.applyTo(this.context);
 
-            const split = this.string.split('\n');
+            const split = String(this.string).split('\n');
             for (const lineNum in split) {
                 const line = split[lineNum];
-                const addedPos = (this.style?.size || this.size) * lineNum;
+                const addedPos = (this.style?.size || this.size) * lineNum * (this.style?.lineHeight || 1);
+
+                this.context.globalAlpha = this.style?.opacity || 1;
                 if (this.style.fill.paint)   this.context.fillText  (line, this.position.x, this.position.y + addedPos);
                 if (this.style.stroke.paint) this.context.strokeText(line, this.position.x, this.position.y + addedPos);
+                this.context.globalAlpha = 1;
             }
         }
 
