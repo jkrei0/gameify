@@ -131,6 +131,7 @@ export let audio = {
 
         /** Check if the sound currently is playing
          * @returns {Boolean}
+         * @method
          */
         isPlaying = () => {
             return !this.audio.paused;
