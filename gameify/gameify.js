@@ -1177,7 +1177,7 @@ export let gameify = {
                     tile.image.draw(this.context,
                                     row * this.twidth + this.offset.x, col * this.theight + this.offset.y,
                                     this.twidth*tile.size.x, this.theight*tile.size.y,
-                                    tile.rotation );
+                                    tile.rotation, /* ignoreOpacity= */ true );
                 }
             }
 

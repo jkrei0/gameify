@@ -254,7 +254,7 @@ This way speeds and physics are the same regardless of FPS or how good your comp
                              this.position.x, this.position.y,
                              crop.width * this.scale,
                              crop.height * this.scale,
-                             this.rotation );
+                             this.rotation, /* ignoreOpacity= */ true  );
         }
 
         /** Get the size of the sprite

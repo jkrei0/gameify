@@ -179,9 +179,9 @@ export let images = {
          * @param {Number} h - Height
          * @param {Number} r - Rotation, in degrees
          */
-        draw = (context, x, y, w, h, r) => {
+        draw = (context, x, y, w, h, r, ignoreOpacity=false) => {
 
-            context.globalAlpha = this.opacity;
+            if (!ignoreOpacity) context.globalAlpha = this.opacity;
             
             if (r) {
                 // translate the canvas to draw rotated images
@@ -238,7 +238,7 @@ export let images = {
 
             }
             // reset the alpha
-            context.globalAlpha = 1;
+            if (!ignoreOpacity) context.globalAlpha = 1;
         }
     },
 }
