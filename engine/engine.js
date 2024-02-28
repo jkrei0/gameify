@@ -306,6 +306,7 @@ const populateObjectsList = () => {
                 folderSummary.__engine_menu = {
                     'Rename': () => {
                         const new_name = prompt('Enter a new folder name', obj.__engine_folder);
+                        if (!new_name) return;
                         for (const child of folder.__engine_objects) {
                             child.__engine_folder = new_name;
                         }
