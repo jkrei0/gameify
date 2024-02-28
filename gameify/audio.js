@@ -129,6 +129,13 @@ export let audio = {
             };
         }
 
+        /** Check if the sound currently is playing
+         * @returns {Boolean}
+         */
+        isPlaying = () => {
+            return !this.audio.paused;
+        }
+
         /** Play the sound. Please be aware some browsers block autoplay by default.
          * @method
          */
