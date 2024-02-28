@@ -142,7 +142,26 @@ export let scenes = {
          * @param {gameify.Screen} parent
         */
         onLoad = (parent) => {
+            if (this.#loadFunction) this.#loadFunction();
             this.parent = parent;
+        }
+
+        #unloadFunction = undefined;
+        #loadFunction = undefined;
+
+        /** Defined a callback to be run when the scene is hidden (switched away from)
+         * @param {function} callback
+         * @method
+         */
+        onSceneHidden = (func) => {
+            this.#unloadFunction = func;
+        }
+        /** Defined a callback to be run when the scene is shown (switched to)
+         * @param {function} callback
+         * @method
+         */
+        onSceneShown = (func) => {
+            this.#loadFunction = func;
         }
 
         /** Run when the scene is set as inactive / replaced by another scene
@@ -150,6 +169,7 @@ export let scenes = {
          * @package
         */
         onUnload = () => {
+            if (this.#unloadFunction) this.#unloadFunction();
             this.parent = null;
         }
     },
