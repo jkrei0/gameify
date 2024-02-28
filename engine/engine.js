@@ -129,10 +129,13 @@ window.addEventListener('click', (event) => {
 /* Visual Editor and Tools */
 
 let objects = { };
+let open_folders = []; // track open folders for consistency
 
 const populateObjectsList = () => {
     const objList = document.querySelector('#node-list');
     objList.innerHTML = '';
+
+    const folderEls = [];
 
     const types = [];
 
@@ -231,7 +234,93 @@ const populateObjectsList = () => {
             // Don't allow deleting locked items
             if (!obj.__engine_locked) details.appendChild(delButton);
 
-            objList.appendChild(details);
+            if (!obj.__engine_folder) {
+                objList.appendChild(details);
+            } else if (folderEls[obj.__engine_folder]) {
+                const folder = folderEls[obj.__engine_folder];
+                folder.appendChild(details);
+                folder.__engine_objects.push(obj);
+                if (obj.__engine_visible) {
+                    folder.__vis_button.classList.remove('object-hidden');
+                    folder.__vis_button.classList.add('object-visible');
+                }
+            } else {
+                const folder = document.createElement('details');
+                folder.classList.add('list-item');
+                folder.classList.add('folder');
+                folder.__engine_objects = [obj];
+                folderEls[obj.__engine_folder] = folder;
+
+                if (open_folders.find((x) => x === obj.__engine_folder)) {
+                    folder.setAttribute('open', true);
+                }
+
+                folder.addEventListener('toggle', () => {
+                    if(folder.hasAttribute('open')) {
+                        open_folders.push(obj.__engine_folder);
+                    } else {
+                        open_folders = open_folders.filter((x) => x !== obj.__engine_folder);
+                    }
+                });
+                
+                const folderVisButton = document.createElement('button');
+                folder.__vis_button = folderVisButton;
+                if (!obj.__engine_visible) {
+                    folderVisButton.classList.add('object-hidden');
+                }
+                const icon = engineTypes.get('engine_folder', 'icon');
+                folderVisButton.innerHTML = icon;
+
+                folderVisButton.onclick = () => {
+                    let allHidden = true;
+                    for (const child of folder.__engine_objects) {
+                        if (child.__engine_visible) {
+                            allHidden = false;
+                        }
+                    }
+
+                    if (!allHidden) {
+                        for (const child of folder.__engine_objects) {
+                            child.__engine_visible = false;
+                        }
+                    } else {
+                        for (const child of folder.__engine_objects) {
+                            child.__engine_visible = true;
+                        }
+                    }
+                    populateObjectsList();
+                }
+
+                const folderSummary = document.createElement('summary');
+                folderSummary.appendChild(folderVisButton);
+                folderSummary.append(`${obj.__engine_folder}`);
+                const typeSpan = document.createElement('span');
+                typeSpan.classList.add('type');
+                typeSpan.innerHTML = '';
+                folderSummary.appendChild(typeSpan);
+
+                folder.appendChild(folderSummary);
+                folder.appendChild(details);
+                objList.prepend(folder);
+
+                folderSummary.__engine_menu = {
+                    'Rename': () => {
+                        const new_name = prompt('Enter a new folder name', obj.__engine_folder);
+                        for (const child of folder.__engine_objects) {
+                            child.__engine_folder = new_name;
+                        }
+                        populateObjectsList();
+                    },
+                    'Delete': () => {
+                        if (!confirm('Delete folder? Your objects will not be deleted.')) {
+                            return;
+                        }
+                        for (const child of folder.__engine_objects) {
+                            child.__engine_folder = undefined;
+                        }
+                    }
+                }
+            }
 
             summary.__engine_menu = {
                 'Copy Name': () => {
@@ -239,6 +328,10 @@ const populateObjectsList = () => {
                 },
                 'Copy JavaScript': () => {
                     navigator.clipboard.writeText(`$get('${obj.__engine_name}')`)
+                },
+                'Add to folder': () => {
+                    obj.__engine_folder = prompt('Enter a folder name', 'MyFolder');
+                    populateObjectsList();
                 },
                 'Delete': () => {
                     delButton.click();
@@ -274,6 +367,7 @@ const populateObjectsList = () => {
         const name = selName.value.replaceAll('::', '_');
         if (objects[type][name]) {
             visualLog(`Object with the name '${type}::${name}' already exists!`, 'error', 'objects editor');
+            return;
         }
         
         const defaultScreen = Object.values(objects['Screen'])[0];
@@ -319,6 +413,14 @@ const loadObjectsList = (data) => {
                 objects[type][name] = constructor('_deserialize')(data[type][name], loadObject);
             }
             objects[type][name].__engine_name = type + '::' + name;
+
+            // Keep track engine data
+            if (data[type][name].__engine_data?.folder !== undefined) {
+                objects[type][name].__engine_folder = data[type][name].__engine_data.folder;
+            }
+            if (data[type][name].__engine_data?.visible !== undefined) {
+                objects[type][name].__engine_visible = data[type][name].__engine_data.visible;
+            }
         }
         return objects[type][name];
     }

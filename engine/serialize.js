@@ -23,6 +23,15 @@ export const engineSerialize = {
                     console.warn(`Cannot save ${type}::${name}`);
                     out[type][name] = false;
                 }
+
+                // Keep track of engine data
+                out[type][name].__engine_data = {};
+                if (item.__engine_folder) {
+                    out[type][name].__engine_data.folder = item.__engine_folder
+                }
+                if (item.__engine_visible === false) {
+                    out[type][name].__engine_data.visible = false;
+                }
             }
         }
         return out;

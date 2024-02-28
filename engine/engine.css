@@ -334,6 +334,18 @@ body, html {
 .list .list-item:is(span) svg {
   color: white;
 }
+.list .list-item.folder {
+  transition: none;
+}
+.list .list-item.folder[open] {
+  background: #335;
+  border-left: 5px solid #648;
+}
+.list .list-item.folder[open] > summary {
+  position: relative;
+  left: -5px;
+  width: calc(100% + 5px);
+}
 .list .list-item.filename {
   font-family: "Roboto Mono";
 }
@@ -370,7 +382,7 @@ body, html {
 .list .list-item summary::-webkit-details-marker {
   display: none;
 }
-.list .list-item summary button {
+.list .list-item summary button, .list .list-item summary .button {
   all: unset;
   display: flex;
   align-items: center;
@@ -380,17 +392,17 @@ body, html {
   margin-left: 2px;
   margin-right: 12px;
 }
-.list .list-item summary button svg, .list .list-item summary button img {
+.list .list-item summary button svg, .list .list-item summary button img, .list .list-item summary .button svg, .list .list-item summary .button img {
   margin: 0px;
   transition: 0.2s;
 }
-.list .list-item summary button:hover :is(svg, img) {
+.list .list-item summary button:hover :is(svg, img), .list .list-item summary .button:hover :is(svg, img) {
   color: white;
 }
-.list .list-item summary button.object-hidden svg, .list .list-item summary button.object-hidden img {
+.list .list-item summary button.object-hidden svg, .list .list-item summary button.object-hidden img, .list .list-item summary .button.object-hidden svg, .list .list-item summary .button.object-hidden img {
   color: #335;
 }
-.list .list-item summary button.object-hidden::after {
+.list .list-item summary button.object-hidden::after, .list .list-item summary .button.object-hidden::after {
   content: "";
   height: 120%;
   width: 2px;
