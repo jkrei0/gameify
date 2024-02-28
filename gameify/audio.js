@@ -217,7 +217,10 @@ export let audio = {
                 console.warn('Volume should be between 0 and 1');
             }
             this.#volume = Math.max(0, Math.min(1, volume));
-            this.audio.volume = this.getCalculatedVolume();
+            const nv = this.getCalculatedVolume();
+            this.audio.volume = nv;
+            if (nv == 0) this.audio.muted = true;
+            else this.audio.muted = false;
         }
         /** Get the volume of the sound. Note that this volume is mixed with the
          * audioManager's volume to get the actual volume. Use getCalculatedVolume()
@@ -234,7 +237,9 @@ export let audio = {
          * @return {Number} The calculated volume of the sound, between 0 and 1
          */
         getCalculatedVolume = () => {
-            return this.#volume * (this.audioManager?.getVolume() || .2); // Use .2 default when no audioManager is set
+            let vol = this.audioManager?.getVolume();
+            if (vol === undefined) vol = .2 // Use .2 default when no audioManager is set
+            return this.#volume * vol;
         }
 
         /** Change and load a new image path. Resets the image's crop
