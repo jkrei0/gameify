@@ -113,6 +113,15 @@ export let gameify = {
             this.pressedKeys.push(this.makeKeyNicer(key));
         }
 
+        /** Force clear pressed keys
+         */
+        this.forceClearPressedKeys = () => {
+            this.pressedKeys = [];
+        }
+
+        window.addEventListener('blur', this.forceClearPressedKeys);
+        this.captureScope.addEventListener('blur', this.forceClearPressedKeys);
+
         /** Called when a key is released
          * @private
          */
@@ -454,9 +463,9 @@ export let gameify = {
             this.element.height = this.height;
             this.context = this.element.getContext("2d");
 
-            this.keyboard = new gameify.KeyboardEventManager(this.element.parentElement);
+            this.keyboard = new gameify.KeyboardEventManager(this.element);
             this.keyboard.setup();
-            this.mouse = new gameify.MouseEventManager(this.element.parentElement, this.element);
+            this.mouse = new gameify.MouseEventManager(this.element, this.element);
             this.mouse.setup();
             this.audio = new gameify.audio.AudioManager();
             this.audio.setVolume(0.5);
