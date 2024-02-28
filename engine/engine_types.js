@@ -135,6 +135,9 @@ export const engineTypes = {
                     if (obj.__engine_editing) engineEvents.emit('clear visual editor');
                     else engineEvents.emit('edit tilemap', obj);
                 }));
+                parent.appendChild(engineUI.labelItem('Export', 'Download', () => {
+                    obj.downloadMapData();
+                }));
                 parent.appendChild(engineUI.twoInputItem('Tile Size', [obj.twidth, obj.theight], 'number', (x, y) => {
                     obj.twidth  = Number(x);
                     obj.theight = Number(y);

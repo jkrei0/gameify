@@ -1361,6 +1361,28 @@ export let gameify = {
             return output;
         }
 
+        /** Download a .tilemapdata.js file of the tilemap. This file can be imported as an es6 module
+         * @example
+         * myMap.downloadMapData();
+         * @example
+         * import myMapData from './mymap.tilemapdata.js';
+         * myMap.loadMapData(myMapData);
+         * @method
+         */
+        downloadMapData = () => {
+            const text = 'export default' + JSON.stringify(this.exportMapData(), null, 2);
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', `${this.__engine_name || 'mymap'}.tilemapdata.js`);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+          
+            element.click();
+          
+            document.body.removeChild(element);
+        }
+
         /** Load saved map data (export using exportMapData)
          * @method
          * @param {Object} data - The map data to load
