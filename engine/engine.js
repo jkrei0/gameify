@@ -139,7 +139,7 @@ const populateObjectsList = () => {
 
     const types = [];
 
-    for (const setName in engineTypes.types) {
+    for (const setName of engineTypes.listTypes()) {
         if (!objects[setName]) objects[setName] = {};
         const set = objects[setName];
         types.push(setName);

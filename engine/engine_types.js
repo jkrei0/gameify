@@ -19,6 +19,12 @@ export const engineTypes = {
         }
         return array;
     },
+    listTypes: () => {
+        const allTypes = Object.keys(engineTypes.types);
+        // don't include the engine_folder type as it's not a real type
+        allTypes.splice(allTypes.indexOf('engine_folder'), 1);
+        return allTypes;
+    },
     /** Get a property of a type (e.g. the icon or buildUI function)
      * @param {String} type  - The type of the object
      * @param {String} prop  - The property to get
