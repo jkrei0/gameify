@@ -1,4 +1,3 @@
-
 export let game_template = {
     "objects": {
         "None": {},

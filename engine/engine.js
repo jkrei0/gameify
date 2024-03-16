@@ -1,5 +1,5 @@
-import {gameify} from '/gameify/gameify.js';
-import {game_template} from '/engine/project/_template.js';
+import { gameify } from '/gameify/gameify.js';
+import { game_template } from '/engine/project/template_scribble_dungeon.js';
 
 import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js";
 
@@ -53,6 +53,10 @@ const showWindow = (t) => {
         totalMessages = 0;
     } else if (t === 'docs' && document.querySelector('#docs-iframe').contentWindow.location.href.endsWith(';')) {
         document.querySelector('#docs-iframe').contentWindow.location.reload();
+    } else if (t === 'editor') {
+        // Prevent weird issues when the window is resized
+        // by forcing ace to resize every time the editor is shown
+        editor.resize(true);
     }
 };
 
