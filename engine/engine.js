@@ -137,12 +137,9 @@ const populateObjectsList = () => {
 
     const folderEls = [];
 
-    const types = [];
-
     for (const setName of engineTypes.listTypes()) {
         if (!objects[setName]) objects[setName] = {};
         const set = objects[setName];
-        types.push(setName);
 
         for (const objName in set) {
             const obj = set[objName];
@@ -356,7 +353,7 @@ const populateObjectsList = () => {
     const rand = Math.floor(Math.random() * 1000);
     const [nameElem, selName] = engineUI.inputItem('Name', 'New Object ' + rand, 'text');
     details.appendChild(nameElem);
-    const [typeElem, selType] = engineUI.selectItem('Type', types, undefined, 'Sprite');
+    const [typeElem, selType] = engineUI.selectItem('Type', engineTypes.listTypes(), undefined, 'Sprite');
     details.appendChild(typeElem);
 
     const addButton = document.createElement('button');
