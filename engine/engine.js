@@ -1395,35 +1395,6 @@ const diffGithubProject = () => {
 
 const exportProject = async () => {
     const zipFiles = [];
-    let styles = '';
-    let scripts = '';
-    for (const file in files) {
-        zipFiles.push({
-            name: file,
-            input: files[file].getValue()
-        });
-
-        if (file.endsWith('.js')) {
-            scripts += `<script src="./${file}" type="module"></script>`;
-        } else if (file.endsWith('.css')) {
-            styles += `<link rel="stylesheet" href="./${file}">`;
-        }
-    }
-
-    zipFiles.push({
-        name: 'index.html',
-        input: `<!DOCTYPE html>
-            <html>
-                <head>
-                    <title>A Game</title>
-                    ${styles}
-                </head>
-                <body>
-                    <div><canvas id="game-canvas"></canvas></div>
-                </body>
-                ${scripts}
-            </html>`
-    });
 
     const outJS = await fetch("./project/_out.js");
     const outJSText = await outJS.text();
