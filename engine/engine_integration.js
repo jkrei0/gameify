@@ -44,6 +44,7 @@ export const engineIntegrations = {
         if (diffObjectsList) mode = "ace/mode/json";
         else if (file.endsWith('.js')) mode = "ace/mode/javascript";
         else if (file.endsWith('.css')) mode = "ace/mode/css";
+        else if (file.endsWith('.html')) mode = "ace/mode/html";
         const differ = new AceDiff({
             element: '#ace-editor-diff',
             theme: 'ace/theme/dracula',
