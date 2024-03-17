@@ -1182,11 +1182,16 @@ window.addEventListener('message', (event) => {
 
     if (event.data && event.data.type === 'console') {
         const { message, lineNumber, columnNumber, fileName } = event.data.payload;
+
+        const sourceFile = sanitize(fileName.replace(/.* injectedScript.*/, '(main script)')) // replace injectedScript with project script
+                        .replace(/_gamefiles\/\d{1,5}\/_out\.js/, '(_out.js)')
+                        .replace(/_gamefiles\/\d{1,5}\/+/, sanitize(currentProjectFilename || 'Template Project') + '/')
+
         consoleOut.innerHTML += `<span class="log-item ${sanitize(event.data.logType)}">
             <span class="short">${sanitize(event.data.logType.toUpperCase())}</span>
             <span class="message">${sanitize(message)}</span>
             <span class="source">
-                ${sanitize(fileName.replace(/.* injectedScript.*/, '(project script)'))}
+                ${sourceFile}
                 ${sanitize(lineNumber)}:${sanitize(columnNumber)}
             </span>
         </span>`;
@@ -1554,6 +1559,7 @@ const listFiles = (data) => {
             files[file] = ace.createEditSession(data[file]);
             if (file.endsWith('.js')) files[file].setMode("ace/mode/javascript");
             else if (file.endsWith('.css')) files[file].setMode("ace/mode/css");
+            else if (file.endsWith('.html')) files[file].setMode("ace/mode/html");
         }
 
         const button = document.createElement('button');
