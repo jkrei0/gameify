@@ -108,11 +108,11 @@ gameFrame.addEventListener('load', () => {
             document.querySelector('#loading-indicator').style.display = 'none';
         } else if (event.data.message === 'serviceworker error') {
             document.querySelector('#loading-text-short').innerText = 'Loading error';
-            document.querySelector('#loading-text-long').innerText = 'Failed to register serviceworker.';
+            document.querySelector('#loading-text-long').innerText = 'Failed to register serviceworker.<br>Please reload or stop/restart the game';
         } else if (event.data.message === 'sw missing gameData') {
             document.querySelector('#loading-indicator').style.display = '';
             document.querySelector('#loading-text-short').innerText = 'Loading error';
-            document.querySelector('#loading-text-long').innerText = 'Gamedata error (out-of-order).';
+            document.querySelector('#loading-text-long').innerText = 'Gamedata error (out-of-order).<br>Please reload or stop/restart the game';
         }
     });
 
