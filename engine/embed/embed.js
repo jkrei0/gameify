@@ -20,69 +20,18 @@ window.addEventListener('hashchange', () => {
 
 let gameData = {};
 
-
-window.addEventListener('message', (event) => {
-    if (!event.data.gameData || !event.data.type === 'gameData') return;
-    // We don't care where the origin is, so don't bother checking. If another page embeds this, it's fine.
-    gameData = event.data.gameData;
-
-    frameWindow.location.href = "/game.html";
-});
-
-// don't bother looking for nothing
-if (accountName && gameTitle) fetch(originURL + `/api/games-store/load-game`, {
-    method: 'POST',
-    body: JSON.stringify({
-        // no session key needed for loading
-        username: accountName,
-        title: gameTitle,
-    })
-}).then(res=>res.json()).then(result => {
-    if (result.error) {
-        // capitalize first letter
-        document.querySelector('#loading-text-short').innerText = result.error.charAt(0).toUpperCase() + result.error.slice(1);
-        document.querySelector('#loading-text-long').innerText = 'There was an error loading this project. Make sure the URL is correct.';
-    }
-
-    gameData = result.data;
-
-    frameWindow.location.href = "/game.html";
-});
-
 const replaceImportPaths = (file) => {
     // replace imports that 
     return file.replaceAll(/import.*?from ('|"|`)(?!https?:\/\/)/g, (match) => {
         return match + '/_gamefiles/' + windowRandomId + '/';
+    }).replaceAll(/(src|href)=('|"|`)(?!https?:\/\/)/g, (match) => {
+        return match + '/_gamefiles/' + windowRandomId + '/';
     });
 }
 
-gameFrame.addEventListener('load', () => {
-    if(frameWindow.location.href === 'about:blank') {
-        console.warn('Not loading, about:blank!');
-        return;
-    }
-    if(frameWindow.document.body.innerHTML !== 'Gameify!') {
-        document.querySelector('#loading-text-short').innerText = 'Loading error';
-        document.querySelector('#loading-text-long').innerText = 'Could not load /game.html!';
-        return;
-    }
+const setGameData = (data) => {
+    gameData = data;
 
-    addConsoleHook();
-
-    // Add scripts
-    const html = frameWindow.document.querySelector('html');
-    html.innerHTML = `<!DOCTYPE html><head>
-            <title>A Game</title>
-        </head>
-        <body>
-            <div>
-                <canvas id="game-canvas"></canvas>
-            </div>
-        </body>`;
-    
-    frameWindow.__s_objects = gameData.objects;
-
-    
     const files = gameData.files;
     for (const file in files) {
         files[file] = replaceImportPaths(files[file]);
@@ -92,19 +41,8 @@ gameFrame.addEventListener('load', () => {
         if (!event.data.type === 'message') return;
 
         if (event.data.message === 'ready for files') {
-            for (const file in files) {
-                if (file.endsWith('.js')) {
-                    const script = document.createElement('script');
-                    script.type = 'module';
-                    script.innerHTML = files[file];
-                    frameWindow.document.body.appendChild(script);
-        
-                } else if (file.endsWith('.css')) {
-                    const style = document.createElement('style');
-                    style.innerHTML = files[file];
-                    frameWindow.document.head.appendChild(style);
-                }
-            }
+            console.log(files['index.html']);
+            frameWindow.location.href = '/_gamefiles/' + windowRandomId + '/index.html';
             document.querySelector('#loading-indicator').style.display = 'none';
         } else if (event.data.message === 'serviceworker error') {
             document.querySelector('#loading-text-short').innerText = 'Loading error';
@@ -121,7 +59,6 @@ gameFrame.addEventListener('load', () => {
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register('serviceworker.js').then(function(reg){
                 if (reg.active) {
-                    console.log('serviceworker installed');
                     reg.active.postMessage(JSON.stringify({
                         randomId: ${windowRandomId},
                         files: ${JSON.stringify(files)}
@@ -147,6 +84,43 @@ gameFrame.addEventListener('load', () => {
     `;
     frameWindow.document.body.appendChild(workerScript);
 
+}
+
+window.addEventListener('message', (event) => {
+    if (!event.data.gameData || !event.data.type === 'gameData') return;
+    // We don't care where the origin is, so don't bother checking. If another page embeds this, it's fine.
+    
+    setGameData(event.data.gameData);
+});
+
+// don't bother looking for nothing
+if (accountName && gameTitle) fetch(originURL + `/api/games-store/load-game`, {
+    method: 'POST',
+    body: JSON.stringify({
+        // no session key needed for loading
+        username: accountName,
+        title: gameTitle,
+    })
+}).then(res=>res.json()).then(result => {
+    if (result.error) {
+        // capitalize first letter
+        document.querySelector('#loading-text-short').innerText = result.error.charAt(0).toUpperCase() + result.error.slice(1);
+        document.querySelector('#loading-text-long').innerText = 'There was an error loading this project. Make sure the URL is correct.';
+        return;
+    }
+
+    setGameData(result.data);
+});
+
+gameFrame.addEventListener('load', () => {
+    if(frameWindow.location.href === 'about:blank') {
+        console.warn('Not loading, about:blank!');
+        return;
+    }
+
+    addConsoleHook();
+    frameWindow.__s_objects = gameData.objects;
+    if (frameWindow.__set_s_objects) frameWindow.__set_s_objects();
 });
 
 const addConsoleHook = async () => {
