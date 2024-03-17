@@ -1526,15 +1526,21 @@ const listFiles = (data) => {
 
     if (!data['index.html']) {
         data['index.html'] = game_template.files['index.html'];
+        visualLog('Index.html not found, using index.html from template', 'warn', 'filesystem');
     }
     
+    const setAceMode = (file) => {
+        if (file.endsWith('.js')) files[file].setMode("ace/mode/javascript");
+        else if (file.endsWith('.css')) files[file].setMode("ace/mode/css");
+        else if (file.endsWith('.html')) files[file].setMode("ace/mode/html");
+    }
+
     // Load new files
     for (const file in data) {
-        if (reloadEditors) {
+        console.log(reloadEditors, files[file]);
+        if (reloadEditors || !files[file] || typeof files[file] === 'string') {
             files[file] = ace.createEditSession(data[file]);
-            if (file.endsWith('.js')) files[file].setMode("ace/mode/javascript");
-            else if (file.endsWith('.css')) files[file].setMode("ace/mode/css");
-            else if (file.endsWith('.html')) files[file].setMode("ace/mode/html");
+            setAceMode(file);
         }
 
         const button = document.createElement('button');
@@ -1622,7 +1628,7 @@ const listFiles = (data) => {
             if (!name) return;
         }
         files[name] = ace.createEditSession(`// ${name}\n`);
-        files[name].setMode("ace/mode/javascript");
+        setAceMode(name);
         visualLog(`Created file '${name}'`, 'log', 'filesystem');
         listFiles();
         // Make sure the new file is opened
