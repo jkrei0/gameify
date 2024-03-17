@@ -62,7 +62,12 @@ for (const box of collisionBoxes) {
 ```
 
 The more complex one is a little more work:
+*Note: this example imports the collision function from {@tutorial how_to_tilemap_collisions}.
+You can use this, or make your own collision function*
 ```js
+// Place the import at the top of the file
+import {collides_with_map} from '/tilemapColllisions.js';
+
 // Copy both the player position and velocity, since we're messing
 // with both this time
 const last = player.position.copy();
@@ -81,7 +86,7 @@ for (const dir of directions) {
     
     // Check if the player collides with any of the map objects
     // revert to before collision and try again
-    if ($share('collides-with-map')(player.shape)) {
+    if (collides_with_map(player.shape)) {
         player.position = last;
         
     } else break; // If the player can move, we're done, and exit the loop!

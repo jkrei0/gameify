@@ -13,7 +13,7 @@ The general steps are:
 - Add the collision shape to your collision shapes array
 
 ```js
-import {$get,$share} from './_out.js';
+import {$get} from './_out.js';
 import {gameify} from '/gameify/gameify.js';
 
 const map = $get('Tilemap::Forest Map');
@@ -36,34 +36,29 @@ map.listTiles().forEach(tile => {
 });
 
 // Check if a shape collides with any of the collision boxes
-$share('collides-with-map', (shape) => {
+// Export it so other files can import it
+export function collides_with_map(shape) {
     for (let box of boxes) {
         if (shape.collidesWith(box)) {
             return true;
         }
     }
     return false;
-});
+}
 
 // If you want to see collision boxes, for debug purposes
 const screen = $get('Screen::')[0];
-$share('draw-map-boxes', () => {
+export function draw_map_boxes() {
     for (let box of boxes) {
         box.draw(screen.getContext());
     }
-});
+}
 
 ```
 
-If you chose to use `$share()` to access your functions in other files,
-you can then just use them as you normally would with `$share()`:
+If you chose to use `export` your functions,
+you can then import them with `import` in any other file:
 
 ```js
-// onUpdate
-if ($share('collides-with-map')(player)) {
-    // collision management
-}
-
-// onDraw
-$share('draw-map-boxes')();
+import {collides_with_map, draw_map_boxes} from './tilemapColllisions.js';
 ```
