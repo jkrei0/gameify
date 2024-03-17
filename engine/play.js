@@ -6,7 +6,7 @@ const gameWindow = gameFrame.contentWindow;
 gameWindow.location.href = embedURL + '/embed.html' + window.location.hash;
 
 const accountName = window.location.hash.split('/')[0].replace('#', '');
-const gameTitle = window.location.hash.split('/')[1];
+const gameTitle = window.location.hash.split('/')[1].replaceAll('%20', ' ');
 
 if (accountName && gameTitle) {
     document.querySelector('#project-name').innerText = accountName + '/' + gameTitle;
