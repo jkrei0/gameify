@@ -1523,6 +1523,10 @@ const listFiles = (data) => {
     // Clear the file list
     if (reloadEditors) files = {};
     editorFileList.innerHTML = '';
+
+    if (!data['index.html']) {
+        data['index.html'] = game_template.files['index.html'];
+    }
     
     // Load new files
     for (const file in data) {
