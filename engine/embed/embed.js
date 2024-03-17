@@ -1,6 +1,8 @@
 
 const gameFrame = document.querySelector('#game-frame');
-const win = gameFrame.contentWindow;
+const frameWindow = gameFrame.contentWindow;
+// generate an id for each window, so the serviceWorker can keep track of each game
+const windowRandomId = Math.floor(Math.random()*10000);
 
 const accountName = window.location.hash.split('/')[0].replace('#', '');
 const gameTitle = window.location.hash.split('/')[1];
@@ -20,10 +22,11 @@ let gameData = {};
 
 
 window.addEventListener('message', (event) => {
+    if (!event.data.gameData || !event.data.type === 'gameData') return;
     // We don't care where the origin is, so don't bother checking. If another page embeds this, it's fine.
-    gameData = event.data;
+    gameData = event.data.gameData;
 
-    win.location.href = "/game.html";
+    frameWindow.location.href = "/game.html";
 });
 
 // don't bother looking for nothing
@@ -43,18 +46,22 @@ if (accountName && gameTitle) fetch(originURL + `/api/games-store/load-game`, {
 
     gameData = result.data;
 
-    win.location.href = "/game.html";
+    frameWindow.location.href = "/game.html";
 });
 
 const replaceImportPaths = (file) => {
-    return file.replaceAll(`from '/gameify/`, `from '` + originURL + `/gameify/`)
-               .replaceAll(`from './_out.js'`, `from '` + originURL + `/engine/project/_out.js'`);
+    // replace imports that 
+    return file.replaceAll(/import.*?from ('|"|`)(?!https?:\/\/)/g, (match) => {
+        return match + '/_gamefiles/' + windowRandomId + '/';
+    });
 }
 
 gameFrame.addEventListener('load', () => {
-
-    if(win.location.href === 'about:blank') return
-    if(win.document.body.innerHTML !== 'Gameify!') {
+    if(frameWindow.location.href === 'about:blank') {
+        console.warn('Not loading, about:blank!');
+        return;
+    }
+    if(frameWindow.document.body.innerHTML !== 'Gameify!') {
         document.querySelector('#loading-text-short').innerText = 'Loading error';
         document.querySelector('#loading-text-long').innerText = 'Could not load /game.html!';
         return;
@@ -63,7 +70,7 @@ gameFrame.addEventListener('load', () => {
     addConsoleHook();
 
     // Add scripts
-    const html = win.document.querySelector('html');
+    const html = frameWindow.document.querySelector('html');
     html.innerHTML = `<!DOCTYPE html><head>
             <title>A Game</title>
         </head>
@@ -73,24 +80,73 @@ gameFrame.addEventListener('load', () => {
             </div>
         </body>`;
     
-    win.__s_objects = gameData.objects;
+    frameWindow.__s_objects = gameData.objects;
 
+    
     const files = gameData.files;
     for (const file in files) {
-        if (file.endsWith('.js')) {
-            const script = document.createElement('script');
-            script.type = 'module';
-            script.innerHTML = replaceImportPaths(files[file]);
-            win.document.body.appendChild(script);
-
-        } else if (file.endsWith('.css')) {
-            const style = document.createElement('style');
-            style.innerHTML = files[file];
-            win.document.head.appendChild(style);
-
-        }
+        files[file] = replaceImportPaths(files[file]);
     }
-    document.querySelector('#loading-indicator').style.display = 'none';
+
+    window.addEventListener('message', (event) => {
+        if (!event.data.type === 'message') return;
+
+        if (event.data.message === 'ready for files') {
+            for (const file in files) {
+                if (file.endsWith('.js')) {
+                    const script = document.createElement('script');
+                    script.type = 'module';
+                    script.innerHTML = files[file];
+                    frameWindow.document.body.appendChild(script);
+        
+                } else if (file.endsWith('.css')) {
+                    const style = document.createElement('style');
+                    style.innerHTML = files[file];
+                    frameWindow.document.head.appendChild(style);
+                }
+            }
+            document.querySelector('#loading-indicator').style.display = 'none';
+        } else if (event.data.message === 'serviceworker error') {
+            document.querySelector('#loading-text-short').innerText = 'Loading error';
+            document.querySelector('#loading-text-long').innerText = 'Failed to register serviceworker.';
+        } else if (event.data.message === 'sw missing gameData') {
+            document.querySelector('#loading-indicator').style.display = '';
+            document.querySelector('#loading-text-short').innerText = 'Loading error';
+            document.querySelector('#loading-text-long').innerText = 'Gamedata error (out-of-order).';
+        }
+    });
+
+    const workerScript = document.createElement('script');
+    workerScript.innerHTML = `
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register('serviceworker.js').then(function(reg){
+                if (reg.active) {
+                    console.log('serviceworker installed');
+                    reg.active.postMessage(JSON.stringify({
+                        randomId: ${windowRandomId},
+                        files: ${JSON.stringify(files)}
+                    }));
+                    navigator.serviceWorker.addEventListener("message", (event) => {
+                        // foreward messages
+                        parent.postMessage(event.data, '*');
+                    });
+                    parent.postMessage({'type': 'message', message: 'ready for files'}, '*');
+                } else {
+                    parent.postMessage({'type': 'message', message: 'serviceworker error'}, '*');
+                    console.log(reg);
+                }
+            })
+            .catch(function(err){
+                parent.postMessage({'type': 'message', message: 'serviceworker error'}, '*');
+                console.log('registration failed: ' + err);
+            });
+        } else {
+            parent.postMessage({'type': 'message', message: 'serviceworker error'}, '*');
+            console.log('no serviceworker');
+        }
+    `;
+    frameWindow.document.body.appendChild(workerScript);
+
 });
 
 const addConsoleHook = async () => {
@@ -102,7 +158,7 @@ const addConsoleHook = async () => {
 
             let message = q ? args : args.map(a => JSON.stringify(a)).join(', ');
 
-            oldConsole.log(...args);
+            oldConsole.log(...args, q);
 
             try {
                 window.parent.postMessage({

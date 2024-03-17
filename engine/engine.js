@@ -1204,7 +1204,7 @@ gameFrame.addEventListener('load', () => {
 
     runGameButton.innerText = 'Stop Game';
     const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
-    gameFrameWindow.postMessage(saved, /* REPLACE=embedURL */'http://localhost:3001'/* END */);
+    gameFrameWindow.postMessage({ type: 'gameData', gameData: saved }, /* REPLACE=embedURL */'http://localhost:3001'/* END */);
 });
 
 const stopGame = () => {

@@ -68,6 +68,7 @@ export const $get = (name) => {
 };
 /** Share other things. Actual docs in gameify.js */
 export const $share = (name, object) => {
+    console.warn('$share is deprecated. Use import/export instead.');
     if (object) __share[name] = object;
     else return __share[name];
 }
