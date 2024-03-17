@@ -5,7 +5,7 @@ const frameWindow = gameFrame.contentWindow;
 const windowRandomId = Math.floor(Math.random()*10000);
 
 const accountName = window.location.hash.split('/')[0].replace('#', '');
-const gameTitle = window.location.hash.split('/')[1].replaceAll('%20', ' ');
+const gameTitle = window.location.hash.split('/')[1]?.replaceAll('%20', ' ');
 
 const originURL = /* REPLACE=originURL */'http://localhost:3000'/* END */;
 
