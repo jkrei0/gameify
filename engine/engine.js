@@ -1399,7 +1399,6 @@ const exportProject = async () => {
     
     const replaceGameifyImports = (file) => {
         return file.replaceAll(/(import.*?from ('|"|`))\.?\/gameify\//g, (match, p1, p2) => {
-            console.log(match, p1, p2);
             return p1 + 'https://gameify.vercel.app/gameify/';
         });
     }

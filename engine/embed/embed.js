@@ -41,7 +41,6 @@ const setGameData = (data) => {
         if (!event.data.type === 'message') return;
 
         if (event.data.message === 'ready for files') {
-            console.log(files['index.html']);
             frameWindow.location.href = '/_gamefiles/' + windowRandomId + '/index.html';
             document.querySelector('#loading-indicator').style.display = 'none';
         } else if (event.data.message === 'serviceworker error') {
