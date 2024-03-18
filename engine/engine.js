@@ -1396,8 +1396,16 @@ const diffGithubProject = () => {
 const exportProject = async () => {
     const zipFiles = [];
 
+    
+    const replaceGameifyImports = (file) => {
+        return file.replaceAll(/(import.*?from ('|"|`))\.?\/gameify\//g, (match, p1, p2) => {
+            console.log(match, p1, p2);
+            return p1 + 'https://gameify.vercel.app/gameify/';
+        });
+    }
+
     const outJS = await fetch("./project/_out.js");
-    const outJSText = await outJS.text();
+    const outJSText = replaceGameifyImports(await outJS.text());
     const objListText = 'window.__s_objects = ' + JSON.stringify(engineSerialize.objectsList(objects));
 
     zipFiles.push({
@@ -1405,11 +1413,24 @@ const exportProject = async () => {
         input: outJSText.replace('/*__s_objects*/', objListText)
     });
 
+    for (const file in files) {
+        let fileText = replaceGameifyImports(files[file].getValue());
+        if (file === 'index.html') {
+            // Add a script that alerts the user if they run it w/o a server
+            const localCheckScript = await (await fetch("./project/_local_check.js")).text();
+            fileText = fileText.replace('<body>', `<body><script>${localCheckScript}</script>`);
+        }
+        zipFiles.push({
+            name: file,
+            input: fileText
+        });
+    }
+
     const blob = await downloadZip(zipFiles).blob();
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + ".zip";
+    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + "_export.zip";
     link.click();
     link.remove();
     URL.revokeObjectURL(link.href);
@@ -1457,7 +1478,7 @@ OBJECTS:objects.gpj
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + ".zip";
+    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + "_source.zip";
     link.click();
     link.remove();
     URL.revokeObjectURL(link.href);
@@ -1537,7 +1558,6 @@ const listFiles = (data) => {
 
     // Load new files
     for (const file in data) {
-        console.log(reloadEditors, files[file]);
         if (reloadEditors || !files[file] || typeof files[file] === 'string') {
             files[file] = ace.createEditSession(data[file]);
             setAceMode(file);
