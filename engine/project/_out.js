@@ -13,7 +13,16 @@ import {gameify} from '/gameify/gameify.js';
 Please do not edit the following line: */
 /*__s_objects*/
 
-if (!window.__s_objects) console.error('Failed to load game objects');
+if (!window.__s_objects) {
+    await new Promise((resolve) => {
+        window.__set_s_objects = resolve;
+    });
+    if (!window.__s_objects) {  
+        console.error('Failed to load game objects');
+    }
+}
+
+
 
 const __objects = {};
 

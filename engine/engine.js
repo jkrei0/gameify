@@ -1395,38 +1395,17 @@ const diffGithubProject = () => {
 
 const exportProject = async () => {
     const zipFiles = [];
-    let styles = '';
-    let scripts = '';
-    for (const file in files) {
-        zipFiles.push({
-            name: file,
-            input: files[file].getValue()
-        });
 
-        if (file.endsWith('.js')) {
-            scripts += `<script src="./${file}" type="module"></script>`;
-        } else if (file.endsWith('.css')) {
-            styles += `<link rel="stylesheet" href="./${file}">`;
-        }
+    
+    const replaceGameifyImports = (file) => {
+        return file.replaceAll(/(import.*?from ('|"|`))\.?\/gameify\//g, (match, p1, p2) => {
+            console.log(match, p1, p2);
+            return p1 + 'https://gameify.vercel.app/gameify/';
+        });
     }
 
-    zipFiles.push({
-        name: 'index.html',
-        input: `<!DOCTYPE html>
-            <html>
-                <head>
-                    <title>A Game</title>
-                    ${styles}
-                </head>
-                <body>
-                    <div><canvas id="game-canvas"></canvas></div>
-                </body>
-                ${scripts}
-            </html>`
-    });
-
     const outJS = await fetch("./project/_out.js");
-    const outJSText = await outJS.text();
+    const outJSText = replaceGameifyImports(await outJS.text());
     const objListText = 'window.__s_objects = ' + JSON.stringify(engineSerialize.objectsList(objects));
 
     zipFiles.push({
@@ -1434,11 +1413,24 @@ const exportProject = async () => {
         input: outJSText.replace('/*__s_objects*/', objListText)
     });
 
+    for (const file in files) {
+        let fileText = replaceGameifyImports(files[file].getValue());
+        if (file === 'index.html') {
+            // Add a script that alerts the user if they run it w/o a server
+            const localCheckScript = await (await fetch("./project/_local_check.js")).text();
+            fileText = fileText.replace('<body>', `<body><script>${localCheckScript}</script>`);
+        }
+        zipFiles.push({
+            name: file,
+            input: fileText
+        });
+    }
+
     const blob = await downloadZip(zipFiles).blob();
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + ".zip";
+    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + "_export.zip";
     link.click();
     link.remove();
     URL.revokeObjectURL(link.href);
@@ -1486,7 +1478,7 @@ OBJECTS:objects.gpj
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + ".zip";
+    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + "_source.zip";
     link.click();
     link.remove();
     URL.revokeObjectURL(link.href);
@@ -1552,14 +1544,23 @@ const listFiles = (data) => {
     // Clear the file list
     if (reloadEditors) files = {};
     editorFileList.innerHTML = '';
+
+    if (!data['index.html']) {
+        data['index.html'] = game_template.files['index.html'];
+        visualLog('Index.html not found, using index.html from template', 'warn', 'filesystem');
+    }
     
+    const setAceMode = (file) => {
+        if (file.endsWith('.js')) files[file].setMode("ace/mode/javascript");
+        else if (file.endsWith('.css')) files[file].setMode("ace/mode/css");
+        else if (file.endsWith('.html')) files[file].setMode("ace/mode/html");
+    }
+
     // Load new files
     for (const file in data) {
-        if (reloadEditors) {
+        if (reloadEditors || !files[file] || typeof files[file] === 'string') {
             files[file] = ace.createEditSession(data[file]);
-            if (file.endsWith('.js')) files[file].setMode("ace/mode/javascript");
-            else if (file.endsWith('.css')) files[file].setMode("ace/mode/css");
-            else if (file.endsWith('.html')) files[file].setMode("ace/mode/html");
+            setAceMode(file);
         }
 
         const button = document.createElement('button');
@@ -1647,7 +1648,7 @@ const listFiles = (data) => {
             if (!name) return;
         }
         files[name] = ace.createEditSession(`// ${name}\n`);
-        files[name].setMode("ace/mode/javascript");
+        setAceMode(name);
         visualLog(`Created file '${name}'`, 'log', 'filesystem');
         listFiles();
         // Make sure the new file is opened
