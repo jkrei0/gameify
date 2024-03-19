@@ -30,7 +30,10 @@ export let gameify = {
     Animator: animation.Animator,
     Camera: camera.Camera,
     Vector2d: vectors.Vector2d,
-    vectors: vectors.vectors,
+    vectors: new Proxy(vectors, { get: () => {
+        console.warn("gameify.vectors is deprecated. Use static methods/properties of gameify.Vector2d instead");
+        return vectors;
+    } }), // alias, for compatibility for now
 
     Image: images.Image,
     Sprite: sprites.Sprite,

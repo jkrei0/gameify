@@ -67,6 +67,87 @@ export let vectors = {
             this.#y = value;
         }
 
+        /** A zero vector for reference and calculation
+         * @example let vectorA = new gameify.Vector2d(3, 2);
+         * // Interpolate vectorA towards zero (using gameify.Vector2d.ZERO to avoid having to make a new vector)
+         * let vectorB = vectorA.linearInterpolate(gameify.Vector2d.ZERO, 0.5); // vectorB = <1.5, 1>
+         * @readonly
+         * @name gameify.Vector2d.ZERO
+         */
+        static get ZERO () { return new vectors.Vector2d(0, 0); }
+        /** The i vector <1, 0> for reference and calculation
+         * @name gameify.Vector2d.I
+         * @readonly
+         */
+        static get I () { return new vectors.Vector2d(1, 0); }
+        /** The j vector <0, 1> for reference and calculation
+         * @name gameify.Vector2d.J
+         * @readonly */
+        static get J () { return new vectors.Vector2d(0, 1); }
+        /** Checks if a vector is compatible with operations in this one
+         * @method
+         * @name gameify.Vector2d.isCompatibleVector
+         * @arg {gameify.Vector2d} vector
+         */
+        static isCompatibleVector = (vector) => {
+            if (typeof(vector.x) != "number" || typeof(vector.y) != "number") {
+                return false;
+            }
+            return true;
+        }
+        /** Checks if a vector is compatible with operations in this one, and throws if not.
+         * @method
+         * @name gameify.Vector2d.assertIsCompatibleVector
+         * @arg {gameify.Vector2d} vector
+         */
+        static assertIsCompatibleVector = (vector) => {
+            if (typeof(vector.x) != "number" || typeof(vector.y) != "number") {
+                console.error(`The vector you're passing to this function is either broken or not a vector. See ${docs.getDocs("gameify.Vector2d")} for help`);
+                return false;
+            }
+            return true;
+        }
+        /** Given two vectors, returns the one with the greatest magnitude (length)
+         * @method
+         * @name gameify.Vector2d.longestOf
+         * @arg {gameify.Vector2d} vectorA
+         * @arg {gameify.Vector2d} vectorB
+         */
+        static longestOf = (vectorA, vectorB) => {
+            if (!vectors.Vector2d.assertIsCompatibleVector(vectorA)) return;
+            if (!vectors.Vector2d.assertIsCompatibleVector(vectorB)) return;
+
+            if (new vectorA.getMagnitude() > vectorB.getMagnitude()) {
+                return vectorA;
+            }
+            return vectorB;
+        }
+        /** Given two vectors, returns the one with the least magnitude (length)
+         * @method
+         * @name gameify.Vector2d.shortestOf
+         * @arg {gameify.Vector2d} vectorA
+         * @arg {gameify.Vector2d} vectorB
+         */
+        static shortestOf = (vectorA, vectorB) => {
+            if (!vectors.Vector2d.assertIsCompatibleVector(vectorA)) return;
+            if (!vectors.Vector2d.assertIsCompatibleVector(vectorB)) return;
+            
+            if (vectorA.getMagnitude() < vectorB.getMagnitude()) {
+                return vectorA;
+            }
+            return vectorB;
+        }
+        /** Creates a vector from an x and y, string, or existing vector
+         * @method
+         * @name gameify.Vector2d.from
+         * @arg {Number|gameify.Vector2d|String} x - x coordinate OR an existing vector
+         * @arg {Number} [y] - y coordinate
+         * @returns {gameify.Vector2d}
+         */
+        static from = (x, y) => {
+            return new vectors.Vector2d(x, y);
+        }
+
         /** Returns a copy of the vector
          * @method
          * @returns {gameify.Vector2d} */
@@ -172,7 +253,7 @@ export let vectors = {
          * @returns {gameify.Vector2d}
          */
         add = (vectorB) => {
-            if (!vectors.vectors.assertIsCompatibleVector(vectorB)) return;
+            if (!vectors.Vector2d.assertIsCompatibleVector(vectorB)) return;
             return new vectors.Vector2d(this.x + vectorB.x, this.y + vectorB.y);
         }
         /** Subtracts this vector and another one, and returns the result as a new vector
@@ -184,7 +265,7 @@ export let vectors = {
          * @returns {gameify.Vector2d}
          */
         subtract = (vectorB) => {
-            if (!vectors.vectors.assertIsCompatibleVector(vectorB)) return;
+            if (!vectors.Vector2d.assertIsCompatibleVector(vectorB)) return;
             return new vectors.Vector2d(this.x - vectorB.x, this.y - vectorB.y);
         }
         /** Multiplies this vector by an amount, and returns the result as a new vector
@@ -274,63 +355,4 @@ export let vectors = {
          */
         valueOf = this.toString;
     },
-    /** Vector helpers
-     * @member
-     * @alias gameify.vectors
-     * @example // Create a new vector <0, 0>
-     * let myVector = gameify.vectors.ZERO()
-     */
-    vectors: {
-        /** A zero vector for reference and calculation
-         * @example let vectorA = new gameify.Vector2d(3, 2);
-         * // Interpolate vectorA towards zero (using gameify.vectors.ZERO to avoid having to make a new vector)
-         * let vectorB = vectorA.linearInterpolate(gameify.vectors.ZERO, 0.5); // vectorB = <1.5, 1>*/
-        ZERO: () => { return new vectors.Vector2d(0, 0); },
-        /** The i vector <1, 0> for reference and calculation */
-        i: () => { return new vectors.Vector2d(1, 0); },
-        /** The j vector <0, 1> for reference and calculation */
-        j: () => { return new vectors.Vector2d(0, 1); },
-        /** Checks if a vector is compatible with operations in this one
-         * @package
-         */
-        isCompatibleVector: (vector) => {
-            if (typeof(vector.x) != "number" || typeof(vector.y) != "number") {
-                return false;
-            }
-            return true;
-        },
-        assertIsCompatibleVector: (vector) => {
-            if (typeof(vector.x) != "number" || typeof(vector.y) != "number") {
-                console.error(`The vector you're passing to this function is either broken or not a vector. See ${docs.getDocs("gameify.Vector2d")} for help`);
-                return false;
-            }
-            return true;
-        },
-        /** Given two vectors, returns the one with the greatest magnitude (length)
-         * @arg {gameify.Vector2d} vectorA
-         * @arg {gameify.Vector2d} vectorB
-         */
-        longestOf: (vectorA, vectorB) => {
-            if (!vectors.vectors.assertIsCompatibleVector(vectorA)) return;
-            if (!vectors.vectors.assertIsCompatibleVector(vectorB)) return;
-
-            if (vectorA.getMagnitude() > vectorB.getMagnitude()) {
-                return vectorA;
-            }
-            return vectorB;
-        },
-        /** Given two vectors, returns the one with the least magnitude (length)
-         * @arg {gameify.Vector2d} vectorA
-         * @arg {gameify.Vector2d} vectorB
-         */
-        shortestOf: (vectorA, vectorB) => {
-            if (!vectors.vectors.assertIsCompatibleVector(vectorA)) return;
-            if (!vectors.vectors.assertIsCompatibleVector(vectorB)) return;
-            
-            if (vectorA.getMagnitude() < vectorB.getMagnitude()) {
-                return vectorA;
-            }
-            return vectorB;
-        }
-    }
 }

@@ -1118,7 +1118,7 @@ const clearVisualEditor = () => {
     }
     for (const mn in objects['Tilemap']) {
         // Reset tilemap positions
-        objects['Tilemap'][mn].offset = gameify.vectors.ZERO();
+        objects['Tilemap'][mn].offset = gameify.Vector2d.ZERO;
     }
     editorScreen.setScene(previewScene);
 }

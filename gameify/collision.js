@@ -134,7 +134,7 @@ class Circle extends Shape {
      * @returns {Boolean}
      */
     contains = (point) => {
-        vectors.vectors.assertIsCompatibleVector(point);
+        vectors.Vector2d.assertIsCompatibleVector(point);
         return this.position.distanceTo(point) < this.radius;
     }
 
@@ -255,7 +255,7 @@ class Rectangle extends Shape {
      * @returns {Boolean}
      */
     contains = (point) => {
-        vectors.vectors.assertIsCompatibleVector(point);
+        vectors.Vector2d.assertIsCompatibleVector(point);
         if (this.position.x < point.x && this.position.x + this.size.x > point.x
             && this.position.y < point.y && this.position.y + this.size.y > point.y
         ) {
