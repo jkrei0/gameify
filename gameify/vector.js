@@ -40,14 +40,32 @@ export let vectors = {
             }
         }
 
+        #x = 0;
+        #y = 0;
+        
         /** The x (a) point of the vector
          * @type {Number}
+         * @name gameify.Vector2d#x
          */
-        x = 0;
+        get x() { return this.#x; }
+        set x(value) {
+            if (typeof value !== 'number') {
+                throw new Error("Vector2d.x must be a number!");
+            }
+            this.#x = value;
+        }
+        
         /** The y (b) point of the vector
          * @type {Number}
+         * @name gameify.Vector2d#y
          */
-        y = 0;
+        get y() { return this.#y; }
+        set y(value) {
+            if (typeof value !== 'number') {
+                throw new Error("Vector2d.y must be a number!");
+            }
+            this.#y = value;
+        }
 
         /** Returns a copy of the vector
          * @method
