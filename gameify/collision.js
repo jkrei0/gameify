@@ -2,18 +2,6 @@ import { vectors } from "./vector.js"
 
 "use strict"
 
-/** Shapes and collision detection for use in gameify. Usually you'll access this through the gameify object.
- * @example // Use shapes via gameify
- * // This is the most common way
- * import { gameify } from "./gameify/gameify.js"
- * let myCircle = new gameify.shapes.Circle(0, 0, 5);
- * @example // Import just shapes
- * import { shapes } from "./gameify/collision.js"
- * let myCircle = new shapes.Circle(0, 0, 5);
- * @global
- */
-export let shapes = {};
-
 /** A generic shape. The base for all other shapes.
  * @constructor
  * @arg {string} type - The shape type
@@ -21,7 +9,7 @@ export let shapes = {};
  * @arg {number} [y=0] - The y position
  * @alias gameify.shapes.Shape
  */
-shapes.Shape = class {
+class Shape {
     constructor(type, x = 0, y = 0) {
         this.#type = type || "Shape";
 
@@ -95,7 +83,7 @@ shapes.Shape = class {
  * @param {number} y - The y position
  * @param {number} radius - The circle radius
  */
-shapes.Circle = class extends shapes.Shape {
+class Circle extends shapes.Shape {
     constructor (x, y, radius){
         super("Circle", x, y);
 
@@ -121,7 +109,6 @@ shapes.Circle = class extends shapes.Shape {
     }
     
     /** Check if this shape collides with another shape
-     * @virtual
      * @method
      * @arg {shapes.Shape} obj - The object to check for collision
      * @arg {Boolean} [recursion=false] - If this is a recursive call
@@ -151,7 +138,6 @@ shapes.Circle = class extends shapes.Shape {
     }
 
     /** Draw a hitbox for debugging
-     * @virtual
      * @method
      * @param {CanvasRenderingContext2D} context - The rendering context to draw to
      */
@@ -175,7 +161,7 @@ shapes.Circle = class extends shapes.Shape {
  * @param {number} width - The rectangle width
  * @param {number} height - The rectangle height
  */
-shapes.Rectangle = class extends shapes.Shape {
+class Rectangle extends shapes.Shape {
     constructor (x, y, width, height) {
         super("Rectangle", x, y);
         if (typeof width !== "number" || typeof height !== "number") {
@@ -220,7 +206,6 @@ shapes.Rectangle = class extends shapes.Shape {
     }
 
     /** Check if this shape collides with another shape
-     * @virtual
      * @method
      * @arg {shapes.Shape} obj - The object to check for collision
      * @arg {Boolean} [recursion=false] - If this is a recursive call
@@ -279,7 +264,6 @@ shapes.Rectangle = class extends shapes.Shape {
     }
 
     /** Draw a hitbox for debugging
-     * @virtual
      * @method
      * @param {CanvasRenderingContext2D} context - The rendering context to draw to
      */
@@ -293,3 +277,17 @@ shapes.Rectangle = class extends shapes.Shape {
         context.fill();
     }
 }
+
+/** Shapes and collision detection for use in gameify. Usually you'll access this through the gameify object.
+ * @example // Use shapes via gameify
+ * // This is the most common way
+ * import { gameify } from "./gameify/gameify.js"
+ * let myCircle = new gameify.shapes.Circle(0, 0, 5);
+ * @example // Import just shapes
+ * import { shapes } from "./gameify/collision.js"
+ * let myCircle = new shapes.Circle(0, 0, 5);
+ * @global
+ */
+export let shapes = {
+    Shape, Circle, Rectangle
+};
