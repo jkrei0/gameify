@@ -117,7 +117,7 @@ export let vectors = {
             if (!vectors.Vector2d.assertIsCompatibleVector(vectorA)) return;
             if (!vectors.Vector2d.assertIsCompatibleVector(vectorB)) return;
 
-            if (new vectorA.getMagnitude() > vectorB.getMagnitude()) {
+            if (vectors.Vector2d.from(vectorA).getMagnitude() > vectors.Vector2d.from(vectorB).getMagnitude()) {
                 return vectorA;
             }
             return vectorB;
@@ -132,7 +132,7 @@ export let vectors = {
             if (!vectors.Vector2d.assertIsCompatibleVector(vectorA)) return;
             if (!vectors.Vector2d.assertIsCompatibleVector(vectorB)) return;
             
-            if (vectorA.getMagnitude() < vectorB.getMagnitude()) {
+            if (vectors.Vector2d.from(vectorA).getMagnitude() < vectors.Vector2d.from(vectorB).getMagnitude()) {
                 return vectorA;
             }
             return vectorB;
