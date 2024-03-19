@@ -727,8 +727,8 @@ export let gameify = {
     Tileset: class {
         constructor(path, twidth, theight) {
             this.path = path;
-            this.twidth = Number(twidth);
-            this.theight = Number(theight);
+            this.#twidth = Number(twidth);
+            this.#theight = Number(theight);
             this.texture = document.createElement("img");
             this.texture.src = path;
 
@@ -748,8 +748,25 @@ export let gameify = {
         }
 
         path;
-        twidth;
-        theight;
+        #twidth;
+        #theight;
+        // We'll pretend twidth/theight in maps is readonly for the sake of docs.
+        // In reality, it doesn't hurt anything, so I'm not adding a warning like in Tileset
+        /** The Tileset's tile width
+         * @readonly
+         * @member
+         * @name gameify.Tileset#twidth
+         */
+        get twidth() { return this.#twidth; }
+        set twidth(value) { this.#twidth = value; }
+        /** The Tileset's tile height
+         * @readonly
+         * @member
+         * @name gameify.Tileset#theight
+         */
+        get theight() { return this.#theight; }
+        set theight(value) { this.#theight = value; }
+
         loaded = false;
         /** The tileset's image/texture
          * @package
@@ -929,13 +946,34 @@ export let gameify = {
     // Some are correct, because I realised it -- but be careful
     Tilemap: class {
         constructor (twidth, theight, offsetx, offsety) {
-            this.twidth = Number(twidth);
-            this.theight = Number(theight);
+            this.#twidth = Number(twidth);
+            this.#theight = Number(theight);
             this.offset = new vectors.Vector2d(offsetx || 0, offsety || 0);
         }
 
-        twidth;
-        theight;
+        #twidth;
+        #theight;
+        /** The Tilemap's tile width
+         * @readonly
+         * @member
+         * @name gameify.Tileset#twidth
+         */
+        get twidth() { return this.#twidth; }
+        set twidth(value) {
+            console.warn('Setting Tilemap.twidth may not update immediately. It is not reccomended that you hot-update the tile size.')
+            this.#twidth = value;
+        }
+        /** The Tilemap's tile height
+         * @readonly
+         * @member
+         * @name gameify.Tileset#theight
+         */
+        get theight() { return this.#theight; }
+        set theight(value) {
+            console.warn('Setting Tilemap.theight may not update immediately. It is not reccomended that you hot-update the tile size.')
+            this.#theight = value;
+        }
+
         /** The tile offset (coordinates of tile <0, 0>). Used to translate the map
          * @type {gameify.Vector2d}
          */
