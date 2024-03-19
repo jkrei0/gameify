@@ -73,7 +73,6 @@ export let vectors = {
         copy = () => {
             return new vectors.Vector2d(this.x, this.y);
         }
-
         /** Calculate the distance between a this and another vector
          * (From this vector's coordinates to the other vector's coordinates)
          * @method
@@ -132,13 +131,7 @@ export let vectors = {
             // Distance from original point to projected point
             return Math.sqrt((this.x - proj.x)**2 + (this.y - proj.y)**2);
         }
-        /** Returns the length (magnitude) of the vector. Equivalent to vector.getMagnitude
-         * @method
-         */
-        getDistance = () => {
-            return Math.sqrt((this.x**2) + (this.y**2));
-        }
-        /** Returns the (magnitude) length of the vector. Equivalent to vector.getDistance
+        /** Returns the length (magnitude) of the vector.
          * @method
          */
         getMagnitude = () => {
@@ -149,7 +142,7 @@ export let vectors = {
          * @method
          */
         getNormalized = () => {
-            const dist = this.getDistance();
+            const dist = this.getMagnitude();
             if (dist === 0) {
                 return new vectors.Vector2d(this.x, this.y);
             }
@@ -170,7 +163,7 @@ export let vectors = {
             this.x = normalized.x;
             this.y = normalized.y;
         }
-        /** Adds this vector and another one
+        /** Adds this vector and another one, and returns the result as a new vector
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * let vectorB = new gameify.Vector2d(7, -3);
          * let vectorC = vectorA.add(vectorB); // vectorC = <10, -1>
@@ -182,7 +175,7 @@ export let vectors = {
             if (!vectors.vectors.assertIsCompatibleVector(vectorB)) return;
             return new vectors.Vector2d(this.x + vectorB.x, this.y + vectorB.y);
         }
-        /** Subtracts this vector and another one
+        /** Subtracts this vector and another one, and returns the result as a new vector
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * let vectorB = new gameify.Vector2d(7, -3);
          * let vectorC = vectorA.add(vectorB); // vectorC = <10, -1>
@@ -194,7 +187,7 @@ export let vectors = {
             if (!vectors.vectors.assertIsCompatibleVector(vectorB)) return;
             return new vectors.Vector2d(this.x - vectorB.x, this.y - vectorB.y);
         }
-        /** Multiplies this vector by an amount
+        /** Multiplies this vector by an amount, and returns the result as a new vector
          * @example let vectorA = new gameify.Vector2d(3, 2);
          * let vectorB = vectorA.multiply(4); // vectorB = <12, -8>
          * @method
@@ -241,7 +234,7 @@ export let vectors = {
             // Linear interpolation is A * (1 - t) + B * t
             return new vectors.Vector2d(this.x + (vectorB.x - this.x) * t, this.y + (vectorB.y - this.y) * t);
         }
-        /** Truncates the x and y values to a certain precision
+        /** Returns a copy of this vector, width the x and y values truncated to a certain precision
          * @method
          * @param {Number} [precision=0] - Values after the decimal to keep
          * @returns {gameify.Vector2d} The vector with truncated values

@@ -83,7 +83,7 @@ class Shape {
  * @param {number} y - The y position
  * @param {number} radius - The circle radius
  */
-class Circle extends shapes.Shape {
+class Circle extends Shape {
     constructor (x, y, radius){
         super("Circle", x, y);
 
@@ -116,7 +116,7 @@ class Circle extends shapes.Shape {
      */
     collidesWith = (obj, recursion) => {
         if (obj.type === "Circle") {
-            return ( this.position.subtract(obj.position).getDistance() < this.radius + obj.radius );
+            return ( this.position.subtract(obj.position).getMagnitude() < this.radius + obj.radius );
 
         } else {
             // don't create an infinite recursion loop if neither object has a collision function
@@ -134,6 +134,7 @@ class Circle extends shapes.Shape {
      * @returns {Boolean}
      */
     contains = (point) => {
+        vectors.vectors.assertIsCompatibleVector(point);
         return this.position.distanceTo(point) < this.radius;
     }
 
@@ -161,7 +162,7 @@ class Circle extends shapes.Shape {
  * @param {number} width - The rectangle width
  * @param {number} height - The rectangle height
  */
-class Rectangle extends shapes.Shape {
+class Rectangle extends Shape {
     constructor (x, y, width, height) {
         super("Rectangle", x, y);
         if (typeof width !== "number" || typeof height !== "number") {
@@ -254,6 +255,7 @@ class Rectangle extends shapes.Shape {
      * @returns {Boolean}
      */
     contains = (point) => {
+        vectors.vectors.assertIsCompatibleVector(point);
         if (this.position.x < point.x && this.position.x + this.size.x > point.x
             && this.position.y < point.y && this.position.y + this.size.y > point.y
         ) {
