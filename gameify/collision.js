@@ -280,6 +280,179 @@ class Rectangle extends Shape {
     }
 }
 
+class Polygon extends Shape {
+    constructor(x, y, points) {
+        super("Polygon", x, y);
+        if (!Array.isArray(points)) {
+            throw new Error("Points must be an array of gameify.Vector2d or compatible vector.");
+        }
+        for (const v in points) {
+            this.#points[v] = new vectors.Vector2d(points[v]);
+        }
+    }
+
+    #points = [];
+    #segments;
+    #segmentsUpdated = false;
+
+    /** The points of the polygon, relative to the position of the polygon
+     * @type {gameify.Vector2d[]}
+     * @name gameify.shapes.Polygon#points
+     */
+    set points(value) {
+        if (!Array.isArray(value))   {
+            throw new Error("Points must be an array of gameify.Vector2d or compatible vector.");
+        }
+        this.#segmentsUpdated = false;
+        for (const v in value) {
+            this.points[v] = new vectors.Vector2d(value[v]);
+        }
+    }
+    get points() {
+        return new Proxy(this.#points, {
+            get: (target, name) => {
+                return target[name];
+            },
+            set: (target, name, value) => {
+                this.#segmentsUpdated = false;
+                target[name] = new vectors.Vector2d(value);
+            }
+        });
+    }
+
+    /** The polygon, as an array of line segments, relative to the position of the polygon
+     * @type {{a: gameify.Vector2d, b: gameify.Vector2d}[]}
+     * @name gameify.shapes.Polygon#segments
+     * @readonly
+     */
+    get segments() {
+        if (this.#segments && this.#segmentsUpdated) {
+            return this.#segments;
+        }
+
+        this.#segments = [];
+        for (const i in this.#points) {
+            const p1 = this.#points[i];
+            const p2 = this.#points[(parseInt(i) + 1) % this.#points.length];
+            this.#segments.push({
+                a: p1, b: p2
+            });
+        }
+
+        this.#segmentsUpdated = true;
+        return this.#segments;
+    }
+
+    #lastpoint = null;
+
+    /** Check if a point (Vector2d) is inside this shape
+     * @param {gameify.Vector2d} point - The point to check
+     * @method
+     * @returns {Boolean}
+     */
+    contains = (point) => {
+        vectors.Vector2d.assertIsCompatibleVector(point);
+
+        this.#lastpoint = point;
+
+        let intersections = 0;
+        
+        for (const seg of this.segments) {
+            // Subtract a weird amount so we're not likely to have similar slopes
+            const int = vectors.Vector2d.segmentsIntersect(
+                seg.a.add(this.position), seg.b.add(this.position), point, vectors.Vector2d.from(point).subtract({x: 1000, y: 1120}),
+                /*tolerance=*/undefined, /*collinear=*/false
+            );
+            if (int) {
+                intersections++;
+            }
+            console.log(seg.a.toString(), seg.b.toString(), int, intersections);
+        }
+
+        return intersections % 2 === 1;
+    }
+
+    /** Check if this shape collides with another shape
+     * @method
+     * @arg {shapes.Shape} obj - The object to check for collision
+     * @arg {Boolean} [recursion=false] - If this is a recursive call
+     * @return {Boolean}
+     */
+    collidesWith = (obj, recursion) => {
+        if (obj.type === "Rectangle") {
+            // Rectangle intersects if any lines intersect
+            // or if any points are inside the rectangle
+            for (const seg of this.segments) {
+                const adjPosA = seg.a.add(this.position)
+                const adjPosB = seg.b.add(this.position);
+
+                const intTop = vectors.Vector2d.segmentsIntersect(
+                    adjPosA, adjPosB, obj.position, obj.position.add(obj.size.xComponent())
+                );
+                const intBottom = vectors.Vector2d.segmentsIntersect(
+                    adjPosA, adjPosB, obj.position.add(obj.size.yComponent()), obj.position.add(obj.size.xComponent())
+                )
+                const intLeft = vectors.Vector2d.segmentsIntersect(
+                    adjPosA, adjPosB, obj.position, obj.position.add(obj.size.yComponent())
+                );
+                const intRight = vectors.Vector2d.segmentsIntersect(
+                    adjPosA, adjPosB, obj.position.add(obj.size.xComponent()), obj.position.add(obj.size.yComponent())
+                );
+
+                if (intTop || intBottom || intLeft || intRight) {
+                    return true;
+                }
+            }
+            if (this.contains(obj.position) || this.contains(obj.position.add(obj.size))
+                || this.contains(obj.position.add(obj.size.xComponent())) || this.contains(obj.position.add(obj.size.yComponent()))
+            ) {
+                return true;
+            }
+            return false;
+        } else if (obj.type === "Circle") {
+            // Circle intersects if its center is inside the polygon or
+            // if it intersects any lines of the polygon
+            for (const seg of this.segments) {
+                const adjPosA = seg.a.add(this.position)
+                const adjPosB = seg.b.add(this.position);
+
+                const dist = obj.position.distanceTo(adjPosA, adjPosB);
+                if (dist < obj.radius) {
+                    return true;
+                }
+            }
+            if (this.contains (obj.position)) {
+                return true;
+            }
+            return false;
+
+        } else {
+            // don't create an infinite recursion loop if neither object has a collision function
+            if (recursion) {
+                throw new Error("Collision between these shapes is not supported.");
+            }
+            // else see if the passed object can handle the request
+            return obj.collidesWith(this, /*recursion=*/true);
+        }
+    }
+
+    /** Draw a hitbox for debugging
+     * @method
+     * @param {CanvasRenderingContext2D} context - The rendering context to draw to
+     */
+    draw = (context) => {
+        context.strokeStyle = this.strokeColor;
+        context.fillStyle = this.fillColor;
+        context.beginPath();
+        for (const point of this.#points) {
+            context.lineTo(this.position.x + point.x, this.position.y + point.y);
+        }
+        context.closePath();
+        context.stroke();
+        context.fill();
+    }
+}
+
 /** Shapes and collision detection for use in gameify. Usually you'll access this through the gameify object.
  * @example // Use shapes via gameify
  * // This is the most common way
@@ -291,5 +464,5 @@ class Rectangle extends Shape {
  * @global
  */
 export let shapes = {
-    Shape, Circle, Rectangle
+    Shape, Circle, Rectangle, Polygon
 };

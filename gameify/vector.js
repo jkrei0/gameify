@@ -148,12 +148,58 @@ export let vectors = {
             return new vectors.Vector2d(x, y);
         }
 
+        /** Check if two line segments intersect
+         * @method
+         * @name gameify.Vector2d.segmentsIntersect
+         * @arg {gameify.Vector2d} startA - The start of the first line segment
+         * @arg {gameify.Vector2d} endA - The end of the first line segment
+         * @arg {gameify.Vector2d} startB - The start of the second line segment
+         * @arg {gameify.Vector2d} endB - The end of the second line segment
+         * @arg {Number} [tolerance=1e-8] - Maximum tolerance (because of floating-point errors)
+         * @arg {Boolean} [collinearIntersects=true] - Whether collinear lines should count as intersecting
+         * @returns {Boolean} True if the line segments intersect, false otherwise
+         */
+        static segmentsIntersect = (startA, endA, startB, endB, tolerance = 1e-8, collinearIntersects = true) => {
+            if (!vectors.Vector2d.assertIsCompatibleVector(startA)) return;
+            if (!vectors.Vector2d.assertIsCompatibleVector(endA)) return;
+            if (!vectors.Vector2d.assertIsCompatibleVector(startB)) return;
+            if (!vectors.Vector2d.assertIsCompatibleVector(endB)) return;
+            const ccw = (A, B, C) => {
+                return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+            }
+
+            const lineA = vectors.Vector2d.from(endA).subtract(startA);
+            const lineB = vectors.Vector2d.from(endB).subtract(startB);
+            if (Math.abs(lineB.getAngle() - lineA.getAngle()) < tolerance) {
+                // lines are same angle, therefore
+                // they're collinear and intersecting if any of the points are on the other line
+                return collinearIntersects
+                    && (lineA.distanceTo(startB) < tolerance || lineA.distanceTo(endB) < tolerance
+                    || lineB.distanceTo(startA) < tolerance || lineB.distanceTo(endA) < tolerance);
+            }
+
+            return ccw(startA, startB, endB) !== ccw(endA, startB, endB)
+                && ccw(startA, endA, startB) !== ccw(startA, endA, endB);
+        }
+
         /** Returns a copy of the vector
          * @method
          * @returns {gameify.Vector2d} */
         copy = () => {
             return new vectors.Vector2d(this.x, this.y);
         }
+
+        /** Returns the x component of this vector
+         * @method
+         * @returns {gameify.Vector2d}
+         */
+        xComponent = () => { return new vectors.Vector2d(this.#x, 0); }
+        /** Returns the y component of this vector
+         * @method
+         * @returns {gameify.Vector2d}
+         */
+        yComponent = () => { return new vectors.Vector2d(0, this.#y); }
+
         /** Calculate the distance between a this and another vector
          * (From this vector's coordinates to the other vector's coordinates)
          * @method
@@ -277,6 +323,24 @@ export let vectors = {
          */
         multiply = (value) => {
             return new vectors.Vector2d(this.x * value, this.y * value);
+        }
+        /** Find the angle from the vector (in radians)
+         * @method
+         * @returns {Number}
+         */
+        getAngle = () => {
+            let angle = Math.atan2(this.y, this.x);
+            if (angle < 0) {
+                angle += 2 * Math.PI; // Adjust angle to be positive (0 to 2π)
+            }
+            return angle;
+        }
+        /** Find the angle from the vector (in degrees)
+         * @method
+         * @returns {Number}
+         */
+        getAngleDegrees = () => {
+            return this.getAngle() * 180 / Math.PI;
         }
         /** Returns a copy of this vector rotated by an angle, in radians (counterclockwise)
          * @example let vectorA = new gameify.Vector2d(3, 2);
