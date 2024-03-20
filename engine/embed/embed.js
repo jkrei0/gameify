@@ -91,6 +91,10 @@ window.addEventListener('message', (event) => {
     
     setGameData(event.data.gameData);
 });
+window.addEventListener('message', (event) => {
+    if (event.data.type !== 'consoleHook') return;
+    addConsoleHook(event.data.consoleHook);
+});
 
 // don't bother looking for nothing
 if (accountName && gameTitle) fetch(originURL + `/api/games-store/load-game`, {
@@ -122,8 +126,22 @@ gameFrame.addEventListener('load', () => {
     if (frameWindow.__set_s_objects) frameWindow.__set_s_objects();
 });
 
-const addConsoleHook = async () => {
+let useConsoleHook = localStorage.getItem('useConsoleHook') === 'true';
+window.parent.postMessage({ type: 'consoleHook', consoleHook: useConsoleHook }, '*');
+let currentConsoleHook = undefined;
+const addConsoleHook = async (enable) => {
+    useConsoleHook = enable ?? useConsoleHook;
+    localStorage.setItem('useConsoleHook', useConsoleHook);
+    if (!useConsoleHook) {
+        if (currentConsoleHook) {
+            gameFrame.contentWindow.console = currentConsoleHook;
+        }
+        return;
+    }
+
     const newConsole = (function (oldConsole) {
+        currentConsoleHook = oldConsole;
+
         // Pass logs to parent window
         const log = (t, args, q = {}, pe) => {
             const error = pe || new Error().stack.split('\n')[2];

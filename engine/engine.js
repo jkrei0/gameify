@@ -1133,26 +1133,46 @@ document.querySelector('#refresh-objects').addEventListener('click', populateObj
 const gameFrame = document.querySelector('#game-frame');
 const gameFrameWindow = gameFrame.contentWindow;
 
-const genGameHtml = (scripts = '', styles = '') => {
-    const html = `<head>
-            <title>A Game</title>
-            ${styles}
-        </head>
-        <body>
-            <div>
-                <canvas id="game-canvas"></canvas>
-            </div>
-            ${scripts}
-        </body>
-    `;
-    return html;
-}
-
 const consoleOut = document.querySelector('#console-output');
+const consoleToggleButton = document.querySelector('#toggle-console-hook');
+consoleToggleButton.addEventListener('click', () => {
+    if (consoleOut.style.display === 'none') {
+        consoleOut.style.display = '';
+        consoleToggleButton.textContent = 'Hide console';
+        gameFrame.contentWindow.postMessage({ type: 'consoleHook', consoleHook: true }, '*');
+    } else {
+        consoleOut.style.display = 'none';
+        consoleToggleButton.textContent = 'Show console';
+        gameFrame.contentWindow.postMessage({ type: 'consoleHook', consoleHook: false }, '*');
+    }
+    const message = 'Console hook toggled. You may need to stop/restart the game for the changes to take effect.';
+    console.warn(message);
+    // then send it to ourselves to show it in the gameify console
+    window.postMessage({
+        type: 'console',
+        logType: 'warn',
+        payload: {
+            message: message,
+            lineNumber: 0,
+            columnNumber: 0,
+            fileName: '(console)'
+        }
+    }, '*');
+});
+window.addEventListener('message', (event) => {
+    if (event.data.type !== 'consoleHook') return;
+    // sync console status with the iframe
+    const consoleOpen = consoleOut.style.display !== 'none';
+    if (event.data.consoleHook !== consoleOpen) {
+        consoleToggleButton.click();
+    }
+});
+
 let numMessages = 0;
 let totalMessages = 0;
 const maxMessages = 1000
 window.addEventListener('message', (event) => {
+    if (event.data.type !== 'console') return;
     numMessages += 1;
     totalMessages += 1;
 

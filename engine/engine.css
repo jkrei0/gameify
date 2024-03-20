@@ -73,6 +73,18 @@ body, html {
   padding: 5px 10px;
   margin: 0;
 }
+.window .console h3 button {
+  all: unset;
+  float: right;
+  cursor: pointer;
+  color: white;
+  font-size: 0.8em;
+  padding: 2px 10px;
+  background: #3a3d4f;
+}
+.window .console h3 button:hover {
+  background: #448;
+}
 .window .console .output-container {
   height: 200px;
   overflow: auto;
