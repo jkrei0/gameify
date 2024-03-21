@@ -181,6 +181,7 @@ export let images = {
          */
         draw = (context, x, y, w, h, r, ignoreOpacity=false) => {
 
+            const originalOpacity = context.globalAlpha;
             if (!ignoreOpacity) context.globalAlpha = this.opacity;
             
             if (r) {
@@ -238,7 +239,7 @@ export let images = {
 
             }
             // reset the alpha
-            if (!ignoreOpacity) context.globalAlpha = 1;
+            if (!ignoreOpacity) context.globalAlpha = originalOpacity;
         }
     },
 }
