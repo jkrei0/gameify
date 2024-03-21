@@ -242,7 +242,7 @@ export let gameify = {
      * });
      * @arg {HTMLElement} scope - What parts of the screen the MouseEventManager looks at.
      */
-    MouseEventManager: function (captureScope, canvasElement) {
+    MouseEventManager: function (captureScope, canvasElement, defaultCamera) {
         /** The element that input events are captured from
          * @private
          */
@@ -255,6 +255,8 @@ export let gameify = {
         this.eventsJustHappened = [];
         // Current mouse position
         this.cursorPosition = {x: 0, y: 0};
+
+        this.camera = defaultCamera;
 
         /** Returns the name of the button given the number. <br> 0 = left, 1 = middle (wheel), 2 = right
          * @param {Number} button - The numerical button to get the name of
@@ -269,7 +271,7 @@ export let gameify = {
             }
         }
 
-        /** Get the x and y position of the mouse cursor
+        /** Get the x and y position of the mouse cursor on the creen
          * @example 
          * if (myScreen.mouse.getPosition().x < 50) {
          *     // do something
@@ -279,6 +281,13 @@ export let gameify = {
         this.getPosition = () => {
             // copy values, because we don't want to return a reference.
             return new vectors.Vector2d(this.cursorPosition.x, this.cursorPosition.y);
+        }
+
+        /** Get the x and y position of the mouse cursor in the world
+         * @returns {gameify.Vector2d} The mouse position in the world
+         */
+        this.worldPosition = () => {
+            return this.camera.screenToWorld(this.cursorPosition);
         }
 
         /** Called when a mouse button is pressed down
@@ -455,13 +464,13 @@ export let gameify = {
             this.element.height = this.height;
             this.context = this.element.getContext("2d");
 
+            this.camera = new gameify.Camera(this.context);
             this.keyboard = new gameify.KeyboardEventManager(this.element);
             this.keyboard.setup();
-            this.mouse = new gameify.MouseEventManager(this.element, this.element);
+            this.mouse = new gameify.MouseEventManager(this.element, this.element, this.camera);
             this.mouse.setup();
             this.audio = new gameify.audio.AudioManager();
             this.audio.setVolume(0.5);
-            this.camera = new gameify.Camera(this.context);
         }
 
         /** The HTML5 Canvas element the Screen is attached to 
@@ -1071,17 +1080,17 @@ export let gameify = {
             this.#drawFunction = callback;
         }
 
-        /** Convert screen coordinates to map coordinates 
+        /** Convert world coordinates to map coordinates 
          * @method
          * @param {Number} screenx - The screen x coordinate
          * @param {Number} [screeny] - The screen y coordinate
          * @returns {gameify.Vector2d} A vector representing the calculated position
-         *//** Convert screen coordinates to map coordinates 
+         *//** Convert world coordinates to map coordinates 
          * @method
          * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
          * @returns {gameify.Vector2d} A vector representing the calculated position
          */
-        screenToMap = (screenx, screeny) => {
+        worldToMap = (screenx, screeny) => {
             // loose comparison because we don't want any null values
             if (screenx.x != undefined && screenx.y != undefined) {
                 screeny = screenx.y;
@@ -1091,6 +1100,16 @@ export let gameify = {
                 Math.floor((screenx - this.offset.x) / this.twidth),
                 Math.floor((screeny - this.offset.y) / this.theight)
             );
+        }
+        
+        /** Convert world coordinates to map coordinates. Use worldToMap instead
+         * @method
+         * @deprecated
+         * @alias gameify.Tilemap.worldToMap
+         */
+        screenToMap = (screenx, screeny) => {
+            console.warn('screenToMap is deprecated, use worldToMap instead.');
+            return this.worldToMap(screenx, screeny);
         }
 
         /** Convert map coordinates to screen coordinates
