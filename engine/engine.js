@@ -573,7 +573,7 @@ const editTileMap = (map) => {
             const tile = tileset.getTile(tx, ty);
             tileList.appendChild(tileCanvas);
 
-            context.imageSmoothingEnabled = false;
+            context.imageSmoothingEnabled = editorScreen.getAntialiasing();
             tile.draw(context, 0, 0, 50, 50, 0);
         }
         const rowBreak = document.createElement('span');
