@@ -1453,6 +1453,15 @@ export let gameify = {
             }
         }
 
+        /** Clear cached images (use after updating a tileset)
+         * @method
+        */
+        clearCachedImages = () => {
+            const mapData = this.exportMapData();
+            this.clear();
+            this.loadMapData(mapData);
+        }
+
         /** Get the screen this sprite draws 
          * @method
          * @returns {gameify.Screen}
