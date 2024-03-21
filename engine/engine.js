@@ -44,6 +44,9 @@ const visualLog = (message, type = 'info', source = 'editor') => {
         </span>`;
     visualEl.scrollTo(0, visualEl.scrollHeight);
 }
+engineEvents.listen('visual log', (_event, ...args) => {
+    visualLog(...args);
+});
 const showWindow = (t) => {
     stopGame();
     document.querySelector(`.window.visible`).classList.remove('visible');
@@ -480,17 +483,23 @@ previewScene.onDraw(() => {
 });
 editorScreen.startGame();
 
+let doBreakTileRows = false;
+
 const editTileMap = (map) => {
     clearVisualEditor();
     showWindow('visual');
     visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
 
     const tileset = map.getTileset();
+    map.clearCachedImages();
+    map.__engine_editing = true;
+    engineEvents.emit('refresh objects list');
 
     // Update antialiasing to be consistent
     editorScreen.setAntialiasing(map.getParent().getAntialiasing());
 
     const editScene = new gameify.Scene(editorScreen);
+    editorScreen.camera.setSpeed(1);
     editorScreen.setScene(editScene);
 
     const controls = document.createElement('div');
@@ -505,7 +514,8 @@ const editTileMap = (map) => {
         <span><img src="images/mouse_right.svg">Delete tiles</span>
         <span><img src="images/mouse_middle.svg">Pick tile</span>
         <span><img src="images/arrows_scroll.svg">Rotate tile</span>
-        <button id="vi-zoom-out" class="right"><img src="images/zoom_out.svg">Smaller</button>
+        <button id="vi-switch-layout" class="right"><img src="images/tiles_layout.svg">Switch layout</button>
+        <button id="vi-zoom-out"><img src="images/zoom_out.svg">Smaller</button>
         <button id="vi-zoom-in"><img src="images/zoom_in.svg">Larger</button>
     </div>
     `;
@@ -528,6 +538,12 @@ const editTileMap = (map) => {
             tile.style.height = tileCellSize + 'px';
         })
     }
+    controls.querySelector('#vi-switch-layout').onclick = () => {
+        for (const rowBreak of tileList.querySelectorAll('.row-break')) {
+            rowBreak.classList.toggle('no-break');
+        }
+        doBreakTileRows = !doBreakTileRows;
+    }
 
     controls.appendChild(tileList);
     editorCanvas.parentElement.after(controls);
@@ -539,6 +555,8 @@ const editTileMap = (map) => {
     for (let ty = 0; ty < tileset.texture.height/tileset.theight; ty++) {
         for (let tx = 0; tx < tileset.texture.width/tileset.twidth; tx++) {
             const tileCanvas = document.createElement('canvas');
+            const context = tileCanvas.getContext('2d');
+
             tileCanvas.setAttribute('title', `Tile ${tx}, ${ty}`)
             tileCanvas.classList.add('tile');
             tileCanvas.classList.add(`tile-${tx}-${ty}`);
@@ -555,15 +573,22 @@ const editTileMap = (map) => {
             const tile = tileset.getTile(tx, ty);
             tileList.appendChild(tileCanvas);
 
-            tile.draw(tileCanvas.getContext('2d'), 0, 0, 50, 50, 0);
+            context.imageSmoothingEnabled = false;
+            tile.draw(context, 0, 0, 50, 50, 0);
         }
         const rowBreak = document.createElement('span');
         rowBreak.classList.add('row-break');
+        if (!doBreakTileRows) {
+            rowBreak.classList.add('no-break');
+        }
         tileList.appendChild(rowBreak);
     }
+    const rowBreakEnd = document.createElement('span');
+    rowBreakEnd.classList.add('row-break-end');
+    tileList.appendChild(rowBreakEnd);
 
     editScene.onUpdate(() => {
-        const position = map.screenToMap(editorScreen.mouse.getPosition());
+        const position = map.screenToMap(editorScreen.mouse.worldPosition());
         if (editorScreen.mouse.buttonIsPressed("left")) {
             map.place(selTile.x, selTile.y, position.x, position.y, selTile.r);
 
@@ -588,9 +613,10 @@ const editTileMap = (map) => {
             const mousePos = editorScreen.mouse.getPosition();
             if (!dragStart) {
                 dragStart = mousePos;
-                originalOffset = map.offset.copy();
+                originalOffset = editorScreen.camera.getPosition();
             }
-            map.offset = originalOffset.subtract(dragStart.subtract(mousePos)).rounded();
+            editorScreen.camera.translateAbsolute(originalOffset.subtract(dragStart.subtract(mousePos)));
+
         } else {
             dragStart = false;
         }
@@ -604,7 +630,7 @@ const editTileMap = (map) => {
     });
     editScene.onDraw(() => {
         // Convert to map and back again to snap to map tiles
-        const position = map.mapToScreen(map.screenToMap(editorScreen.mouse.getPosition()));
+        const position = map.mapToScreen(map.screenToMap(editorScreen.mouse.worldPosition()));
 
         const previewTile = map.getTileset().getTile(selTile.x, selTile.y);
         
@@ -619,23 +645,16 @@ const editTileMap = (map) => {
                 objects['Tilemap'][mn].__engine_visible === false) {
                 continue;
             }
-
-            objects['Tilemap'][mn].offset = map.offset.copy();
             objects['Tilemap'][mn].draw();
         }
-        ctx.globalAlpha = 1;
 
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.75;
         previewTile.draw(ctx,
                         position.x, position.y,
                         map.twidth, map.theight,
-                        selTile.r);
+                        selTile.r, /*ignoreOpacity=*/true);
 
         ctx.globalAlpha = 1;
-        ctx.font = '26px sans-serif';
-        ctx.fillStyle = '#000';
-        ctx.fillText('Editing ' + map.__engine_name, 10, editorCanvas.height - 10);
-
     });
 }
 engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
@@ -1117,9 +1136,9 @@ const clearVisualEditor = () => {
         controls.remove();
     }
     for (const mn in objects['Tilemap']) {
-        // Reset tilemap positions
-        objects['Tilemap'][mn].offset = gameify.Vector2d.ZERO;
+        objects['Tilemap'][mn].__engine_editing = false;
     }
+    engineEvents.emit('refresh objects list');
     editorScreen.setScene(previewScene);
 }
 engineEvents.listen('clear visual editor', () => clearVisualEditor());

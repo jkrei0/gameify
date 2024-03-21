@@ -787,6 +787,13 @@ $transition: 0.1s;
         }
         .row-break {
             width: 100%;
+            &.no-break {
+                display: none;
+            }
+        }
+        .row-break-end {
+            width: 100%;
+            height: 100px;
         }
         
     }

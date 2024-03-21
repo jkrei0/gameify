@@ -649,6 +649,13 @@ body, html {
 .editor-controls .tile-list .row-break {
   width: 100%;
 }
+.editor-controls .tile-list .row-break.no-break {
+  display: none;
+}
+.editor-controls .tile-list .row-break-end {
+  width: 100%;
+  height: 100px;
+}
 .editor-controls input, .editor-controls button, .editor-controls select {
   background: #448;
 }
