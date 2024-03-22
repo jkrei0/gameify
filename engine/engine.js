@@ -464,13 +464,16 @@ const sortPreviewTileMaps = () => {
 
     return sortedPreviewTileMaps;
 }
-const drawTileMapsInOrder = () => {
+const drawTileMapsInOrder = (beforeDraw) => {
     for (let index = sortedPreviewTileMaps.length - 1; index >= 0; index--) {
         const mn = sortedPreviewTileMaps[index];
         if (!objects['Tilemap'][mn] || objects['Tilemap'][mn].__engine_visible === false) {
             continue;
         }
         const obj = objects['Tilemap'][mn];
+        if (beforeDraw) {
+            beforeDraw(obj);
+        }
         obj.draw((t, x, y) => {
             if ((x+1)*obj.twidth < -editorScreen.camera.getPosition().x
                 || x*obj.twidth > -editorScreen.camera.getPosition().x + editorScreen.width
@@ -552,11 +555,12 @@ const editTileMap = (map) => {
 
     controls.innerHTML = `
     <div class="legend">
-        <span><img src="images/mouse_left.svg">Place tiles</span>
-        <span><img src="images/mouse_right.svg">Delete tiles</span>
-        <span><img src="images/mouse_middle.svg">Pick tile</span>
-        <span><img src="images/arrows_scroll.svg">Rotate tile</span>
-        <button id="vi-switch-layout" class="right"><img src="images/tiles_layout.svg">Switch layout</button>
+        <span><img src="images/mouse_left.svg">Place</span>
+        <span><img src="images/mouse_right.svg">Delete</span>
+        <span><img src="images/mouse_middle.svg">Pick</span>
+        <span><img src="images/arrows_scroll.svg">Rotate</span>
+        <button id="vi-stop-editing" class="right"><img src="images/check_done.svg">Preview</button>
+        <button id="vi-switch-layout"><img src="images/tiles_layout.svg">Wrap</button>
         <button id="vi-zoom-out"><img src="images/zoom_out.svg">Smaller</button>
         <button id="vi-zoom-in"><img src="images/zoom_in.svg">Larger</button>
     </div>
@@ -585,6 +589,11 @@ const editTileMap = (map) => {
             rowBreak.classList.toggle('no-break');
         }
         doBreakTileRows = !doBreakTileRows;
+    }
+    controls.querySelector('#vi-stop-editing').onclick = () => {
+        map.__engine_editing = false;
+        engineEvents.emit('refresh objects list');
+        showPreviewOrderControls();
     }
 
     controls.appendChild(tileList);
@@ -681,8 +690,12 @@ const editTileMap = (map) => {
 
         const ctx = editorCanvas.getContext('2d');
 
-        ctx.globalAlpha = 0.25;
-        drawTileMapsInOrder();
+        drawTileMapsInOrder((dm) => {
+            ctx.globalAlpha = 0.4;
+            if (dm === map) {
+                ctx.globalAlpha = 1;
+            }
+        });
 
         ctx.globalAlpha = 0.75;
         previewTile.draw(ctx,
