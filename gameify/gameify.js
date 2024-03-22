@@ -1233,7 +1233,7 @@ export let gameify = {
                 for (const col in this.tiles.placed[row]) {
                     // row = x, col = y, yes it's backwards
                     const tile = this.tiles.placed[row][col];
-                    if (!check(tile, row, col)) continue
+                    if (!check(tile, Number(row), Number(col))) continue
                     tile.image.draw(this.context,
                                     row * this.twidth + this.offset.x, col * this.theight + this.offset.y,
                                     this.twidth*tile.size.x, this.theight*tile.size.y,
