@@ -27,6 +27,7 @@ body, html {
 }
 
 .window {
+  position: relative;
   width: 100%;
   height: 100%;
   max-height: calc(100vh - 41px);
@@ -569,6 +570,38 @@ body, html {
 .editor-controls.visual {
   overflow-x: auto;
 }
+.editor-controls.floating {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 3;
+  width: 40%;
+  height: 200px;
+  resize: both;
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 300px;
+  max-height: calc(100vh - 41px);
+  min-height: 95px;
+  opacity: 0.5;
+  transition: opacity 0.1s;
+}
+.editor-controls.floating:hover {
+  opacity: 1;
+}
+.editor-controls.floating.collapsed {
+  min-height: unset;
+  min-width: unset;
+  width: 250px;
+  height: 43px;
+  opacity: 1;
+  resize: none;
+}
+.editor-controls.floating .list {
+  resize: none;
+  width: 100%;
+  height: 100%;
+}
 .editor-controls .frame-list table, .editor-controls .frame-list:is(table) {
   margin-top: 5px;
   width: 100%;
@@ -655,6 +688,23 @@ body, html {
 .editor-controls .tile-list .row-break-end {
   width: 100%;
   height: 100px;
+}
+.editor-controls .list {
+  height: 100px;
+  resize: vertical;
+  overflow-y: scroll;
+  margin: 0;
+}
+.editor-controls .list-item {
+  font-family: Poppins, sans-serif;
+  color: white;
+}
+.editor-controls .list-item.grab {
+  cursor: grab;
+}
+.editor-controls .list-item.dragging {
+  background: #648;
+  outline: 2px solid #ebe;
 }
 .editor-controls input, .editor-controls button, .editor-controls select {
   background: #448;

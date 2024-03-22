@@ -140,7 +140,7 @@ export const engineTypes = {
             buildUI: (parent, obj, objects) => {
                 parent.appendChild(engineUI.labelItem('Edit map', obj.__engine_editing ? 'Done editing' : 'Edit', () => {
                     if (obj.__engine_editing) {
-                        engineEvents.emit('clear visual editor');
+                        engineEvents.emit('show visual editor preview');
                         return;
                     }
 

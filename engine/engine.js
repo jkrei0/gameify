@@ -142,7 +142,7 @@ const populateObjectsList = () => {
     const objList = document.querySelector('#node-list');
     objList.innerHTML = '';
 
-    const folderEls = [];
+    const folderEls = {};
 
     for (const setName of engineTypes.listTypes()) {
         if (!objects[setName]) objects[setName] = {};
@@ -419,12 +419,8 @@ const loadObjectsList = (data) => {
             }
             objects[type][name].__engine_name = type + '::' + name;
 
-            // Keep track engine data
-            if (data[type][name].__engine_data?.folder !== undefined) {
-                objects[type][name].__engine_folder = data[type][name].__engine_data.folder;
-            }
-            if (data[type][name].__engine_data?.visible !== undefined) {
-                objects[type][name].__engine_visible = data[type][name].__engine_data.visible;
+            for (const dat in data[type][name].__engine_data) {
+                objects[type][name]['__engine_' + dat] = data[type][name].__engine_data[dat];
             }
         }
         return objects[type][name];
@@ -449,36 +445,82 @@ const loadObjectsList = (data) => {
 }
 
 const editorCanvas = document.querySelector('#game-canvas');
-const editorScreen = new gameify.Screen(editorCanvas, 1200, 800);
+const editorScreen = new gameify.Screen(editorCanvas, 1400, 800);
 
 const previewScene = new gameify.Scene(editorScreen);
 editorScreen.setScene(previewScene);
+
+
+let previewSceneDragStart = null;
+let previewOriginalOffset = null;
+
+let sortedPreviewTileMaps = []
+const sortPreviewTileMaps = () => {
+    sortedPreviewTileMaps = [];
+    for (const mn in objects['Tilemap']) {
+        sortedPreviewTileMaps.push(mn);
+    }
+    sortedPreviewTileMaps.sort((a, b) => objects['Tilemap'][a].__engine_index - objects['Tilemap'][b].__engine_index);
+
+    return sortedPreviewTileMaps;
+}
+const drawTileMapsInOrder = () => {
+    for (let index = sortedPreviewTileMaps.length - 1; index >= 0; index--) {
+        const mn = sortedPreviewTileMaps[index];
+        if (!objects['Tilemap'][mn] || objects['Tilemap'][mn].__engine_visible === false) {
+            continue;
+        }
+        const obj = objects['Tilemap'][mn];
+        obj.draw((t, x, y) => {
+            if ((x+1)*obj.twidth < -editorScreen.camera.getPosition().x
+                || x*obj.twidth > -editorScreen.camera.getPosition().x + editorScreen.width
+                || (y+1)*obj.theight < -editorScreen.camera.getPosition().y
+                || y*obj.theight > -editorScreen.camera.getPosition().y + editorScreen.height
+            ) {
+                return false;
+            }
+            return true;
+        });
+    }
+}
 
 previewScene.onUpdate(() => {
     // Resize based on game screen size
     const defaultScreen = Object.values(objects['Screen'])[0];
     editorScreen.setSize(defaultScreen.getSize());
     editorScreen.setAntialiasing(defaultScreen.getAntialiasing());
+
+    if (editorScreen.mouse.buttonIsPressed("left") || editorScreen.mouse.buttonIsPressed("middle")) {
+        // Drag map
+        const mousePos = editorScreen.mouse.getPosition();
+        if (!previewSceneDragStart) {
+            previewSceneDragStart = mousePos;
+            previewOriginalOffset = editorScreen.camera.getPosition();
+        }
+        editorScreen.camera.translateAbsolute(previewOriginalOffset.subtract(previewSceneDragStart.subtract(mousePos)));
+    } else {
+        previewSceneDragStart = false;
+    }
 });
 previewScene.onDraw(() => {
-    for (const type of ['Tilemap', 'Sprite']) {
-        for (const name in objects[type]) {
-            const obj = objects[type][name];
-            const ps = obj.getParent();
-            editorScreen.add(obj);
-            try {
-                obj.draw();
-                obj.__engine_error = false;
-            } catch (e) {
-                // Object failed to draw
-                if (!obj.__engine_error) {
-                    visualLog(`Error drawing ${type}::${name}: ${e}`, 'error', 'visual editor');
-                    // Track errors to not spam logs
-                    obj.__engine_error = true;
-                }
+    drawTileMapsInOrder();
+    for (const name in objects['Sprite']) {
+        const obj = objects['Sprite'][name];
+        const ps = obj.getParent();
+        editorScreen.add(obj);
+        try {
+            // Only pass the check function to Tilemaps
+            obj.draw();
+            obj.__engine_error = false;
+        } catch (e) {
+            // Object failed to draw
+            if (!obj.__engine_error) {
+                visualLog(`Error drawing Sprite::${name}: ${e}`, 'error', obj.__engine_name);
+                // Track errors to not spam logs
+                obj.__engine_error = true;
             }
-            ps.add(obj); // Set the screen back!
         }
+        ps.add(obj); // Set the screen back!
     }
 });
 editorScreen.startGame();
@@ -640,13 +682,7 @@ const editTileMap = (map) => {
         const ctx = editorCanvas.getContext('2d');
 
         ctx.globalAlpha = 0.25;
-        for (const mn in objects['Tilemap']) {
-            if (objects['Tilemap'][mn] === map ||
-                objects['Tilemap'][mn].__engine_visible === false) {
-                continue;
-            }
-            objects['Tilemap'][mn].draw();
-        }
+        drawTileMapsInOrder();
 
         ctx.globalAlpha = 0.75;
         previewTile.draw(ctx,
@@ -1129,10 +1165,116 @@ const editAnimation = (anim) => {
 }
 engineEvents.listen('edit animation', (_event, anim) => editAnimation(anim));
 
+const showPreviewOrderControls = () => {
+    clearVisualEditor();
+    // Create order 
+    let controls = document.createElement('div');
+    controls.classList.add('editor-controls');
+    controls.classList.add('floating');
+    controls.classList.add('visual');
+    controls.classList.add('collapsed');
+    const tileList = document.createElement('div');
+    tileList.classList.add('tile-list');
+
+    controls.innerHTML = `
+    <div class="legend">
+        <span>Reorder objects</span>
+        <button id="vi-shrink-expand">Expand</button>
+    </div>`;
+    editorCanvas.parentElement.after(controls);
+
+    controls.querySelector('#vi-shrink-expand').onclick = () => {
+        if (controls.classList.contains('collapsed')) {
+            controls.classList.remove('collapsed');
+            controls.querySelector('#vi-shrink-expand').innerHTML = 'Collapse';
+            controls.setAttribute(
+                'style', controls.getAttribute('data-style') || ''
+            );
+        } else {
+            controls.classList.add('collapsed');
+            controls.querySelector('#vi-shrink-expand').innerHTML = 'Expand';
+            controls.setAttribute(
+                'data-style', controls.getAttribute('style') || ''
+            );
+            controls.removeAttribute('style');
+
+        }
+    }
+
+    const list = document.createElement('ul');
+    list.classList.add('list');
+    controls.appendChild(list);
+
+    const createList = () => {
+        let selected = null
+
+        function dragOver(e) {
+            if (isBefore(selected, e.target)) {
+                e.target.parentNode.insertBefore(selected, e.target)
+            } else {
+                e.target.parentNode.insertBefore(selected, e.target.nextSibling)
+            }
+        }
+        function dragEnd() {
+            selected.classList.remove('dragging');
+            selected = null;
+            // re-number the elements and regenerate the list
+            let curIndex = 0;
+            for (const el of list.children) {
+                const name = el.getAttribute('data-tilemap-name');
+                objects['Tilemap'][name].__engine_index = curIndex;
+                curIndex++;
+            }
+            createList();
+        }
+        function dragStart(e) {
+            e.dataTransfer.effectAllowed = 'move'
+            e.dataTransfer.setData('text/plain', null)
+            selected = e.target
+            selected.classList.add('dragging');
+        }
+        function isBefore(el1, el2) {
+            let cur
+            if (el2.parentNode === el1.parentNode) {
+                for (cur = el1.previousSibling; cur; cur = cur.previousSibling) {
+                if (cur === el2) return true
+                }
+            }
+            return false;
+        }
+
+        list.innerHTML = '';
+        const sortedMaps = sortPreviewTileMaps();;
+        for (const index in sortedMaps) {
+            const name = sortedMaps[index];
+            const obj = objects['Tilemap'][name];
+            obj.__engine_index = Number(index);
+
+            const li = document.createElement('li');
+            li.innerHTML += '(' + obj.__engine_index + ') ' + obj.__engine_name;
+            li.classList.add('list-item');
+            li.classList.add('grab');
+            li.setAttribute('data-tilemap-name', name);
+            li.setAttribute('draggable', true);
+            
+            li.addEventListener('dragstart', dragStart);
+            li.addEventListener('dragover', dragOver);
+            li.addEventListener('dragend', dragEnd);
+            
+            list.appendChild(li);
+        }
+    }
+    createList();
+
+}
+
 const clearVisualEditor = () => {
+    sortPreviewTileMaps();
+
     visualLog(`Cleared tilemap editor`, 'debug', 'tilemap editor');
-    const controls = document.querySelector('.editor-controls.visual');
-    if (controls) {
+    // Remove old things
+    const allControls = document.querySelectorAll('.editor-controls.visual');
+    for (const controls of allControls) {
         controls.remove();
     }
     for (const mn in objects['Tilemap']) {
@@ -1142,6 +1284,7 @@ const clearVisualEditor = () => {
     editorScreen.setScene(previewScene);
 }
 engineEvents.listen('clear visual editor', () => clearVisualEditor());
+engineEvents.listen('show visual editor preview', () => showPreviewOrderControls());
 
 // Populate list after editor setup
 populateObjectsList();
@@ -1705,13 +1848,15 @@ const openProject = (data) => {
         document.querySelector('#github-save-integration').style.display = 'none';
     }
 
-    // Clear the visual editor
-    clearVisualEditor();
-
     listFiles(data.files);
 
     // Load editor objects
     loadObjectsList(data.objects);
+
+    // Clear the visual editor
+    // and show map controls
+    showPreviewOrderControls();
+    showWindow('visual');
 
     visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'log', 'project');
 }

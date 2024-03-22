@@ -29,6 +29,9 @@ export const engineSerialize = {
                 if (item.__engine_folder) {
                     out[type][name].__engine_data.folder = item.__engine_folder
                 }
+                if (item.__engine_index) {
+                    out[type][name].__engine_data.index = item.__engine_index
+                }
                 if (item.__engine_visible === false) {
                     out[type][name].__engine_data.visible = false;
                 }

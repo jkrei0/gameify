@@ -86,6 +86,7 @@ The current properties are:
 - `__engine_editing`: Set to true when the object is being edited using the visual editor
 - `__engine_folder`: The folder the object is in
 - `__engine_data`: When serialized, contains information such as folder, visible, etc. that don't actually modify the object
+- `__engine_index`: The order objects should be drawn in in the visual editor (lower index = draw first)
 
 
 **For HTML Elements (`element.__engine_property`)**
