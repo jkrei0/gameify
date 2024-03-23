@@ -1453,10 +1453,12 @@ export let gameify = {
             }
         }
 
-        /** Clear cached images (use after updating a tileset)
+        /** Clear cached images (use after updating a tileset).
+         * Clears all placed tiles, and re-adds them from the current tileset.
+         * This operation can be slow and is intended for infrequent changes (so don't run it every frame). 
          * @method
         */
-        clearCachedImages = () => {
+        refreshCachedImages = () => {
             const mapData = this.exportMapData();
             this.clear();
             this.loadMapData(mapData);

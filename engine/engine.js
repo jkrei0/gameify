@@ -536,7 +536,7 @@ const editTileMap = (map) => {
     visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
 
     const tileset = map.getTileset();
-    map.clearCachedImages();
+    map.refreshCachedImages();
     map.__engine_editing = true;
     engineEvents.emit('refresh objects list');
 
