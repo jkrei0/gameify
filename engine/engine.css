@@ -575,8 +575,8 @@ body, html {
   top: 0px;
   left: 0px;
   z-index: 3;
-  width: 40%;
-  height: 200px;
+  width: 375px;
+  height: 300px;
   resize: both;
   overflow: hidden;
   max-width: 100%;
