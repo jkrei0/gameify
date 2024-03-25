@@ -320,8 +320,15 @@ class Polygon extends Shape {
         });
     }
 
-    /** The polygon, as an array of line segments, relative to the position of the polygon
-     * @type {{a: gameify.Vector2d, b: gameify.Vector2d}[]}
+    /**
+     * @typedef {Object} LineSegment
+     * @property {gameify.Vector2d} a - The starting point of the line segment
+     * @property {gameify.Vector2d} b - The ending point of the line segment
+     */
+
+    /**
+     * The polygon, as an array of line segments, relative to the position of the polygon
+     * @type {LineSegment[]}
      * @name gameify.shapes.Polygon#segments
      * @readonly
      */
