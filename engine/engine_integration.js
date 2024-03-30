@@ -161,5 +161,29 @@ export const githubIntegration = {
         }, (result) => {
             button.innerHTML = 'Diff';
         });
+    },
+    loadRepo: (repo, callback, errCallback) => {
+        fetch('/api/integrations/github-load-game', {
+            method: 'POST',
+            body: JSON.stringify({
+                // github integration requires a session key
+                username: localStorage.getItem('accountName'),
+                sessionKey: localStorage.getItem('accountSessionKey'),
+                repo: repo,
+                url: 'https://github.com/' + repo
+            })
+        })
+        .then(engineFetch.toJson)
+        .then(result => {
+            if (result.error) {
+                visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
+                engineFetch.checkSessionErrors(result);
+                engineFetch.checkGithubErrors(result, repo);
+                errCallback(result);
+                return;
+            }
+    
+            callback(result);
+        });
     }
 }

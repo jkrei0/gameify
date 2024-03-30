@@ -1168,31 +1168,6 @@ listSaves();
 visualLog('Loaded template project', 'debug', 'engine');
 openProject(game_template);
 
-const loadGithubRepo = (repo, callback, errCallback) => {
-    fetch('/api/integrations/github-load-game', {
-        method: 'POST',
-        body: JSON.stringify({
-            // github integration requires a session key
-            username: localStorage.getItem('accountName'),
-            sessionKey: localStorage.getItem('accountSessionKey'),
-            repo: repo,
-            url: 'https://github.com/' + repo
-        })
-    })
-    .then(engineFetch.toJson)
-    .then(result => {
-        if (result.error) {
-            visualLog(`Failed to load github repo '${repo}' - ${result.error}`, 'error', 'github');
-            engineFetch.checkSessionErrors(result);
-            engineFetch.checkGithubErrors(result, repo);
-            errCallback(result);
-            return;
-        }
-
-        callback(result);
-    });
-}
-
 // Load project from hash
 const loadFromHash = () => {
     if (!window.location.hash) return;
@@ -1203,7 +1178,7 @@ const loadFromHash = () => {
         const repoName = repo.split('/')[1];
         visualLog(`Loading 'github:${repo}' ...`, 'info', 'github progress');
 
-        loadGithubRepo(repo, (result) => {
+        githubIntegration.loadRepo(repo, (result) => {
             currentProjectFilename = 'github:' + repoName;
             openProject(result.data);
             visualLog(`Loaded github repository: '${repo}'`, 'info', 'github');
