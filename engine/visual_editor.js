@@ -1,6 +1,7 @@
 import { gameify } from '/gameify/gameify.js';
 import { engineEvents } from './engine_events.js';
 import { engineState } from './engine_state.js';
+import { engineTypes } from './engine_types.js';
 
 const visualLog = (...args) => engineEvents.emit('visual log', ...args);
 
@@ -91,7 +92,7 @@ let doBreakTileRows = false;
 
 const editTileMap = (map) => {
     clearVisualEditor();
-    showWindow('visual');
+    engineEvents.emit('show window', 'visual');
     visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
 
     const tileset = map.getTileset();
@@ -269,7 +270,7 @@ engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
 
 const editAnimation = (anim) => {
     clearVisualEditor();
-    showWindow('visual');
+    engineEvents.emit('show window', 'visual');
     visualLog(`Editing ${anim.__engine_name}.`, 'log', 'animation editor');
 
     // Update antialiasing to be consistent
