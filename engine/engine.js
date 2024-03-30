@@ -8,6 +8,7 @@ import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
 import { engineIntegrations } from '/engine/engine_integration.js';
 import { engineFetch } from '/engine/engine_fetch.js';
+import { engineState } from '/engine/engine_state.js';
 
 import '/engine/visual_editor.js';
 import '/engine/docs.js';
@@ -15,13 +16,6 @@ import '/engine/docs.js';
 /* Code Editor */
 
 const editorFileList = document.querySelector('#editor-list');
-
-let files = {};
-
-const editor = ace.edit("ace-editor");
-editor.setTheme("ace/theme/dracula");
-editor.setOptions({fontSize: '16px'})
-
 
 /* Misc Internal Utils */
 
@@ -58,7 +52,7 @@ const showWindow = (t) => {
     } else if (t === 'editor') {
         // Prevent weird issues when the window is resized
         // by forcing ace to resize every time the editor is shown
-        editor.resize(true);
+        engineState.editor.resize(true);
     }
 };
 
@@ -131,12 +125,6 @@ window.addEventListener('click', (event) => {
     }, 20);
 });
 
-
-/* Visual Editor and Tools */
-
-let objects = { };
-let open_folders = []; // track open folders for consistency
-
 const populateObjectsList = () => {
     const objList = document.querySelector('#node-list');
     objList.innerHTML = '';
@@ -144,8 +132,8 @@ const populateObjectsList = () => {
     const folderEls = {};
 
     for (const setName of engineTypes.listTypes()) {
-        if (!objects[setName]) objects[setName] = {};
-        const set = objects[setName];
+        if (!engineState.objects[setName]) engineState.objects[setName] = {};
+        const set = engineState.objects[setName];
 
         for (const objName in set) {
             const obj = set[objName];
@@ -218,7 +206,7 @@ const populateObjectsList = () => {
                 `));
             } else {
                 // Call the type's buildUI function
-                engineTypes.get(setName, 'buildUI')(details, obj, objects);
+                engineTypes.get(setName, 'buildUI')(details, obj, engineState.objects);
             }
 
             /* Delete Button */
@@ -254,15 +242,15 @@ const populateObjectsList = () => {
                 folder.__engine_objects = [obj];
                 folderEls[obj.__engine_folder] = folder;
 
-                if (open_folders.find((x) => x === obj.__engine_folder)) {
+                if (engineState.openFolders.find((x) => x === obj.__engine_folder)) {
                     folder.setAttribute('open', true);
                 }
 
                 folder.addEventListener('toggle', () => {
                     if(folder.hasAttribute('open')) {
-                        open_folders.push(obj.__engine_folder);
+                        engineState.openFolders.push(obj.__engine_folder);
                     } else {
-                        open_folders = open_folders.filter((x) => x !== obj.__engine_folder);
+                        engineState.openFolders = engineState.openFolders.filter((x) => x !== obj.__engine_folder);
                     }
                 });
                 
@@ -369,12 +357,12 @@ const populateObjectsList = () => {
     addButton.onclick = () => {
         const type = selType.value;
         const name = selName.value.replaceAll('::', '_');
-        if (objects[type][name]) {
+        if (engineState.objects[type][name]) {
             visualLog(`Object with the name '${type}::${name}' already exists!`, 'error', 'objects editor');
             return;
         }
         
-        const defaultScreen = Object.values(objects['Screen'])[0];
+        const defaultScreen = Object.values(engineState.objects['Screen'])[0];
         const newObject = engineTypes.get(type, 'newObject')(defaultScreen);
 
         if (!newObject) {
@@ -382,7 +370,7 @@ const populateObjectsList = () => {
             return;
 
         } else {
-            objects[type][name] = newObject;
+            engineState.objects[type][name] = newObject;
         }
 
         visualLog(`Created new object '${type}::${name}'`, 'log', 'objects editor');
@@ -403,38 +391,38 @@ const loadObjectsList = (data) => {
         }
         const type = query.split('::')[0];
         const name = query.split('::')[1];
-        if (!objects[type]) objects[type] = {};
-        if (!objects[type][name]) {
+        if (!engineState.objects[type]) engineState.objects[type] = {};
+        if (!engineState.objects[type][name]) {
             if (!data[type][name]) {
                 console.warn('Cannot load ' + query + ' (object data is missing)');
                 return undefined;
             }
             const constructor = engineTypes.resolve(type);
             if (constructor.fromJSON) {
-                objects[type][name] = constructor.fromJSON(data[type][name], loadObject);
+                engineState.objects[type][name] = constructor.fromJSON(data[type][name], loadObject);
             } else {
                 console.warn(`Object ${type}::${name} is using the old (de)serialization system.`);
-                objects[type][name] = constructor('_deserialize')(data[type][name], loadObject);
+                engineState.objects[type][name] = constructor('_deserialize')(data[type][name], loadObject);
             }
-            objects[type][name].__engine_name = type + '::' + name;
+            engineState.objects[type][name].__engine_name = type + '::' + name;
 
             for (const dat in data[type][name].__engine_data) {
-                objects[type][name]['__engine_' + dat] = data[type][name].__engine_data[dat];
+                engineState.objects[type][name]['__engine_' + dat] = data[type][name].__engine_data[dat];
             }
         }
-        return objects[type][name];
+        return engineState.objects[type][name];
     }
 
-    objects = {};
+    engineState.objects = {};
     for (const type in data) {
-        if (!objects[type]) objects[type] = {};
+        if (!engineState.objects[type]) engineState.objects[type] = {};
         for (const name in data[type]) {
             if (data[type][name] === false || !engineTypes.resolve(type)) {
                 console.warn(`Cannot deserialize ${type}::${name}`);
                 continue;
             }
             // If an object was already loaded (because of another's dependency)
-            if (objects[type][name]) continue;
+            if (engineState.objects[type][name]) continue;
 
             // Deserialize object
             loadObject(type + '::' + name);
@@ -547,7 +535,7 @@ gameFrame.addEventListener('load', () => {
     numMessages = 0;
 
     runGameButton.innerText = 'Stop Game';
-    const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
+    const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
     gameFrameWindow.postMessage({ type: 'gameData', gameData: saved }, /* REPLACE=embedURL */'http://localhost:3001'/* END */);
 });
 
@@ -607,7 +595,7 @@ const saveProject = (asName) => {
     if (!overwrite) savedList.push(name);
     localStorage.setItem('saveNames', savedList.join(','))
 
-    const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
+    const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
 
     let success = false;
     try {
@@ -657,7 +645,7 @@ const saveProject = (asName) => {
     return name;
 }
 const pushProjectToGithub = () => {
-    const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
+    const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
 
     if (engineIntegrations.getProvider() !== 'github') {
         visualLog(`Current project does not have GitHub integration.`, 'error', 'github push');
@@ -724,7 +712,7 @@ const diffGithubProject = () => {
         document.querySelector('#diff-objects-button').style.display = '';
         document.querySelector('#diff-objects-button').addEventListener('click', () => {
             showWindow('editor-diff');
-            engineIntegrations.showDiff(engineSerialize.objectsList(objects));
+            engineIntegrations.showDiff(engineSerialize.objectsList(engineState.objects));
         });
         button.innerHTML = 'Diff';
     }, (result) => {
@@ -744,15 +732,15 @@ const exportProject = async () => {
 
     const outJS = await fetch("./project/_out.js");
     const outJSText = replaceGameifyImports(await outJS.text());
-    const objListText = 'window.__s_objects = ' + JSON.stringify(engineSerialize.objectsList(objects));
+    const objListText = 'window.__s_objects = ' + JSON.stringify(engineSerialize.objectsList(engineState.objects));
 
     zipFiles.push({
         name: '_out.js',
         input: outJSText.replace('/*__s_objects*/', objListText)
     });
 
-    for (const file in files) {
-        let fileText = replaceGameifyImports(files[file].getValue());
+    for (const file in engineState.files) {
+        let fileText = replaceGameifyImports(engineState.files[file].getValue());
         if (file === 'index.html') {
             // Add a script that alerts the user if they run it w/o a server
             const localCheckScript = await (await fetch("./project/_local_check.js")).text();
@@ -775,15 +763,15 @@ const exportProject = async () => {
 }
 const exportProjectSource = async () => {
     const zipFiles = [];
-    for (const file in files) {
+    for (const file in engineState.files) {
         zipFiles.push({
             name: file,
-            input: files[file].getValue()
+            input: engineState.files[file].getValue()
         });
     }
 
     const config = { objects: 'objects.gpj' };
-    if ('.gfengine' in files) {
+    if ('.gfengine' in engineState.files) {
         // simplified parsing (as compared to github-load-game.js),
         // this only grabs values needed for exporting the project
         for (const line of configText.split('\n')) {
@@ -809,7 +797,7 @@ OBJECTS:objects.gpj
     zipFiles.push({
         name: config.objects,
         // Be nice to version control and format the json
-        input: JSON.stringify({ "objects": engineSerialize.objectsList(objects) }, null, 2)
+        input: JSON.stringify({ "objects": engineSerialize.objectsList(engineState.objects) }, null, 2)
     })
 
     const blob = await downloadZip(zipFiles).blob();
@@ -862,7 +850,7 @@ document.addEventListener('keydown', e => {
 });
 
 document.querySelector('#download-button').addEventListener('click', () => {
-    const saved = engineSerialize.projectData(objects, files, engineIntegrations.getIntegrations());
+    const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
 
     var link = document.createElement("a");
     link.setAttribute('download', 'gameify_project.gpj');
@@ -876,11 +864,11 @@ document.querySelector('#download-button').addEventListener('click', () => {
 const listFiles = (data) => {
     let reloadEditors = true;
     if (!data) {
-        data = files;
+        data = engineState.files;
         reloadEditors = false;
     }
     // Clear the file list
-    if (reloadEditors) files = {};
+    if (reloadEditors) engineState.files = {};
     editorFileList.innerHTML = '';
 
     if (!data['index.html']) {
@@ -889,15 +877,15 @@ const listFiles = (data) => {
     }
     
     const setAceMode = (file) => {
-        if (file.endsWith('.js')) files[file].setMode("ace/mode/javascript");
-        else if (file.endsWith('.css')) files[file].setMode("ace/mode/css");
-        else if (file.endsWith('.html')) files[file].setMode("ace/mode/html");
+        if (file.endsWith('.js')) engineState.files[file].setMode("ace/mode/javascript");
+        else if (file.endsWith('.css')) engineState.files[file].setMode("ace/mode/css");
+        else if (file.endsWith('.html')) engineState.files[file].setMode("ace/mode/html");
     }
 
     // Load new files
     for (const file in data) {
-        if (reloadEditors || !files[file] || typeof files[file] === 'string') {
-            files[file] = ace.createEditSession(data[file]);
+        if (reloadEditors || !engineState.files[file] || typeof engineState.files[file] === 'string') {
+            engineState.files[file] = ace.createEditSession(data[file]);
             setAceMode(file);
         }
 
@@ -924,7 +912,7 @@ const listFiles = (data) => {
                 if (prev) prev.classList.remove('file-button-active');
                 button.classList.add('file-button-active');
 
-                engineIntegrations.showDiff(file, files);
+                engineIntegrations.showDiff(file, engineState.files);
             }
             button.appendChild(diffButton);
         }
@@ -936,19 +924,19 @@ const listFiles = (data) => {
             'Rename': () => {
                 let name = prompt('Enter a new name', file);
                 if (!name || name === file) return;
-                while (files[name]) {
+                while (engineState.files[name]) {
                     name = prompt('That file already exists! Enter a new name', file);
                     if (!name || name === file) return;
                 }
-                const temp = files[file];
-                delete files[file];
-                files[name] = temp;
+                const temp = engineState.files[file];
+                delete engineState.files[file];
+                engineState.files[name] = temp;
                 visualLog(`Renamed file '${file}' to '${name}'`, 'log', 'filesystem');
                 listFiles();
             },
             'Delete': () => { 
                 if (confirm('Delete ' + file + '?')) {
-                    delete files[file];
+                    delete engineState.files[file];
                     visualLog(`Deleted file '${file}'`, 'warn', 'filesystem');
                     listFiles();
                 }   
@@ -956,7 +944,7 @@ const listFiles = (data) => {
         }
 
         button.addEventListener('click', () => {
-            editor.setSession(files[file]);
+            engineState.editor.setSession(engineState.files[file]);
 
             const prev = document.querySelector('.file-button-active');
             if (prev) prev.classList.remove('file-button-active');
@@ -967,7 +955,7 @@ const listFiles = (data) => {
         editorFileList.appendChild(button);
     }
     for (const file in data) {
-        editor.setSession(files[file]);
+        engineState.editor.setSession(engineState.files[file]);
         // Set the first file as current
         break;
     }
@@ -981,17 +969,17 @@ const listFiles = (data) => {
     newFileButton.onclick = () => {
         let name = prompt('Enter a name', 'unnamed.js');
         if (!name) return;
-        while (files[name]) {
+        while (engineState.files[name]) {
             name = prompt('That file already exists! Enter a name', 'unnamed.js');
             if (!name) return;
         }
-        files[name] = ace.createEditSession(`// ${name}\n`);
+        engineState.files[name] = ace.createEditSession(`// ${name}\n`);
         setAceMode(name);
         visualLog(`Created file '${name}'`, 'log', 'filesystem');
         listFiles();
         // Make sure the new file is opened
         showWindow('editor');
-        editor.setSession(files[name]);
+        engineState.editor.setSession(engineState.files[name]);
     }
     editorFileList.appendChild(newFileButton);
 }

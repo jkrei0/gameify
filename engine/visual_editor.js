@@ -1,25 +1,26 @@
 import { gameify } from '/gameify/gameify.js';
 import { engineEvents } from './engine_events.js';
+import { engineState } from './engine_state.js';
 
 const visualLog = (...args) => engineEvents.emit('visual log', ...args);
 
 let sortedPreviewTileMaps = []
 const sortPreviewTileMaps = () => {
     sortedPreviewTileMaps = [];
-    for (const mn in objects['Tilemap']) {
+    for (const mn in engineState.objects['Tilemap']) {
         sortedPreviewTileMaps.push(mn);
     }
-    sortedPreviewTileMaps.sort((a, b) => objects['Tilemap'][a].__engine_index - objects['Tilemap'][b].__engine_index);
+    sortedPreviewTileMaps.sort((a, b) => engineState.objects['Tilemap'][a].__engine_index - engineState.objects['Tilemap'][b].__engine_index);
 
     return sortedPreviewTileMaps;
 }
 const drawTileMapsInOrder = (beforeDraw) => {
     for (let index = sortedPreviewTileMaps.length - 1; index >= 0; index--) {
         const mn = sortedPreviewTileMaps[index];
-        if (!objects['Tilemap'][mn] || objects['Tilemap'][mn].__engine_visible === false) {
+        if (!engineState.objects['Tilemap'][mn] || engineState.objects['Tilemap'][mn].__engine_visible === false) {
             continue;
         }
-        const obj = objects['Tilemap'][mn];
+        const obj = engineState.objects['Tilemap'][mn];
         if (beforeDraw) {
             beforeDraw(obj);
         }
@@ -47,7 +48,7 @@ let previewOriginalOffset = null;
 
 previewScene.onUpdate(() => {
     // Resize based on game screen size
-    const defaultScreen = Object.values(objects['Screen'])[0];
+    const defaultScreen = Object.values(engineState.objects['Screen'])[0];
     editorScreen.setSize(defaultScreen.getSize());
     editorScreen.setAntialiasing(defaultScreen.getAntialiasing());
 
@@ -65,8 +66,8 @@ previewScene.onUpdate(() => {
 });
 previewScene.onDraw(() => {
     drawTileMapsInOrder();
-    for (const name in objects['Sprite']) {
-        const obj = objects['Sprite'][name];
+    for (const name in engineState.objects['Sprite']) {
+        const obj = engineState.objects['Sprite'][name];
         const ps = obj.getParent();
         editorScreen.add(obj);
         try {
@@ -272,7 +273,7 @@ const editAnimation = (anim) => {
     visualLog(`Editing ${anim.__engine_name}.`, 'log', 'animation editor');
 
     // Update antialiasing to be consistent
-    const defaultScreen = Object.values(objects['Screen'])[0];
+    const defaultScreen = Object.values(engineState.objects['Screen'])[0];
     editorScreen.setAntialiasing(defaultScreen.getAntialiasing());
 
     const editScene = new gameify.Scene(editorScreen);
@@ -367,7 +368,7 @@ const editAnimation = (anim) => {
                 const container = document.createElement('div');
                 const input = document.createElement('select');
                 input.innerHTML = '<option value="None::None" selected disabled>None</option>';
-                engineTypes.list(objects, ['Image', 'Tileset']).forEach((name) => {
+                engineTypes.list(engineState.objects, ['Image', 'Tileset']).forEach((name) => {
                     const selectedName = property.value?.__engine_name || property.value?.tileData?.tileset?.__engine_name
                     const selected = name === selectedName || name === property.value ? 'selected' : '';
                     const shortName = name.replace('Image::', 'I::').replace('Tileset::', 'T::');
@@ -378,9 +379,9 @@ const editAnimation = (anim) => {
                     const type = v.split('::')[0];
                     const name = v.split('::')[1];
                     if (type === 'Image') {
-                        property.value = objects[type][name];
+                        property.value = engineState.objects[type][name];
                     } else if (type === 'Tileset') {
-                        const tileset = objects[type][name];
+                        const tileset = engineState.objects[type][name];
                         property.value = tileset.getTile(tilePos.value.x, tilePos.value.y)
                     }
                     updateTsPos();
@@ -637,7 +638,7 @@ const editAnimation = (anim) => {
     const previewSelector = controls.querySelector('#vi-preview-obj-select');
     // You can technically apply animations to anything, but
     // we're only supporting sprites and tilemaps for previews.
-    engineTypes.list(objects, ['Sprite', 'Tilemap']).forEach((name) => {
+    engineTypes.list(engineState.objects, ['Sprite', 'Tilemap']).forEach((name) => {
         previewSelector.innerHTML += `<option value="${name}">${name}</option>`;
     });
 
@@ -650,7 +651,7 @@ const editAnimation = (anim) => {
         const type = name.split('::')[0];
         const oName = name.split('::')[1];
         // Copy the object that we apply the preview to.
-        const obj = objects[type][oName].toJSON(oName, (v)=>v); // Simple ref function, since we're not modifying any referenced objects
+        const obj = engineState.objects[type][oName].toJSON(oName, (v)=>v); // Simple ref function, since we're not modifying any referenced objects
         previewEl = engineTypes.resolve(type).fromJSON(obj, (v)=>v);
         // Make a new animator for the new preview el
         previewAnimator = new gameify.Animator(previewEl);
@@ -793,7 +794,7 @@ const showPreviewOrderControls = () => {
             let curIndex = 0;
             for (const el of list.children) {
                 const name = el.getAttribute('data-tilemap-name');
-                objects['Tilemap'][name].__engine_index = curIndex;
+                engineState.objects['Tilemap'][name].__engine_index = curIndex;
                 curIndex++;
             }
             createList();
@@ -818,7 +819,7 @@ const showPreviewOrderControls = () => {
         const sortedMaps = sortPreviewTileMaps();;
         for (const index in sortedMaps) {
             const name = sortedMaps[index];
-            const obj = objects['Tilemap'][name];
+            const obj = engineState.objects['Tilemap'][name];
             obj.__engine_index = Number(index);
 
             const li = document.createElement('li');
@@ -849,8 +850,8 @@ const clearVisualEditor = () => {
     for (const controls of allControls) {
         controls.remove();
     }
-    for (const mn in objects['Tilemap']) {
-        objects['Tilemap'][mn].__engine_editing = false;
+    for (const mn in engineState.objects['Tilemap']) {
+        engineState.objects['Tilemap'][mn].__engine_editing = false;
     }
     engineEvents.emit('refresh objects list');
     editorScreen.setScene(previewScene);
