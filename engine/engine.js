@@ -587,6 +587,9 @@ engineFetch.setSessionFunction(() => {
 engineFetch.setLogFunction(visualLog);
 
 const saveProject = (asName) => {
+    if (!engineState.projectFilename) {
+        return;
+    }
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
     let name = asName || engineState.projectFilename;
