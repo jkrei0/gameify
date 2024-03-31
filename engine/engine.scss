@@ -49,8 +49,10 @@ $transition: 0.1s;
         width: 50%;
         max-width: 450px;
         margin: 40px 10px;
+        overflow-y: auto;
 
         background: transparent;
+        max-height: calc(100% - 40px);
 
         h3 {
             padding: 15px 20px;
