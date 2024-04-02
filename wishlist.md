@@ -12,7 +12,7 @@ Things I would like to add, roughly in order.
 
 - **Save-load tools** - Tools for saving/loading game data
 - **Visual effects** - VFX including screen shake, distortion, particles, etc
-- **Resource Management** - Better image/audio/etc management - Loading and unloading, and storeage in some way that's not dataURIs for everything.
+- **Resource Management** - Better image/audio/etc management - Loading and unloading, and storage in some way that's not dataURIs for everything.
   - **Asset management** - Image, audio, etc manager
 - **Networking** - Tools for multiplayer games
     - **Player controls** - Tools for controlling multiple players and inputs
@@ -27,4 +27,8 @@ Things I would like to add, roughly in order.
 - **Audio effects** - More advanced audio controls and effects
 - **Debug tools** - Better integrated console and debugging tools
 - ~~**Version control** - Version management and collaboration tools~~
-- 
+- **More robust git/github integration**, better diff viewer, possibly built-in version control
+- **Rework the save format** to be an array, where each object has type, name, and data properties
+  - This allows the save format to save the order of objects without __engine_index,
+  - and allows folders to be part of the save format
+  - Save format, object references, and a lot of other things will have to be updated

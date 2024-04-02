@@ -63,9 +63,13 @@ See [API.md](API.md) for api routes and docs
 
 ## Other notes
 
+- Github integration is very flimsy/unreliable. I think I broke it more while refactoring. But it really needs an overhaul, so I haven't bothered to fix it for now.
 - Styles are written in SCSS, in `engine.scss`. These should be compiled to `engine.css`, and both files should be committed.
 - The engine core is in `engine.js`, and some components have been extracted to their own files (e.g. `engine_events.js`). Please try to keep new code as modular as possible, preferrably in a new file or a relevant existing file.
-- MIGRATION TO EVENTS: I'm trying to use events, instead of global variables, using the `engineEvents` module. Instead of passing global methods/variables/objects around, try to attach an event, and use it instead. This is not complete, many things still pass globals around. If you run into old code, you're welcome to update it.
+- REFACTORING: I'm trying to move stuff out of engine.js, into other files.
+  - `engineEvents.emit/listen` can be used to call some functions. It was mostly made to ease refactoring for me, and functions that can be `export`ed should be.
+  - `engineState` contains information about the currently open project.
+  - Other functionality and utilities are mostly split into their own files.
 
 ## Embedding games
 
