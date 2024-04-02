@@ -44,7 +44,8 @@ export const engineSerialize = {
         const data = {
             objects: engineSerialize.objectsList(objects),
             integrations: integrations,
-            files: {}
+            files: {},
+            timestamp: Date.now()
         };
         for (const file in files) {
             if (!files[file].getValue) {

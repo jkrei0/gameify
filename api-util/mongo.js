@@ -159,7 +159,11 @@ export async function listGames(query) {
     return connect(async (database) => {
         const games = database.collection("games");
 
-        const result = await games.find({ username: query.username }, { projection: { _id: 0, title: 1 } }).toArray();
+        const result = await games.find(
+            { username: query.username }, 
+            { projection: { _id: 0, title: 1, "data.timestamp": 1 } }
+        ).toArray();
+        
         if (!result) return { error: 'no games found' };
 
         return { games: result };
