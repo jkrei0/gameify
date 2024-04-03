@@ -122,6 +122,10 @@ $transition: 0.1s;
             min-height: 75px;
         }
 
+        &.small .output-container {
+            height: 100px;
+        }
+
         .log-item {
             font-size: 0.95em;
             padding: 5px 10px;
@@ -636,16 +640,28 @@ $transition: 0.1s;
     }
 }
 
-.contextmenu {
+.contextmenu, .tooltip {
     position: fixed;
-    display: none;
-
     padding: 2px;
 
     color: $text;
     font-family: $font;
     background: $highlightsecondary;
     box-shadow: 0 0 2px #0008;
+
+    &.contextmenu {
+        display: none;
+    }
+
+    &.tooltip {
+        background: $faded;
+        opacity: 0;
+        padding-inline: 7px;
+        pointer-events: none;
+        font-size: 0.9rem;
+
+        transition: opacity $transition;
+    }
 
     button.list-item {
         font-family: $font;
@@ -687,6 +703,14 @@ $transition: 0.1s;
         button :is(svg, img) {
             position: relative;
             left: 2px;
+        }
+
+        button.active {
+            background: $highlight;
+        }
+
+        .squish-right {
+            margin-right: 0;
         }
     }
 

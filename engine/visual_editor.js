@@ -2,6 +2,7 @@ import { gameify } from '/gameify/gameify.js';
 import { engineEvents } from './engine_events.js';
 import { engineState } from './engine_state.js';
 import { engineTypes } from './engine_types.js';
+import { tilemapTools } from './visual_editor_tilemap_tools.js';
 
 const visualLog = (...args) => engineEvents.emit('visual log', ...args);
 
@@ -36,6 +37,38 @@ const drawTileMapsInOrder = (beforeDraw) => {
             return true;
         });
     }
+}
+
+/** Add a tooltip (similar to the title attribute), with the content of the element's aria-label.
+ * @param {HTMLElement} el - The element to add the tooltip to
+ * @param {number} [delay=500] - The delay to show the tooltip for
+ */
+const addAriaTooltip = (el, delay = 500) => {
+    const tooltip = document.createElement('span');
+    tooltip.innerHTML = el.getAttribute('aria-label');
+    tooltip.classList.add('tooltip');
+    // The aria-label already exists, so don't add this to the accessibility tree
+    tooltip.classList.add('aria-hidden', true);
+
+    el.addEventListener('mouseenter', () => {
+        document.body.appendChild(tooltip);
+        window.setTimeout(() => {
+            if (el.matches(':hover')) {
+                const box = el.getBoundingClientRect();
+                tooltip.style.top = box.bottom + 'px';
+                tooltip.style.left = box.left + 'px';
+                tooltip.style.opacity = 1;
+            }
+            
+        }, delay);
+    });
+    el.addEventListener('mouseleave', () => {
+        tooltip.style.opacity = 0;
+        // there won't be a fade-out transition,
+        // oh well. Removing this with a delay causes
+        // problems when the mouse leaves and re-enters quickly
+        tooltip.remove();
+    });
 }
 
 const editorCanvas = document.querySelector('#game-canvas');
@@ -115,14 +148,23 @@ const editTileMap = (map) => {
 
     controls.innerHTML = `
     <div class="legend">
-        <span><img src="images/mouse_left.svg">Place</span>
-        <span><img src="images/mouse_right.svg">Delete</span>
-        <span><img src="images/mouse_middle.svg">Pick</span>
-        <span><img src="images/arrows_scroll.svg">Rotate</span>
+        <span aria-label="Drag to place tiles, Control-drag to pan/move"><img src="images/mouse_left.svg">Place</span>
+        <span aria-label="Shift-drag or Right-drag to erase tiles"><img src="images/mouse_right.svg">Delete</span>
+        <span aria-label="Alt-click or Middle-click to pick tiles"><img src="images/mouse_middle.svg">Pick</span>
+        <span aria-label="Scroll to rotate the current tile."><img src="images/arrows_scroll.svg">Rotate</span>
         <button id="vi-stop-editing" class="right"><img src="images/check_done.svg">Preview</button>
         <button id="vi-switch-layout"><img src="images/tiles_layout.svg">Wrap</button>
         <button id="vi-zoom-out"><img src="images/zoom_out.svg">Smaller</button>
         <button id="vi-zoom-in"><img src="images/zoom_in.svg">Larger</button>
+    </div>
+    <div class="legend tool-selector">
+        <button class="squish-right active" data-tool="brush" aria-label="3x3 Brush: Draw/erase tiles"><img src="images/draw-point.svg">Brush</button>
+        <input  data-tool="brush" type="number" id="vi-brush-size" min="1" max="15" value="1" aria-label="Brush radius">
+        <button data-tool="line" aria-label="Line: Draw/erase lines"><img src="images/draw-line.svg">Line</button>
+        <button data-tool="rectangle" aria-label="Rectangle: Draw/erase rectangles"><img src="images/draw-grid.svg">Rectangle</button>
+
+        <button id="vi-edit-undo" aria-label="Undo up to 25 actions (Ctrl+Z)" class="right"><img src="images/undo.svg">Undo</button>
+        <button id="vi-edit-redo" aria-label="Redo your last undone action (Ctrl+Y or Ctrl+Shift+Z)"><img src="images/redo.svg">Redo</button>
     </div>
     `;
 
@@ -156,19 +198,59 @@ const editTileMap = (map) => {
         showPreviewOrderControls();
     }
 
+    let currentTool = 'brush';
+    controls.querySelectorAll('.tool-selector [data-tool]').forEach(el => {
+        el.addEventListener('click', () => {
+            controls.querySelector('.tool-selector .active').classList.remove('active');
+            el.classList.add('active');
+            currentTool = el.getAttribute('data-tool');
+        });
+    });
+
+    let undoFrames = [map.exportMapData()];
+    let redoFrames = [];
+    const undo = () => {
+        if (undoFrames.length > 1) {
+            redoFrames.push(undoFrames.pop());
+            map.clear();
+            map.loadMapData(undoFrames[undoFrames.length - 1]);
+        } else {
+            visualLog('Nothing to undo', 'warn', 'tilemap editor');
+        }
+    }
+    const redo = () => {
+        if (redoFrames.length > 0) {
+            undoFrames.push(redoFrames.pop());
+            map.clear();
+            map.loadMapData(undoFrames[undoFrames.length - 1]);
+        } else {
+            visualLog('Nothing to redo', 'warn', 'tilemap editor');
+        }
+    }
+    controls.querySelector('#vi-edit-undo').addEventListener('click', () => {
+        undo();
+    });
+    controls.querySelector('#vi-edit-redo').addEventListener('click', () => {
+        redo();
+    });
+
     controls.appendChild(tileList);
     editorCanvas.parentElement.after(controls);
+
+    controls.querySelectorAll('[aria-label]').forEach(el => addAriaTooltip(el));
 
     let selTile = {x: 0, y: 0, r: 0};
     let dragStart = false;
     let originalOffset = null;
+    let previewTilePositions = [];
 
     for (let ty = 0; ty < tileset.texture.height/tileset.theight; ty++) {
         for (let tx = 0; tx < tileset.texture.width/tileset.twidth; tx++) {
             const tileCanvas = document.createElement('canvas');
             const context = tileCanvas.getContext('2d');
 
-            tileCanvas.setAttribute('title', `Tile ${tx}, ${ty}`)
+            tileCanvas.setAttribute('aria-label', `Tile ${tx}, ${ty}`);
+            addAriaTooltip(tileCanvas);
             tileCanvas.classList.add('tile');
             tileCanvas.classList.add(`tile-${tx}-${ty}`);
             if (tx === 0 && ty === 0) {
@@ -198,17 +280,83 @@ const editTileMap = (map) => {
     rowBreakEnd.classList.add('row-break-end');
     tileList.appendChild(rowBreakEnd);
 
+    let lastMouseAction = 'draw';
+
     editScene.onUpdate(() => {
-        const position = map.screenToMap(editorScreen.mouse.worldPosition());
+        const position = map.worldToMap(editorScreen.mouse.worldPosition());
+        let mouseAction = 'none';
         if (editorScreen.mouse.buttonIsPressed("left")) {
-            map.place(selTile.x, selTile.y, position.x, position.y, selTile.r);
-
+            mouseAction = 'draw';
+            
+            if (editorScreen.keyboard.keyIsPressed("Shift")) {
+                mouseAction = 'delete';
+            } else if (editorScreen.keyboard.keyIsPressed("Control")) {
+                mouseAction = 'move';
+            } else if (editorScreen.keyboard.keyIsPressed("Alt")) {
+                mouseAction = 'pick';
+            }
         } else if (editorScreen.mouse.buttonIsPressed("right")) {
-            map.remove(position.x, position.y);
-
+            mouseAction = 'delete';
+        } else if (editorScreen.mouse.buttonIsPressed("middle")) {
+            mouseAction = 'move,pick';
         }
 
-        if (editorScreen.mouse.buttonIsPressed("middle")) {
+        if ((mouseAction === 'draw' || mouseAction === 'delete') && mouseAction !== lastMouseAction) {
+            undoFrames.push(map.exportMapData());
+            if (undoFrames.length > 25) {
+                undoFrames.shift();
+            }
+            redoFrames = [];
+        }
+
+        // keyboard undo/redo
+        if (editorScreen.keyboard.keyIsPressed("Control") && editorScreen.keyboard.keyWasJustPressed("Z")) {
+            undo();
+        } else if (
+            ( editorScreen.keyboard.keyIsPressed("Control")     // ctrl+y
+                && editorScreen.keyboard.keyWasJustPressed("Y")
+            ) || (editorScreen.keyboard.keyIsPressed("Control") // ctrl+shift+z
+                && editorScreen.keyboard.keyWasJustPressed("Shift")
+                && editorScreen.keyboard.keyWasJustPressed("Z")
+        )) {
+            redo();
+        }
+
+        // Clear last frame's preview
+        previewTilePositions = [];
+
+        // Change what the tool does based on the mouse action
+        let applyAction = undefined;
+        let applyLastAction = undefined;
+        const applyPreview = (placeX, placeY) => previewTilePositions.push(
+            new gameify.Vector2d(placeX*map.twidth, placeY*map.theight)
+        );
+        const applyDraw = (placeX, placeY) => {
+            applyPreview(placeX, placeY);
+            map.place(selTile.x, selTile.y, placeX, placeY, selTile.r);
+        }
+        const applyDelete = (placeX, placeY) => {
+            applyPreview(placeX, placeY);
+            map.remove(placeX, placeY);
+        }
+        if (lastMouseAction === 'draw') {
+            applyLastAction = applyDraw;
+        } else if (lastMouseAction === 'delete') {
+            applyLastAction = applyDelete;
+        } else {
+            applyLastAction = applyPreview;
+        }
+        if (mouseAction === 'draw') {
+            applyAction = applyDraw;
+        } else if (mouseAction === 'delete') {
+            applyAction = applyDelete;
+        } else {
+            applyAction = applyPreview;
+        }
+        tilemapTools[currentTool](position, mouseAction, applyAction, applyLastAction, applyPreview);
+
+
+        if (mouseAction.includes('pick')) {
             // Pick tile
             const tile = map.get(position.x, position.y);
             if (tile && !dragStart) {
@@ -219,7 +367,9 @@ const editTileMap = (map) => {
                 tileList.querySelector(`.tile-${tile.source.x}-${tile.source.y}`).classList.add("selected");
                 tileList.querySelector(`.tile-${tile.source.x}-${tile.source.y}`).scrollIntoView();
             }
+        }
 
+        if (mouseAction.includes('move')) {
             // Drag map
             const mousePos = editorScreen.mouse.getPosition();
             if (!dragStart) {
@@ -232,17 +382,15 @@ const editTileMap = (map) => {
             dragStart = false;
         }
 
-
         if (editorScreen.mouse.eventJustHappened("wheelup")) {
             selTile.r -= 45;
         } else if (editorScreen.mouse.eventJustHappened("wheeldown")) {
             selTile.r += 45;
         }
+
+        lastMouseAction = mouseAction;
     });
     editScene.onDraw(() => {
-        // Convert to map and back again to snap to map tiles
-        const position = map.mapToScreen(map.screenToMap(editorScreen.mouse.worldPosition()));
-
         const previewTile = map.getTileset().getTile(selTile.x, selTile.y);
         
         editorScreen.clear();
@@ -258,11 +406,12 @@ const editTileMap = (map) => {
         });
 
         ctx.globalAlpha = 0.75;
-        previewTile.draw(ctx,
-                        position.x, position.y,
-                        map.twidth, map.theight,
-                        selTile.r, /*ignoreOpacity=*/true);
-
+        for (const tilePos of previewTilePositions) {
+            previewTile.draw(ctx,
+                            tilePos.x, tilePos.y,
+                            map.twidth, map.theight,
+                            selTile.r, /*ignoreOpacity=*/true);
+        }
         ctx.globalAlpha = 1;
     });
 }

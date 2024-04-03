@@ -93,6 +93,9 @@ body, html {
   max-height: 250px;
   min-height: 75px;
 }
+.window .console.small .output-container {
+  height: 100px;
+}
 .window .console .log-item {
   font-size: 0.95em;
   padding: 5px 10px;
@@ -523,9 +526,8 @@ body, html {
   margin-left: auto;
 }
 
-.contextmenu {
+.contextmenu, .tooltip {
   position: fixed;
-  display: none;
   padding: 2px;
   color: white;
   font-family: Poppins, sans-serif;
@@ -533,13 +535,24 @@ body, html {
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5333333333);
   z-index: 99;
 }
-.contextmenu button.list-item {
+.contextmenu.contextmenu, .tooltip.contextmenu {
+  display: none;
+}
+.contextmenu.tooltip, .tooltip.tooltip {
+  background: #3a3d4f;
+  opacity: 0;
+  padding-inline: 7px;
+  pointer-events: none;
+  font-size: 0.9rem;
+  transition: opacity 0.1s;
+}
+.contextmenu button.list-item, .tooltip button.list-item {
   font-family: Poppins, sans-serif;
   font-size: 0.95rem;
   min-width: 120px;
   margin: 0;
 }
-.contextmenu button.list-item:hover {
+.contextmenu button.list-item:hover, .tooltip button.list-item:hover {
   background: transparent;
 }
 
@@ -566,6 +579,12 @@ body, html {
 .editor-controls .legend button :is(svg, img) {
   position: relative;
   left: 2px;
+}
+.editor-controls .legend button.active {
+  background: #648;
+}
+.editor-controls .legend .squish-right {
+  margin-right: 0;
 }
 .editor-controls.visual {
   overflow-x: auto;
