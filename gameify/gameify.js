@@ -66,6 +66,13 @@ export let gameify = {
         this.pressedKeys = [];
         // A list of keys that were just pressed. Cleared after a few updates or at the end of an update in which it's queried for.
         this.justPressedKeys = [];
+        // Control, shift, alt, meta
+        this.modifierKeys = {
+            Control: false,
+            Shift: false,
+            Alt: false,
+            Meta: false
+        }
 
         /** Makes pressed keys nicer, for simpler queries (KeyH --> H) 
          * @package
@@ -91,6 +98,7 @@ export let gameify = {
          * @private
          */
         this.onKeyDown = (event) => {
+            this.checkEventModifierKeys(event);
             let key = event.code;
             // If the key is already in the array, don't add it again.
             // This is normal, the OS might fire the keydown event repeatedly for held keys
@@ -119,12 +127,23 @@ export let gameify = {
          */
         this.onKeyUp = (event) => {
             event.preventDefault();
+            this.checkEventModifierKeys(event);
             let key = event.code;
             // Remove the keys from the pressedkeys array
             this.pressedKeys.splice(this.pressedKeys.indexOf(key), 2);
 
             // Add keys to just pressed list
             this.justPressedKeys.push([0, key, this.makeKeyNicer(key)]);
+        }
+
+        /** Called when any mouse event happens, to grab ctrl,shift,alt keys
+         * @private
+         */
+        this.checkEventModifierKeys = (event) => {
+            this.modifierKeys.Control = event.ctrlKey;
+            this.modifierKeys.Shift = event.shiftKey;
+            this.modifierKeys.Alt = event.altKey;
+            this.modifierKeys.Meta = event.metaKey;
         }
 
         /** Check if a key is currently pressed down
@@ -137,6 +156,11 @@ export let gameify = {
          * }
         */
         this.keyIsPressed = (key) => {
+            // The modifier keys list is more accurate (updated on any event), so check it
+            if (this.modifierKeys[key]) {
+                return true;
+            }
+            // then check the rest of the list
             return (this.pressedKeys.indexOf(key) >= 0);
         }
 
@@ -212,6 +236,13 @@ export let gameify = {
             });
             this.captureScope.addEventListener("keydown", this.onKeyDown);
             this.captureScope.addEventListener("keyup", this.onKeyUp);
+
+            this.captureScope.addEventListener("mousedown", this.checkEventModifierKeys);
+            this.captureScope.addEventListener("mouseup", this.checkEventModifierKeys);
+            this.captureScope.addEventListener("mouseout", this.checkEventModifierKeys);
+            this.captureScope.addEventListener("mousemove", this.checkEventModifierKeys);
+            this.captureScope.addEventListener("wheel", this.checkEventModifierKeys);
+            this.captureScope.addEventListener("contextmenu", this.checkEventModifierKeys);
         }
         /** Destructs the event manager (clears events) 
          * @package
@@ -219,6 +250,13 @@ export let gameify = {
         this.destruct = () => {
             this.captureScope.removeEventListener("keydown", this.onkeyDown);
             this.captureScope.removeEventListener("keyup", this.onKeyUp);
+
+            this.captureScope.removeEventListener("mousedown", this.checkEventModifierKeys);
+            this.captureScope.removeEventListener("mouseup", this.checkEventModifierKeys);
+            this.captureScope.removeEventListener("mouseout", this.checkEventModifierKeys);
+            this.captureScope.removeEventListener("mousemove", this.checkEventModifierKeys);
+            this.captureScope.removeEventListener("wheel", this.checkEventModifierKeys);
+            this.captureScope.removeEventListener("contextmenu", this.checkEventModifierKeys);
         }
         /** Changes the scope that the KeyboardInputManager looks at
          * @arg {HTMLElement} scope - What parts of the screen the KeyboardEventManager looks for.
