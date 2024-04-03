@@ -210,7 +210,7 @@ const editTileMap = (map) => {
     let undoFrames = [map.exportMapData()];
     let redoFrames = [];
     const undo = () => {
-        if (undoFrames.length > 1) {
+        if (undoFrames.length > 0) {
             redoFrames.push(undoFrames.pop());
             map.clear();
             map.loadMapData(undoFrames[undoFrames.length - 1]);
