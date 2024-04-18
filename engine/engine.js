@@ -1,5 +1,3 @@
-import { game_template } from '/engine/project/template_scribble_dungeon.js';
-
 import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js";
 
 import { engineSerialize } from '/engine/serialize.js';
@@ -42,6 +40,12 @@ engineEvents.listen('visual log', (_event, ...args) => {
 });
 const showWindow = (t) => {
     stopGame();
+
+    if (!engineState.projectFilename) {
+        // No project is open, don't do anything
+        return false;
+    }
+
     document.querySelector(`.window.visible`).classList.remove('visible');
     document.querySelector(`.window.${t}`).classList.add('visible');
 
@@ -54,6 +58,8 @@ const showWindow = (t) => {
         // by forcing ace to resize every time the editor is shown
         engineState.editor.resize(true);
     }
+
+    return true;
 };
 engineEvents.listen('show window', (_event, ...args) => {
     showWindow(...args);
@@ -515,7 +521,7 @@ window.addEventListener('message', (event) => {
 
         const sourceFile = sanitize(fileName.replace(/.* injectedScript.*/, '(main script)')) // replace injectedScript with project script
                         .replace(/_gamefiles\/\d{1,5}\/_out\.js/, '(_out.js)')
-                        .replace(/_gamefiles\/\d{1,5}\/+/, sanitize(currentProjectFilename || 'Template Project') + '/')
+                        .replace(/_gamefiles\/\d{1,5}\/+/, sanitize(engineState.projectFilename || 'Template Project') + '/')
 
         consoleOut.innerHTML += `<span class="log-item ${sanitize(event.data.logType)}">
             <span class="short">${sanitize(event.data.logType.toUpperCase())}</span>
@@ -548,7 +554,10 @@ const stopGame = () => {
 }
 const runGame = () => {
     engineEvents.emit('clear visual editor');
-    showWindow('preview');
+
+    // Try to show the window, only start the game if it did show
+    if (!showWindow('preview')) return;
+
     gameFrame.src = /* REPLACE=embedURL */'http://localhost:3001'/* END */+'/embed.html';
 }
 
@@ -568,7 +577,6 @@ document.querySelector('#visual-button').addEventListener('click', () => {
     showWindow('visual');
 });
 
-let currentProjectFilename = undefined;
 
 /* Save and load */
 
@@ -581,13 +589,19 @@ engineFetch.setLogFunction(visualLog);
 const saveProject = (asName) => {
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
-    const name = asName || prompt('Name this save', currentProjectFilename)?.replaceAll(',', '_');
+    let name = asName || engineState.projectFilename;
+    if (engineState.projectFilename.startsWith('(template)')) {
+        name = prompt('Name this save')?.replaceAll(',', '_')
+    } else if (asName === false) {
+        name = prompt('Name this save', engineState.projectFilename)?.replaceAll(',', '_')
+    }
+
     if (!name) {
         return;
     }
 
     let overwrite = false;
-    if (savedList.includes(name) && name !== currentProjectFilename) {
+    if (savedList.includes(name) && name !== engineState.projectFilename) {
         if (!confirm(`Overwrite save '${name}'?`)) return;
         overwrite = true;
     } else if (savedList.includes(name)) {
@@ -643,7 +657,7 @@ const saveProject = (asName) => {
     }
     listSaves();
 
-    currentProjectFilename = name;
+    engineState.projectFilename = name;
 
     return name;
 }
@@ -684,7 +698,7 @@ const exportProject = async () => {
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + "_export.zip";
+    link.download = engineState.sanitizedFilename() + "_export.zip";
     link.click();
     link.remove();
     URL.revokeObjectURL(link.href);
@@ -732,13 +746,13 @@ OBJECTS:objects.gpj
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + "_source.zip";
+    link.download = engineState.sanitizedFilename() + "_source.zip";
     link.click();
     link.remove();
     URL.revokeObjectURL(link.href);
 }
 
-document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
+document.querySelector('#save-button').addEventListener('click', () => { saveProject(false) });
 document.querySelector('#github-push-button').addEventListener('click', () => { githubIntegration.pushProject() });
 document.querySelector('#github-diff-button').addEventListener('click', () => { githubIntegration.diffProject() });
 document.querySelector('#export-game-button').addEventListener('click', () => { exportProject() });
@@ -748,7 +762,7 @@ document.addEventListener('keydown', e => {
         // Ctrl + S
         // Save project
         e.preventDefault();
-        saveProject(currentProjectFilename);
+        saveProject();
     } else if (e.ctrlKey && !e.shiftKey && e.key === 'Enter') {
         // Ctrl + Enter
         // Run game
@@ -781,7 +795,7 @@ document.querySelector('#download-button').addEventListener('click', () => {
     const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
 
     var link = document.createElement("a");
-    link.setAttribute('download', 'gameify_project.gpj');
+    link.setAttribute('download',  engineState.sanitizedFilename() + '.gpj');
     link.href = URL.createObjectURL(new Blob([JSON.stringify(saved)]));
     document.body.appendChild(link);
     link.click();
@@ -789,7 +803,11 @@ document.querySelector('#download-button').addEventListener('click', () => {
 
 });
 
-const listFiles = (data) => {
+const fetchTemplate = async (name) => {
+    return await fetch(`/engine/templates/${name}.gpj`).then(engineFetch.toJson);
+}
+
+const listFiles = async (data) => {
     let reloadEditors = true;
     if (!data) {
         data = engineState.files;
@@ -800,7 +818,7 @@ const listFiles = (data) => {
     editorFileList.innerHTML = '';
 
     if (!data['index.html']) {
-        data['index.html'] = game_template.files['index.html'];
+        data['index.html'] = (await fetchTemplate('scribble_dungeon')).files['index.html'];
         visualLog('Index.html not found, using index.html from template', 'warn', 'filesystem');
     }
     
@@ -913,6 +931,11 @@ const listFiles = (data) => {
 }
 
 const openProject = (data) => {
+    // Sidebar is hidden before a project is loaded
+    if (document.querySelector('.sidebar.hidden')) {
+        document.querySelector('.sidebar').classList.remove('hidden');
+    }
+
     engineIntegrations.setIntegrations(data.integrations);
     console.log(data);
     if (data.integrations?.github) {
@@ -931,7 +954,9 @@ const openProject = (data) => {
     engineEvents.emit('show visual editor preview');
     showWindow('visual');
 
-    visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'log', 'project');
+    visualLog(`Loaded '${engineState.projectFilename || 'Template Project'}'`, 'log', 'project');
+
+    return true;
 }
 
 const deleteCloudSave = (save) => {
@@ -1018,7 +1043,7 @@ const listSaves = () => {
                             return;
                         }
 
-                        currentProjectFilename = name;
+                        engineState.projectFilename = name;
                         openProject(result.data);
                         visualLog(`Loaded cloud save '${name}'`, 'info', 'cloud save');
                     });
@@ -1039,7 +1064,7 @@ const listSaves = () => {
 
                 listElem.prepend(button);
                 button.__engine_menu = {
-                    'Save': () => {
+                    'Overwrite': () => {
                         saveProject(name);
                     },
                     'Load': () => {
@@ -1080,7 +1105,7 @@ const listSaves = () => {
         button.onclick = () => {
             const loaded = localStorage.getItem('savedObjects:' + name);
             if (!loaded) return;
-            currentProjectFilename = name;
+            engineState.projectFilename = name;
             openProject(JSON.parse(loaded));
 
             visualLog(`Loaded save '${name}'`, 'info', 'local save');
@@ -1107,7 +1132,7 @@ const listSaves = () => {
         listElem.appendChild(button);
 
         button.__engine_menu = {
-            'Save': () => {
+            'Overwrite': () => {
                 saveProject(name);
             },
             'Load': () => {
@@ -1137,36 +1162,31 @@ const listSaves = () => {
             }
         }
     }
-
-    // upload files
-
-    const label = document.createElement('span');
-    label.classList.add('list-item');
-    label.innerText = 'Upload';
-
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', '.gpj');
-    input.onchange = (event) => {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = (event) => {
-            const fileContents = event.target.result;
-            visualLog(`Loaded project file '${file.name}'`, 'info', 'local save');
-            currentProjectFilename = file.name;
-            openProject(JSON.parse(fileContents));
-        };
-    }
-    label.appendChild(input);
-
-    listElem.appendChild(label);
 }
 document.querySelector('#refresh-saves').addEventListener('click', listSaves);
 listSaves();
 
-visualLog('Loaded template project', 'debug', 'engine');
-openProject(game_template);
+document.querySelector('#show-load-window').addEventListener('click', ()=>showWindow('save-load'));
+document.querySelector('#upload-gpj-input').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = (event) => {
+        const fileContents = event.target.result;
+        visualLog(`Loaded project file '${file.name}'`, 'info', 'local save');
+        engineState.projectFilename = file.name;
+        openProject(JSON.parse(fileContents));
+    };
+});
+
+document.querySelectorAll('button.template').forEach((button) => {
+    button.addEventListener('click', async (event) => {
+        const name = button.getAttribute('data-template');
+        engineState.projectFilename = '(template) ' + name;
+        openProject(await fetchTemplate(name));
+        visualLog(`Loaded template '${name}'`, 'info', 'local save');
+    });
+});
 
 // Load project from hash
 const loadFromHash = () => {
@@ -1179,10 +1199,10 @@ const loadFromHash = () => {
         visualLog(`Loading 'github:${repo}' ...`, 'info', 'github progress');
 
         githubIntegration.loadRepo(repo, (result) => {
-            currentProjectFilename = 'github:' + repoName;
+            engineState.projectFilename = 'github:' + repoName;
             openProject(result.data);
             visualLog(`Loaded github repository: '${repo}'`, 'info', 'github');
-        });
+        }, () => {});
 
     } else {
         // load from gameify cloud
@@ -1207,7 +1227,7 @@ const loadFromHash = () => {
                 return;
             }
     
-            currentProjectFilename = game;
+            engineState.projectFilename = game;
             openProject(result.data);
             visualLog(`Loaded cloud save '${game}'`, 'info', 'cloud save');
         });

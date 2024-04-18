@@ -1,4 +1,4 @@
-export let game_template = {
+{
     "objects": {
         "None": {},
         "Screen": {
@@ -228,7 +228,7 @@ export let game_template = {
                 "image": {
                     "parent": "Tileset::Dungeon Tiles",
                     "position": {
-                        "x": "6",
+                        "x": "4",
                         "y": "8"
                     }
                 },

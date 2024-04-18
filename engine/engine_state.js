@@ -11,6 +11,11 @@ export const engineState = {
     // Array of folders currently (visually) opened/expanded
     // so the objects list doesn't jump around when it's refreshed
     openFolders: [],
+    // The name of the open project
+    projectFilename: undefined,
+    sanitizedFilename: () => {
+        return (engineState.projectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._ ()]/g, '_')
+    }
 }
 
 engineState.editor.setTheme("ace/theme/dracula");

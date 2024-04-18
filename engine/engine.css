@@ -17,6 +17,27 @@ body, html {
   display: flex;
   flex-direction: row;
   flex-grow: 1;
+  justify-content: center;
+  max-height: 100%;
+}
+.container > .editor-controls {
+  width: 50%;
+  max-width: 450px;
+  margin: 40px 10px;
+  background: transparent;
+}
+.container > .editor-controls h3 {
+  padding: 15px 20px;
+}
+.container > .editor-controls .list {
+  height: unset;
+  resize: none;
+  flex-grow: 1;
+  padding: 15px;
+  padding-top: 0;
+  max-height: calc(100% - 60px);
+  overflow-y: auto;
+  background: #335;
 }
 
 .window:not(.visible) {
@@ -223,12 +244,19 @@ body, html {
   color: white;
   background: #335;
 }
-.sidebar h3 {
+.sidebar.hidden {
+  display: none;
+}
+
+h3 {
+  font-family: Poppins, sans-serif;
+  color: white;
+  background: #335;
   margin: 0;
   padding: 10px;
   font-size: 1.25rem;
 }
-.sidebar h3 button {
+h3 button {
   float: right;
   border: none;
   background: #448;
@@ -239,10 +267,10 @@ body, html {
   font-family: Poppins, sans-serif;
   transition: 0.1s;
 }
-.sidebar h3 button:hover {
+h3 button:hover {
   background: #648;
 }
-.sidebar h3 button:not(:first-of-type) {
+h3 button:not(:first-of-type) {
   margin-right: 5px;
 }
 
@@ -475,7 +503,7 @@ body, html {
   background: #648;
 }
 
-.list .list-item > :is(button, input, select), .editor-controls > :is(button, input, select), .editor-controls * > :is(button, input, select) {
+.list .list-item > :is(button, input, select, label, a), .editor-controls > :is(button, input, select, label, a), .editor-controls * > :is(button, input, select, label, a) {
   color: white;
   background: #282a36;
   border: none;
@@ -485,44 +513,68 @@ body, html {
   cursor: pointer;
   transition: 0.1s;
 }
-.list .list-item > :is(button, input, select):not(:last-child), .editor-controls > :is(button, input, select):not(:last-child), .editor-controls * > :is(button, input, select):not(:last-child) {
+.list .list-item > :is(button, input, select, label, a):not(:last-child), .editor-controls > :is(button, input, select, label, a):not(:last-child), .editor-controls * > :is(button, input, select, label, a):not(:last-child) {
   margin-right: 5px;
 }
-.list .list-item > :is(button, input, select).icon-button, .editor-controls > :is(button, input, select).icon-button, .editor-controls * > :is(button, input, select).icon-button {
+.list .list-item > :is(button, input, select, label, a).icon-button, .editor-controls > :is(button, input, select, label, a).icon-button, .editor-controls * > :is(button, input, select, label, a).icon-button {
   padding: 5px;
 }
-.list .list-item > :is(button, input, select).icon-button svg, .editor-controls > :is(button, input, select).icon-button svg, .editor-controls * > :is(button, input, select).icon-button svg {
+.list .list-item > :is(button, input, select, label, a).icon-button svg, .editor-controls > :is(button, input, select, label, a).icon-button svg, .editor-controls * > :is(button, input, select, label, a).icon-button svg {
   margin-inline: 3px;
 }
-.list .list-item > :is(button, input, select):hover, .editor-controls > :is(button, input, select):hover, .editor-controls * > :is(button, input, select):hover {
+.list .list-item > :is(button, input, select, label, a):hover, .editor-controls > :is(button, input, select, label, a):hover, .editor-controls * > :is(button, input, select, label, a):hover {
   background: #3a3d4f;
 }
-.list .list-item > :is(button, input, select):is(input, select), .editor-controls > :is(button, input, select):is(input, select), .editor-controls * > :is(button, input, select):is(input, select) {
+.list .list-item > :is(button, input, select, label, a):is(a), .editor-controls > :is(button, input, select, label, a):is(a), .editor-controls * > :is(button, input, select, label, a):is(a) {
+  text-decoration: none;
+}
+.list .list-item > :is(button, input, select, label, a):is(input, select), .editor-controls > :is(button, input, select, label, a):is(input, select), .editor-controls * > :is(button, input, select, label, a):is(input, select) {
   max-width: 140px;
   padding: 5px;
 }
-.list .list-item > :is(button, input, select):is(input, select):focus, .editor-controls > :is(button, input, select):is(input, select):focus, .editor-controls * > :is(button, input, select):is(input, select):focus {
+.list .list-item > :is(button, input, select, label, a):is(input, select):focus, .editor-controls > :is(button, input, select, label, a):is(input, select):focus, .editor-controls * > :is(button, input, select, label, a):is(input, select):focus {
   outline: 2px solid white;
 }
-.list .list-item > :is(button, input, select)[type=text], .editor-controls > :is(button, input, select)[type=text], .editor-controls * > :is(button, input, select)[type=text] {
+.list .list-item > :is(button, input, select, label, a)[type=text], .editor-controls > :is(button, input, select, label, a)[type=text], .editor-controls * > :is(button, input, select, label, a)[type=text] {
   cursor: text;
 }
-.list .list-item > :is(button, input, select)[type=number], .editor-controls > :is(button, input, select)[type=number], .editor-controls * > :is(button, input, select)[type=number] {
+.list .list-item > :is(button, input, select, label, a)[type=number], .editor-controls > :is(button, input, select, label, a)[type=number], .editor-controls * > :is(button, input, select, label, a)[type=number] {
   max-width: 70px;
 }
-.list .list-item > :is(button, input, select)[type=file], .editor-controls > :is(button, input, select)[type=file], .editor-controls * > :is(button, input, select)[type=file] {
+.list .list-item > :is(button, input, select, label, a)[type=file], .editor-controls > :is(button, input, select, label, a)[type=file], .editor-controls * > :is(button, input, select, label, a)[type=file] {
+  position: relative;
   max-width: 180px;
   cursor: pointer;
   padding: 0px;
   padding-right: 7px;
 }
-.list .list-item > :is(button, input, select)[type=file]::file-selector-button, .editor-controls > :is(button, input, select)[type=file]::file-selector-button, .editor-controls * > :is(button, input, select)[type=file]::file-selector-button {
+.list .list-item > :is(button, input, select, label, a)[type=file]::file-selector-button, .editor-controls > :is(button, input, select, label, a)[type=file]::file-selector-button, .editor-controls * > :is(button, input, select, label, a)[type=file]::file-selector-button {
   background: #282a36;
   padding: 5px 7px;
   border: none;
   color: #ebe;
 }
-.list .list-item > :is(button, input, select):first-child, .list .list-item > :is(button, input, select).right, .editor-controls > :is(button, input, select):first-child, .editor-controls > :is(button, input, select).right, .editor-controls * > :is(button, input, select):first-child, .editor-controls * > :is(button, input, select).right {
+.list .list-item > :is(button, input, select, label, a).for-file-input, .editor-controls > :is(button, input, select, label, a).for-file-input, .editor-controls * > :is(button, input, select, label, a).for-file-input {
+  position: relative;
+  width: 200px;
+  padding: 10px;
+  text-align: center;
+}
+.list .list-item > :is(button, input, select, label, a).for-file-input svg, .editor-controls > :is(button, input, select, label, a).for-file-input svg, .editor-controls * > :is(button, input, select, label, a).for-file-input svg {
+  display: block;
+  height: 20px;
+  width: 100%;
+}
+.list .list-item > :is(button, input, select, label, a).for-file-input > input, .editor-controls > :is(button, input, select, label, a).for-file-input > input, .editor-controls * > :is(button, input, select, label, a).for-file-input > input {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+.list .list-item > :is(button, input, select, label, a):first-child, .list .list-item > :is(button, input, select, label, a).right, .editor-controls > :is(button, input, select, label, a):first-child, .editor-controls > :is(button, input, select, label, a).right, .editor-controls * > :is(button, input, select, label, a):first-child, .editor-controls * > :is(button, input, select, label, a).right {
   margin-left: auto;
 }
 
@@ -734,6 +786,18 @@ body, html {
 }
 .editor-controls input:hover, .editor-controls button:hover, .editor-controls select:hover {
   background: #648;
+}
+.editor-controls input.template, .editor-controls button.template, .editor-controls select.template {
+  box-sizing: border-box;
+  width: calc(50% - 4px);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+.editor-controls input.template img, .editor-controls input.template svg, .editor-controls button.template img, .editor-controls button.template svg, .editor-controls select.template img, .editor-controls select.template svg {
+  width: 100%;
+  height: unset;
+  margin-bottom: 5px;
 }
 .editor-controls span, .editor-controls button, .editor-controls input, .editor-controls select {
   border: none;
