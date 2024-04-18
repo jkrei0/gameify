@@ -26,7 +26,9 @@ body, html {
   width: 50%;
   max-width: 450px;
   margin: 40px 10px;
+  overflow-y: auto;
   background: transparent;
+  max-height: calc(100% - 40px);
 }
 .container > .editor-controls h3 {
   padding: 15px 20px;
