@@ -17,8 +17,10 @@ body, html {
   display: flex;
   flex-direction: row;
   flex-grow: 1;
-  justify-content: center;
   max-height: 100%;
+}
+.container.inner {
+  justify-content: center;
 }
 .container > .editor-controls {
   width: 50%;
@@ -577,6 +579,9 @@ h3 button:not(:first-of-type) {
 .list .list-item > :is(button, input, select, label, a):first-child, .list .list-item > :is(button, input, select, label, a).right, .editor-controls > :is(button, input, select, label, a):first-child, .editor-controls > :is(button, input, select, label, a).right, .editor-controls * > :is(button, input, select, label, a):first-child, .editor-controls * > :is(button, input, select, label, a).right {
   margin-left: auto;
 }
+.list .list-item > :is(button, input, select, label, a):first-child.centered, .list .list-item > :is(button, input, select, label, a).right.centered, .editor-controls > :is(button, input, select, label, a):first-child.centered, .editor-controls > :is(button, input, select, label, a).right.centered, .editor-controls * > :is(button, input, select, label, a):first-child.centered, .editor-controls * > :is(button, input, select, label, a).right.centered {
+  margin-right: auto;
+}
 
 .contextmenu, .tooltip {
   position: fixed;
@@ -790,13 +795,16 @@ h3 button:not(:first-of-type) {
 .editor-controls input.template, .editor-controls button.template, .editor-controls select.template {
   box-sizing: border-box;
   width: calc(50% - 4px);
+  min-width: 160px;
   display: flex;
   flex-direction: column;
   margin: 0;
 }
 .editor-controls input.template img, .editor-controls input.template svg, .editor-controls button.template img, .editor-controls button.template svg, .editor-controls select.template img, .editor-controls select.template svg {
-  width: 100%;
+  max-width: 100%;
+  max-height: 125px;
   height: unset;
+  padding: 5px;
   margin-bottom: 5px;
 }
 .editor-controls span, .editor-controls button, .editor-controls input, .editor-controls select {
