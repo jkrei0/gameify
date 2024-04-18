@@ -32,6 +32,8 @@ $font: Poppins, sans-serif;
 $labeltext: Lato, sans-serif;
 $monospace: 'Roboto Mono';
 
+$warn: #ff8;
+
 $transition: 0.1s;
 
 .container {
@@ -201,7 +203,7 @@ $transition: 0.1s;
                 color: #bbf;
             }
             &.warn .message {
-                color: #ff8;
+                color: $warn;
             }
             &.debug .message {
                 color: #8f8;
@@ -445,6 +447,13 @@ h3 {
             height: 1em;
             margin-left: 3px;
             margin-right: 12px;
+
+            &.warn {
+                color: $warn;
+            }
+            &.check {
+                color: #8f8;
+            }
         }
 
         a {
@@ -618,7 +627,8 @@ h3 {
     }
 }
 
-.list .list-item, .editor-controls, .editor-controls * {
+.list .list-item, .editor-controls, .editor-controls *,
+.popup-content, .popup-content * {
     & > :is(button, input, select, label, a) {
 
         &:not(:last-child) {
@@ -750,6 +760,77 @@ h3 {
     }
 
     z-index: 99;
+}
+
+.popup {
+    position: fixed;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+
+    z-index: 99;
+    background: #0002;
+    backdrop-filter: blur(1px);
+
+    &.visible {
+        display: flex;
+    }
+
+    .popup-content {
+        color: $text;
+        font-family: $labeltext;
+        background: $secondary;
+        box-shadow: 2px 2px 8px #0008;
+
+        min-width: 250px;
+        max-width: 400px;
+
+        display: flex;
+        flex-direction: column;
+        padding: 15px 25px;
+
+        p, input, .button-row, h3 {
+            margin-block: 7px;
+        }
+
+        p {
+            font-size: 1.1em;
+        }
+
+        input, select {
+            font-size: 1em;
+            padding: 7px;
+            width: 100%;
+            max-width: unset;
+        }
+
+        .button-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            gap: 5px;
+
+            button:hover {
+                background: $faded;
+            }
+            .secondary {
+                background: transparent;
+
+                &:hover {
+                    background: $highlight;
+                }
+            }
+        }
+
+        h3 {
+            padding: 0;
+            background: transparent;
+        }
+    }
 }
 
 .editor-controls {
