@@ -845,6 +845,8 @@ h3 button:not(:first-of-type) {
 }
 .editor-controls .tile-list .row-break {
   width: 100%;
+  margin: 0;
+  padding: 0;
 }
 .editor-controls .tile-list .row-break.no-break {
   display: none;

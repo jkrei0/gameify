@@ -1007,6 +1007,8 @@ h3 {
         }
         .row-break {
             width: 100%;
+            margin: 0;
+            padding: 0;
             &.no-break {
                 display: none;
             }
