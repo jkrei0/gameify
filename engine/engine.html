@@ -20,12 +20,12 @@
                 <a href="./auth.html" target="_blank" id="login-link">Log in</a>
             </span>
             <span class="progress" id="cloud-progress">
-                Loading...
+                Gameify
             </span>
         </div>
 
         <div class="container" id="main">
-            <div class="sidebar">
+            <div class="sidebar hidden">
                 <h3>Objects <button id="refresh-objects">Refresh</button> <button id="diff-objects-button" style="display:none;">Diff</button></h3>
                 <div class="list" id="node-list">
                     <span class="list-item">
@@ -40,8 +40,8 @@
 
                 <h3>Save</h3>
                 <div class="list">
-                    <button class="list-item" id="save-button">Save</button>
-                    <button class="list-item" id="download-button">Download</button>
+                    <button class="list-item" id="save-button">Save as</button>
+                    <button class="list-item" id="download-button">Download .gpj</button>
                     <span class="list-item" id="github-save-integration">
                         GitHub
                         <button id="github-diff-button" class="right">Diff</button>
@@ -50,16 +50,17 @@
                     <span class="list-item">
                         Export
                         <button id="export-source-button" class="right">Source</button>
-                        <button id="export-game-button">Game</button>
+                        <button id="export-game-button">Playable</button>
                     </span>
                 </div>
-                <h3>Load <button id="refresh-saves">Refresh</button></h3>
-                <div class="list" id="load-save-list">
-                    <button class="list-item">No saves</button>
+
+                <h3>Load / New Project</h3>
+                <div class="list">
+                    <button class="list-item" id="show-load-window">Open projects manager</button>
                 </div>
             </div>
 
-            <div class="window editor visible">
+            <div class="window editor">
 
                 <div id="ace-editor">// No file opened!</div>
 
@@ -73,6 +74,53 @@
                     </div>
                 </div>
 
+            </div>
+
+            <div class="window save-load visible">
+                <div class="container inner">
+                    <div class="editor-controls">
+                        <h3>New Project</h3>
+                        <div class="list tile-list" id="load-template-list">
+                            <button class="list-item template" data-template="empty_logo">
+                                <img src="images/boxes.png">
+                                Empty Project
+                            </button>
+                            <button class="list-item template" data-template="scribble_dungeon">
+                                <img src="templates/scribble_dungeon.png">
+                                Scribble Dungeon
+                            </button>
+                            <button class="list-item template" data-template="legacy">
+                                Legacy Template
+                            </button>
+                            <button class="list-item template" data-template="pre_import">
+                                Pre-Import Template
+                            </button>
+                        </div>
+                        <h3>Import</h3>
+                        <div class="list">
+                            <span class="list-item">
+                                <label class="for-file-input centered">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+                                    </svg>
+                                    Upload .gpj file
+                                    <input type="file" id="upload-gpj-input">
+                                </label>
+                            </span>
+                            <span class="list-item">
+                                <a href="/engine/account/integrations.html" class="centered">Import from Github</a>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="editor-controls">
+                        <h3>Load <button id="refresh-saves">Refresh</button></h3>
+                        <div class="list" id="load-save-list">
+                            <button class="list-item">Loading saves...</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="window visual">
@@ -125,6 +173,22 @@
             <button class="list-item">Open</button>
             <button class="list-item">Delete</button>
             <button class="list-item">Rename</button>
+        </div>
+
+        <div class="popup" id="popup">
+            <div class="popup-content">
+                <h3>Popup Title</h3>
+                <p>popup text</p>
+                <select>
+                    <option disabled selected>- Choose an option -</option>
+                    <option>Option 1</option>
+                </select>
+                <input type="text" placeholder="Input text">
+                <span class="button-row">
+                    <button class="secondary">Cancel</button>
+                    <button>Ok</button>
+                </span>
+            </div>
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.16.0/ace.js" type="text/javascript" charset="utf-8"></script>

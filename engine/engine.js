@@ -1,5 +1,3 @@
-import { game_template } from '/engine/project/template_scribble_dungeon.js';
-
 import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js";
 
 import { engineSerialize } from '/engine/serialize.js';
@@ -9,6 +7,7 @@ import { engineEvents } from '/engine/engine_events.js';
 import { engineIntegrations, githubIntegration } from '/engine/engine_integration.js';
 import { engineFetch } from '/engine/engine_fetch.js';
 import { engineState } from '/engine/engine_state.js';
+import { popup } from '/engine/popup.js';
 
 import '/engine/visual_editor.js';
 import '/engine/docs.js';
@@ -42,6 +41,12 @@ engineEvents.listen('visual log', (_event, ...args) => {
 });
 const showWindow = (t) => {
     stopGame();
+
+    if (!engineState.projectFilename) {
+        // No project is open, don't do anything
+        return false;
+    }
+
     document.querySelector(`.window.visible`).classList.remove('visible');
     document.querySelector(`.window.${t}`).classList.add('visible');
 
@@ -54,6 +59,8 @@ const showWindow = (t) => {
         // by forcing ace to resize every time the editor is shown
         engineState.editor.resize(true);
     }
+
+    return true;
 };
 engineEvents.listen('show window', (_event, ...args) => {
     showWindow(...args);
@@ -515,7 +522,7 @@ window.addEventListener('message', (event) => {
 
         const sourceFile = sanitize(fileName.replace(/.* injectedScript.*/, '(main script)')) // replace injectedScript with project script
                         .replace(/_gamefiles\/\d{1,5}\/_out\.js/, '(_out.js)')
-                        .replace(/_gamefiles\/\d{1,5}\/+/, sanitize(currentProjectFilename || 'Template Project') + '/')
+                        .replace(/_gamefiles\/\d{1,5}\/+/, sanitize(engineState.projectFilename || 'Template Project') + '/')
 
         consoleOut.innerHTML += `<span class="log-item ${sanitize(event.data.logType)}">
             <span class="short">${sanitize(event.data.logType.toUpperCase())}</span>
@@ -548,7 +555,10 @@ const stopGame = () => {
 }
 const runGame = () => {
     engineEvents.emit('clear visual editor');
-    showWindow('preview');
+
+    // Try to show the window, only start the game if it did show
+    if (!showWindow('preview')) return;
+
     gameFrame.src = /* REPLACE=embedURL */'http://localhost:3001'/* END */+'/embed.html';
 }
 
@@ -568,7 +578,6 @@ document.querySelector('#visual-button').addEventListener('click', () => {
     showWindow('visual');
 });
 
-let currentProjectFilename = undefined;
 
 /* Save and load */
 
@@ -579,15 +588,24 @@ engineFetch.setSessionFunction(() => {
 engineFetch.setLogFunction(visualLog);
 
 const saveProject = (asName) => {
+    if (!engineState.projectFilename) {
+        return;
+    }
     const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
-    const name = asName || prompt('Name this save', currentProjectFilename)?.replaceAll(',', '_');
+    let name = asName || engineState.projectFilename;
+    if (engineState.projectFilename.startsWith('(template)')) {
+        name = prompt('Name this save')?.replaceAll(',', '_')
+    } else if (asName === false) {
+        name = prompt('Name this save', engineState.projectFilename)?.replaceAll(',', '_')
+    }
+
     if (!name) {
         return;
     }
 
     let overwrite = false;
-    if (savedList.includes(name) && name !== currentProjectFilename) {
+    if (savedList.includes(name) && name !== engineState.projectFilename) {
         if (!confirm(`Overwrite save '${name}'?`)) return;
         overwrite = true;
     } else if (savedList.includes(name)) {
@@ -643,7 +661,7 @@ const saveProject = (asName) => {
     }
     listSaves();
 
-    currentProjectFilename = name;
+    engineState.projectFilename = name;
 
     return name;
 }
@@ -684,7 +702,7 @@ const exportProject = async () => {
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + "_export.zip";
+    link.download = engineState.sanitizedFilename() + "_export.zip";
     link.click();
     link.remove();
     URL.revokeObjectURL(link.href);
@@ -732,13 +750,13 @@ OBJECTS:objects.gpj
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (currentProjectFilename || 'gameify_project').toLowerCase().replace(/[^a-zA-z0-9._]/g, '_') + "_source.zip";
+    link.download = engineState.sanitizedFilename() + "_source.zip";
     link.click();
     link.remove();
     URL.revokeObjectURL(link.href);
 }
 
-document.querySelector('#save-button').addEventListener('click', () => { saveProject() });
+document.querySelector('#save-button').addEventListener('click', () => { saveProject(false) });
 document.querySelector('#github-push-button').addEventListener('click', () => { githubIntegration.pushProject() });
 document.querySelector('#github-diff-button').addEventListener('click', () => { githubIntegration.diffProject() });
 document.querySelector('#export-game-button').addEventListener('click', () => { exportProject() });
@@ -748,7 +766,7 @@ document.addEventListener('keydown', e => {
         // Ctrl + S
         // Save project
         e.preventDefault();
-        saveProject(currentProjectFilename);
+        saveProject();
     } else if (e.ctrlKey && !e.shiftKey && e.key === 'Enter') {
         // Ctrl + Enter
         // Run game
@@ -781,7 +799,7 @@ document.querySelector('#download-button').addEventListener('click', () => {
     const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
 
     var link = document.createElement("a");
-    link.setAttribute('download', 'gameify_project.gpj');
+    link.setAttribute('download',  engineState.sanitizedFilename() + '.gpj');
     link.href = URL.createObjectURL(new Blob([JSON.stringify(saved)]));
     document.body.appendChild(link);
     link.click();
@@ -789,7 +807,11 @@ document.querySelector('#download-button').addEventListener('click', () => {
 
 });
 
-const listFiles = (data) => {
+const fetchTemplate = async (name) => {
+    return await fetch(`/engine/templates/${name}.gpj`).then(engineFetch.toJson);
+}
+
+const listFiles = async (data) => {
     let reloadEditors = true;
     if (!data) {
         data = engineState.files;
@@ -800,7 +822,7 @@ const listFiles = (data) => {
     editorFileList.innerHTML = '';
 
     if (!data['index.html']) {
-        data['index.html'] = game_template.files['index.html'];
+        data['index.html'] = (await fetchTemplate('scribble_dungeon')).files['index.html'];
         visualLog('Index.html not found, using index.html from template', 'warn', 'filesystem');
     }
     
@@ -913,6 +935,11 @@ const listFiles = (data) => {
 }
 
 const openProject = (data) => {
+    // Sidebar is hidden before a project is loaded
+    if (document.querySelector('.sidebar.hidden')) {
+        document.querySelector('.sidebar').classList.remove('hidden');
+    }
+
     engineIntegrations.setIntegrations(data.integrations);
     console.log(data);
     if (data.integrations?.github) {
@@ -931,7 +958,9 @@ const openProject = (data) => {
     engineEvents.emit('show visual editor preview');
     showWindow('visual');
 
-    visualLog(`Loaded '${currentProjectFilename || 'Template Project'}'`, 'log', 'project');
+    visualLog(`Loaded '${engineState.projectFilename || 'Template Project'}'`, 'log', 'project');
+
+    return true;
 }
 
 const deleteCloudSave = (save) => {
@@ -995,12 +1024,47 @@ const listSaves = () => {
             }
 
             for (const game of result.games) {
-                const name = game.title
+                const name = game.title;
                 const button = document.createElement('button');
+                let timestampDifference = 5;
                 button.classList.add('list-item');
 
-                button.onclick = () => {
-                    visualLog(`Loading '${name}' ...`, 'info', 'cloud progress');
+                // Find the matching local save (if it exists)
+                const localSaveData = JSON.parse(localStorage.getItem('savedObjects:' + name) || null);
+                const lsButton = document.querySelector(`.list-item[data-local-save-name="${name}"]`);
+
+                button.onclick = async () => {
+                    let loadAsName = name;
+                    if (timestampDifference !== 0) {
+                        const loadCloud = await popup.confirm(`Save mismatch`,
+                            `<b>The local and cloud versions of this save may be different.</b><br>
+                            Cloud saved at ${new Date(game.data.timestamp).toLocaleString()}<br>
+                            Local saved at ${new Date(localSaveData.timestamp).toLocaleString()}`,
+                            'Load a copy', 'Cancel', 'Overwrite local'
+                        );
+                        if (loadCloud === false) {
+                            // cancel
+                            return;
+                        } else if (loadCloud === true) {
+                            // make a copy
+                            const newName = await popup.prompt(
+                                'Name your copy', // title text
+                                `This will create a copy of the cloud save '${name}' and load it.`, // p text
+                                `Copy of ${name}`, // default input value
+                                `Enter a name` // placeholder
+                            );
+
+                            if (!newName) return;
+                            loadAsName = newName;
+                        } else {
+                            // overwrite local
+                            if (!await popup.confirm(`Are you sure?`,
+                                `This will overwrite the local save '${name}' with the cloud save.`
+                            )) return;
+                        }
+                    }
+
+                    visualLog(`Loading '${loadAsName}' ...`, 'info', 'cloud progress');
 
                     fetch(`/api/games-store/load-game`, {
                         method: 'POST',
@@ -1013,22 +1077,46 @@ const listSaves = () => {
                     .then(engineFetch.toJson)
                     .then(result => {
                         if (result.error) {
-                            visualLog(`Failed to load game '${name}' - ${result.error}`, 'error', 'cloud save');
+                            visualLog(`Failed to load game '${loadAsName}' - ${result.error}`, 'error', 'cloud save');
                             engineFetch.checkSessionErrors(result);
                             return;
                         }
 
-                        currentProjectFilename = name;
+                        engineState.projectFilename = loadAsName;
                         openProject(result.data);
-                        visualLog(`Loaded cloud save '${name}'`, 'info', 'cloud save');
+                        visualLog(`Loaded cloud save '${loadAsName}'`, 'info', 'cloud save');
                     });
                 }
-                button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-cloud-arrow-down" viewBox="0 0 16 16">
+                
+                // cloud download icon (no local copy)
+                let icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-cloud-arrow-down" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M7.646 10.854a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 9.293V5.5a.5.5 0 0 0-1 0v3.793L6.354 8.146a.5.5 0 1 0-.708.708l2 2z"/>
                     <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
-                </svg> ` + name;
+                </svg>`;
 
+                if (lsButton) {
+                    const localTimestamp = localSaveData.timestamp;
+                    const cloudTimestamp = game.data.timestamp;
+                    timestampDifference = cloudTimestamp - localTimestamp;
+                    console.log(name, localTimestamp, cloudTimestamp);
+                    if (localTimestamp === undefined || localTimestamp !== cloudTimestamp) {
+                        // warn icon (mismatch)
+                        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-exclamation-diamond warn" viewBox="0 0 16 16">
+                            <path d="M6.95.435c.58-.58 1.52-.58 2.1 0l6.515 6.516c.58.58.58 1.519 0 2.098L9.05 15.565c-.58.58-1.519.58-2.098 0L.435 9.05a1.48 1.48 0 0 1 0-2.098zm1.4.7a.495.495 0 0 0-.7 0L1.134 7.65a.495.495 0 0 0 0 .7l6.516 6.516a.495.495 0 0 0 .7 0l6.516-6.516a.495.495 0 0 0 0-.7L8.35 1.134z"/>
+                            <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                        </svg>`;
+                    } else {
+                        // cloud check icon (saves match)
+                        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-cloud-check" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M10.354 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+                            <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383m.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+                        </svg>`;
+                    }
+                }
                 
+                button.innerHTML = icon + name;
+
+
                 const openButton = document.createElement('button');
                 openButton.onclick = () => {
                     window.open(`${window.location.protocol}//${window.location.host}/engine/play.html#${cloudAccountName}/${name}`, '_blank');
@@ -1039,16 +1127,28 @@ const listSaves = () => {
 
                 listElem.prepend(button);
                 button.__engine_menu = {
-                    'Save': () => {
+                    'Overwrite': () => {
                         saveProject(name);
                     },
-                    'Load': () => {
+                    'Load From Cloud': () => {
                         button.click();
                     },
-                    'Delete': () => {
+                    'Delete From Cloud': () => {
                         button.style.color = '#ff8';
                         deleteCloudSave(name);
                     }
+                }
+
+                if (lsButton) {
+                    // If there's a cloud save of the same name,
+                    // instead add a context menu item, and hide the local save button
+                    button.__engine_menu['Load Local Save'] = () => {
+                        lsButton.click();
+                    }
+                    button.__engine_menu['Rename Local Save'] = () => {
+                        lsButton.__engine_menu['Rename']();
+                    }
+                    lsButton.style.display = 'none';
                 }
             }
         });
@@ -1068,8 +1168,10 @@ const listSaves = () => {
     }
 
     for (const name of savedList) {
+
         const button = document.createElement('button');
         button.classList.add('list-item');
+        button.setAttribute('data-local-save-name', name);
 
         if (!localStorage.getItem('savedObjects:' + name)) {
             button.setAttribute('title', 'This save is missing');
@@ -1080,7 +1182,7 @@ const listSaves = () => {
         button.onclick = () => {
             const loaded = localStorage.getItem('savedObjects:' + name);
             if (!loaded) return;
-            currentProjectFilename = name;
+            engineState.projectFilename = name;
             openProject(JSON.parse(loaded));
 
             visualLog(`Loaded save '${name}'`, 'info', 'local save');
@@ -1107,7 +1209,7 @@ const listSaves = () => {
         listElem.appendChild(button);
 
         button.__engine_menu = {
-            'Save': () => {
+            'Overwrite': () => {
                 saveProject(name);
             },
             'Load': () => {
@@ -1137,36 +1239,31 @@ const listSaves = () => {
             }
         }
     }
-
-    // upload files
-
-    const label = document.createElement('span');
-    label.classList.add('list-item');
-    label.innerText = 'Upload';
-
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', '.gpj');
-    input.onchange = (event) => {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = (event) => {
-            const fileContents = event.target.result;
-            visualLog(`Loaded project file '${file.name}'`, 'info', 'local save');
-            currentProjectFilename = file.name;
-            openProject(JSON.parse(fileContents));
-        };
-    }
-    label.appendChild(input);
-
-    listElem.appendChild(label);
 }
 document.querySelector('#refresh-saves').addEventListener('click', listSaves);
 listSaves();
 
-visualLog('Loaded template project', 'debug', 'engine');
-openProject(game_template);
+document.querySelector('#show-load-window').addEventListener('click', ()=>showWindow('save-load'));
+document.querySelector('#upload-gpj-input').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = (event) => {
+        const fileContents = event.target.result;
+        visualLog(`Loaded project file '${file.name}'`, 'info', 'local save');
+        engineState.projectFilename = file.name;
+        openProject(JSON.parse(fileContents));
+    };
+});
+
+document.querySelectorAll('button.template').forEach((button) => {
+    button.addEventListener('click', async (event) => {
+        const name = button.getAttribute('data-template');
+        engineState.projectFilename = '(template) ' + name;
+        openProject(await fetchTemplate(name));
+        visualLog(`Loaded template '${name}'`, 'info', 'local save');
+    });
+});
 
 // Load project from hash
 const loadFromHash = () => {
@@ -1179,10 +1276,10 @@ const loadFromHash = () => {
         visualLog(`Loading 'github:${repo}' ...`, 'info', 'github progress');
 
         githubIntegration.loadRepo(repo, (result) => {
-            currentProjectFilename = 'github:' + repoName;
+            engineState.projectFilename = 'github:' + repoName;
             openProject(result.data);
             visualLog(`Loaded github repository: '${repo}'`, 'info', 'github');
-        });
+        }, () => {});
 
     } else {
         // load from gameify cloud
@@ -1207,7 +1304,7 @@ const loadFromHash = () => {
                 return;
             }
     
-            currentProjectFilename = game;
+            engineState.projectFilename = game;
             openProject(result.data);
             visualLog(`Loaded cloud save '${game}'`, 'info', 'cloud save');
         });

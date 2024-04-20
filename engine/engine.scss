@@ -32,12 +32,46 @@ $font: Poppins, sans-serif;
 $labeltext: Lato, sans-serif;
 $monospace: 'Roboto Mono';
 
+$warn: #ff8;
+
 $transition: 0.1s;
 
 .container {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
+
+    max-height: 100%;
+
+    &.inner {
+        justify-content: center;
+    }
+
+    & > .editor-controls {
+        width: 50%;
+        max-width: 450px;
+        margin: 40px 10px;
+        overflow-y: auto;
+
+        background: transparent;
+        max-height: calc(100% - 40px);
+
+        h3 {
+            padding: 15px 20px;
+        }
+
+        .list {
+            height: unset;
+            resize: none;
+            flex-grow: 1;
+            padding: 15px;
+            padding-top: 0;
+            max-height: calc(100% - 60px);
+            overflow-y: auto;
+
+            background: $background;
+        }
+    }
 }
 
 .window:not(.visible) {
@@ -97,6 +131,7 @@ $transition: 0.1s;
             font-size: 1rem;
             padding: 5px 10px;
             margin: 0;
+            background: transparent;
 
             button {
                 all: unset;
@@ -169,7 +204,7 @@ $transition: 0.1s;
                 color: #bbf;
             }
             &.warn .message {
-                color: #ff8;
+                color: $warn;
             }
             &.debug .message {
                 color: #8f8;
@@ -272,30 +307,38 @@ $transition: 0.1s;
     color: $text;
     background: $background;
 
-    h3 {
-        margin: 0;
-        padding: 10px;
-        font-size: 1.25rem;
+    &.hidden {
+        display: none;
+    }
+}
 
-        button {
-            float: right;
-            border: none;
-            background: $secondary;
-            color: $text;
-            padding: 2px 10px;
-            cursor: pointer;
-            font-size: 0.8em;
-            font-family: $font;
+h3 {
+    font-family: $font;
+    color: $text;
+    background: $background;
+    
+    margin: 0;
+    padding: 10px;
+    font-size: 1.25rem;
 
-            transition: $transition;
+    button {
+        float: right;
+        border: none;
+        background: $secondary;
+        color: $text;
+        padding: 2px 10px;
+        cursor: pointer;
+        font-size: 0.8em;
+        font-family: $font;
 
-            &:hover {
-                background: $highlight;
-            }
+        transition: $transition;
 
-            &:not(:first-of-type) {
-                margin-right: 5px;
-            }
+        &:hover {
+            background: $highlight;
+        }
+
+        &:not(:first-of-type) {
+            margin-right: 5px;
         }
     }
 }
@@ -405,6 +448,13 @@ $transition: 0.1s;
             height: 1em;
             margin-left: 3px;
             margin-right: 12px;
+
+            &.warn {
+                color: $warn;
+            }
+            &.check {
+                color: #8f8;
+            }
         }
 
         a {
@@ -578,8 +628,9 @@ $transition: 0.1s;
     }
 }
 
-.list .list-item, .editor-controls, .editor-controls * {
-    & > :is(button, input, select) {
+.list .list-item, .editor-controls, .editor-controls *,
+.popup-content, .popup-content * {
+    & > :is(button, input, select, label, a) {
 
         &:not(:last-child) {
             margin-right: 5px;
@@ -606,6 +657,11 @@ $transition: 0.1s;
         &:hover {
             background: $faded;
         }
+
+        &:is(a) {
+            text-decoration: none;
+        }
+
         &:is(input, select) {
             max-width: 140px;
             padding: 5px;
@@ -622,6 +678,7 @@ $transition: 0.1s;
             max-width: 70px;
         }
         &[type=file] {
+            position: relative;
             max-width: 180px;
             cursor: pointer;
             padding: 0px;
@@ -634,9 +691,37 @@ $transition: 0.1s;
             }
         }
 
+        &.for-file-input {
+            position: relative;
+            width: 200px;
+            padding: 10px;
+            text-align: center;
+
+            svg {
+                display: block;
+                height: 20px;
+                width: 100%;
+            }
+
+            & > input {
+                opacity: 0;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1;
+            }
+        }
+
         &:first-child, &.right {
             margin-left: auto;
+            
+            &.centered {
+                margin-right: auto;
+            }
         }
+        
     }
 }
 
@@ -676,6 +761,77 @@ $transition: 0.1s;
     }
 
     z-index: 99;
+}
+
+.popup {
+    position: fixed;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+
+    z-index: 99;
+    background: #0002;
+    backdrop-filter: blur(1px);
+
+    &.visible {
+        display: flex;
+    }
+
+    .popup-content {
+        color: $text;
+        font-family: $labeltext;
+        background: $secondary;
+        box-shadow: 2px 2px 8px #0008;
+
+        min-width: 250px;
+        max-width: 400px;
+
+        display: flex;
+        flex-direction: column;
+        padding: 15px 25px;
+
+        p, input, .button-row, h3 {
+            margin-block: 7px;
+        }
+
+        p {
+            font-size: 1.1em;
+        }
+
+        input, select {
+            font-size: 1em;
+            padding: 7px;
+            width: 100%;
+            max-width: unset;
+        }
+
+        .button-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            gap: 5px;
+
+            button:hover {
+                background: $faded;
+            }
+            .secondary {
+                background: transparent;
+
+                &:hover {
+                    background: $highlight;
+                }
+            }
+        }
+
+        h3 {
+            padding: 0;
+            background: transparent;
+        }
+    }
 }
 
 .editor-controls {
@@ -889,6 +1045,22 @@ $transition: 0.1s;
         background: $secondary;
         &:hover {
             background: $highlight;
+        }
+
+        &.template {
+            box-sizing: border-box;
+            width: calc(50% - 4px);
+            min-width: 160px;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            img, svg {
+                max-width: 100%;
+                max-height: 125px;
+                height: unset;
+                padding: 5px;
+                margin-bottom: 5px;
+            }
         }
     }
 
