@@ -135,13 +135,13 @@ export let sprites = {
             };
         }
 
-        /** Set a shape for collisions
+        /** Set a shape for collisions. If no offset is provided, the shape's position is used.
          * @method
-         * @param {gameify.shapes.Shape} shape
+         * @param {gameify.shapes.Shape} shape - The shape (This shape is NOT copied, and it's position will be modified)
          * @param {gameify.Vector2d} [offset] - The shape's offset (to align it properly)
-         *//** Set a shape for collisions
+         *//** Set a shape for collisions. If no offset is provided, the shape's position is used.
          * @method
-         * @param {gameify.shapes.Shape} shape
+         * @param {gameify.shapes.Shape} shape - The shape (This shape is NOT copied, and it's position will be modified)
          * @param {Number} [offsetx] - The shape's offset x (to align it properly)
          * @param {Number} [offsety] - The shape's offset y
          */
@@ -151,7 +151,9 @@ export let sprites = {
                 this.shapeOffset = new vectors.Vector2d(x);
             } else if (x !== undefined && y !== undefined) {
                 this.shapeOffset = new vectors.Vector2d(x, y);
-            } // else, no offset
+            } else {
+                this.shapeOffset = shape.position.copy();
+            }
         }
 
         /** Change the Sprite's image / texture
