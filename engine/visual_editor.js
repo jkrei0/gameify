@@ -203,17 +203,23 @@ const createTileList = (tileset) => {
     }
 }
 
-const editTileMap = (map) => {
+const setupOpenEditor = (object) => {
     clearVisualEditor();
     engineEvents.emit('show window', 'visual');
-    visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
+    visualLog(`Editing ${object.__engine_name}.`, 'log', 'editor');
 
-    map.refreshCachedImages();
-    map.__engine_editing = true;
+    object.__engine_editing = true;
     engineEvents.emit('refresh objects list');
 
     // Update antialiasing to be consistent
-    editorScreen.setAntialiasing(map.getParent().getAntialiasing());
+    const defaultScreen = Object.values(engineState.objects['Screen'])[0];
+    editorScreen.setAntialiasing(defaultScreen.getAntialiasing());
+}
+
+const editTileMap = (map) => {
+    setupOpenEditor(map);
+
+    map.refreshCachedImages();
 
     const editScene = new gameify.Scene(editorScreen);
     editorScreen.camera.setSpeed(1);
@@ -440,13 +446,7 @@ const editTileMap = (map) => {
 engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
 
 const editAnimation = (anim) => {
-    clearVisualEditor();
-    engineEvents.emit('show window', 'visual');
-    visualLog(`Editing ${anim.__engine_name}.`, 'log', 'animation editor');
-
-    // Update antialiasing to be consistent
-    const defaultScreen = Object.values(engineState.objects['Screen'])[0];
-    editorScreen.setAntialiasing(defaultScreen.getAntialiasing());
+    setupOpenEditor(anim);
 
     const editScene = new gameify.Scene(editorScreen);
     editorScreen.setScene(editScene);
