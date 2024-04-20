@@ -124,13 +124,90 @@ previewScene.onDraw(() => {
 editorScreen.startGame();
 
 let doBreakTileRows = false;
+let tileCellSize = 50;
+
+const createTileList = (tileset) => {
+    const tileListElement = document.createElement('div');
+    tileListElement.classList.add('tile-list');
+
+    let selTile = {x: 0, y: 0, r: 0};
+
+    for (let ty = 0; ty < tileset.texture.height/tileset.theight; ty++) {
+        for (let tx = 0; tx < tileset.texture.width/tileset.twidth; tx++) {
+            const tileCanvas = document.createElement('canvas');
+            const context = tileCanvas.getContext('2d');
+
+            tileCanvas.setAttribute('aria-label', `Tile ${tx}, ${ty}`);
+            addAriaTooltip(tileCanvas);
+            tileCanvas.classList.add('tile');
+            tileCanvas.classList.add(`tile-${tx}-${ty}`);
+            if (tx === 0 && ty === 0) {
+                tileCanvas.classList.add('selected');
+            }
+            tileCanvas.width = tileCellSize;
+            tileCanvas.height = tileCellSize;
+            tileCanvas.onclick = () => {
+                tileListElement.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
+                tileCanvas.classList.add('selected');
+                selTile = {x: tx, y: ty, r: 0};
+            }
+            const tile = tileset.getTile(tx, ty);
+            tileListElement.appendChild(tileCanvas);
+
+            context.imageSmoothingEnabled = editorScreen.getAntialiasing();
+            tile.draw(context, 0, 0, tileCellSize, tileCellSize, 0);
+        }
+        const rowBreak = document.createElement('span');
+        rowBreak.classList.add('row-break');
+        if (!doBreakTileRows) {
+            rowBreak.classList.add('no-break');
+        }
+        tileListElement.appendChild(rowBreak);
+    }
+    const rowBreakEnd = document.createElement('span');
+    rowBreakEnd.classList.add('row-break-end');
+    tileListElement.appendChild(rowBreakEnd);
+
+    return {
+        element: tileListElement,
+        selectedTile: () => selTile,
+        tileCellSize: () => tileCellSize,
+        zoomTilesRelative(size) {
+            tileCellSize = tileCellSize + size;
+            this.zoomTiles(tileCellSize);
+        },
+        zoomTiles(size) {
+            tileCellSize = size;
+            tileListElement.querySelectorAll('.tile').forEach(tile => {
+                tile.style.width = size + 'px';
+                tile.style.height = size + 'px';
+            })
+        },
+        toggleWrap() {
+            for (const rowBreak of tileListElement.querySelectorAll('.row-break')) {
+                rowBreak.classList.toggle('no-break');
+            }
+            doBreakTileRows = !doBreakTileRows;
+        },
+        selectTile(tile) {
+            selTile = tile.source;
+            selTile.r = tile.rotation;
+            // Update the tile list
+            tileListElement.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
+            tileListElement.querySelector(`.tile-${tile.source.x}-${tile.source.y}`).classList.add("selected");
+            tileListElement.querySelector(`.tile-${tile.source.x}-${tile.source.y}`).scrollIntoView();
+        },
+        rotateSelection(degrees) {
+            selTile.r += degrees;
+        }
+    }
+}
 
 const editTileMap = (map) => {
     clearVisualEditor();
     engineEvents.emit('show window', 'visual');
     visualLog(`Editing ${map.__engine_name}.`, 'log', 'tilemap editor');
 
-    const tileset = map.getTileset();
     map.refreshCachedImages();
     map.__engine_editing = true;
     engineEvents.emit('refresh objects list');
@@ -145,8 +222,7 @@ const editTileMap = (map) => {
     const controls = document.createElement('div');
     controls.classList.add('editor-controls');
     controls.classList.add('visual');
-    const tileList = document.createElement('div');
-    tileList.classList.add('tile-list');
+    const tileList = createTileList(map.getTileset());
 
     controls.innerHTML = `
     <div class="legend">
@@ -170,29 +246,14 @@ const editTileMap = (map) => {
     </div>
     `;
 
-    let tileCellSize = 50;
-
     controls.querySelector('#vi-zoom-out').onclick = () => {
-        tileCellSize -= 10;
-        if (tileCellSize < 10) tileCellSize = 10;
-        tileList.querySelectorAll('.tile').forEach(tile => {
-            tile.style.width = tileCellSize + 'px';
-            tile.style.height = tileCellSize + 'px';
-        })
+        tileList.zoomTilesRelative(-10);
     }
     controls.querySelector('#vi-zoom-in').onclick = () => {
-        tileCellSize += 10;
-        if (tileCellSize > 80) tileCellSize = 80;
-        tileList.querySelectorAll('.tile').forEach(tile => {
-            tile.style.width = tileCellSize + 'px';
-            tile.style.height = tileCellSize + 'px';
-        })
+        tileList.zoomTilesRelative(10);
     }
     controls.querySelector('#vi-switch-layout').onclick = () => {
-        for (const rowBreak of tileList.querySelectorAll('.row-break')) {
-            rowBreak.classList.toggle('no-break');
-        }
-        doBreakTileRows = !doBreakTileRows;
+        tileList.toggleWrap();
     }
     controls.querySelector('#vi-stop-editing').onclick = () => {
         map.__engine_editing = false;
@@ -236,51 +297,14 @@ const editTileMap = (map) => {
         redo();
     });
 
-    controls.appendChild(tileList);
+    controls.appendChild(tileList.element);
     editorCanvas.parentElement.after(controls);
 
     controls.querySelectorAll('[aria-label]').forEach(el => addAriaTooltip(el));
 
-    let selTile = {x: 0, y: 0, r: 0};
     let dragStart = false;
     let originalOffset = null;
     let previewTilePositions = [];
-
-    for (let ty = 0; ty < tileset.texture.height/tileset.theight; ty++) {
-        for (let tx = 0; tx < tileset.texture.width/tileset.twidth; tx++) {
-            const tileCanvas = document.createElement('canvas');
-            const context = tileCanvas.getContext('2d');
-
-            tileCanvas.setAttribute('aria-label', `Tile ${tx}, ${ty}`);
-            addAriaTooltip(tileCanvas);
-            tileCanvas.classList.add('tile');
-            tileCanvas.classList.add(`tile-${tx}-${ty}`);
-            if (tx === 0 && ty === 0) {
-                tileCanvas.classList.add('selected');
-            }
-            tileCanvas.width = 50;
-            tileCanvas.height = 50;
-            tileCanvas.onclick = () => {
-                tileList.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
-                tileCanvas.classList.add('selected');
-                selTile = {x: tx, y: ty, r: 0};
-            }
-            const tile = tileset.getTile(tx, ty);
-            tileList.appendChild(tileCanvas);
-
-            context.imageSmoothingEnabled = editorScreen.getAntialiasing();
-            tile.draw(context, 0, 0, 50, 50, 0);
-        }
-        const rowBreak = document.createElement('span');
-        rowBreak.classList.add('row-break');
-        if (!doBreakTileRows) {
-            rowBreak.classList.add('no-break');
-        }
-        tileList.appendChild(rowBreak);
-    }
-    const rowBreakEnd = document.createElement('span');
-    rowBreakEnd.classList.add('row-break-end');
-    tileList.appendChild(rowBreakEnd);
 
     let lastMouseAction = 'draw';
 
@@ -335,6 +359,7 @@ const editTileMap = (map) => {
         );
         const applyDraw = (placeX, placeY) => {
             applyPreview(placeX, placeY);
+            const selTile = tileList.selectedTile();
             map.place(selTile.x, selTile.y, placeX, placeY, selTile.r);
         }
         const applyDelete = (placeX, placeY) => {
@@ -362,12 +387,7 @@ const editTileMap = (map) => {
             // Pick tile
             const tile = map.get(position.x, position.y);
             if (tile && !dragStart) {
-                selTile = tile.source;
-                selTile.r = tile.rotation;
-                // Update the tile list
-                tileList.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
-                tileList.querySelector(`.tile-${tile.source.x}-${tile.source.y}`).classList.add("selected");
-                tileList.querySelector(`.tile-${tile.source.x}-${tile.source.y}`).scrollIntoView();
+                tileList.selectTile(tile);
             }
         }
 
@@ -385,15 +405,15 @@ const editTileMap = (map) => {
         }
 
         if (editorScreen.mouse.eventJustHappened("wheelup")) {
-            selTile.r -= 45;
+            tileList.rotateSelection(-45);
         } else if (editorScreen.mouse.eventJustHappened("wheeldown")) {
-            selTile.r += 45;
+            tileList.rotateSelection(45);
         }
 
         lastMouseAction = mouseAction;
     });
     editScene.onDraw(() => {
-        const previewTile = map.getTileset().getTile(selTile.x, selTile.y);
+        const previewTile = map.getTileset().getTile(tileList.selectedTile().x, tileList.selectedTile().y);
         
         editorScreen.clear();
         map.draw();
@@ -412,7 +432,7 @@ const editTileMap = (map) => {
             previewTile.draw(ctx,
                             tilePos.x, tilePos.y,
                             map.twidth, map.theight,
-                            selTile.r, /*ignoreOpacity=*/true);
+                            tileList.selectedTile().r, /*ignoreOpacity=*/true);
         }
         ctx.globalAlpha = 1;
     });
@@ -897,8 +917,6 @@ const showPreviewOrderControls = () => {
     controls.classList.add('floating');
     controls.classList.add('visual');
     controls.classList.add('collapsed');
-    const tileList = document.createElement('div');
-    tileList.classList.add('tile-list');
 
     controls.innerHTML = `
     <div class="legend">
