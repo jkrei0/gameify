@@ -546,7 +546,12 @@ gameFrame.addEventListener('load', () => {
 
     runGameButton.innerText = 'Stop Game';
     const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
-    gameFrameWindow.postMessage({ type: 'gameData', gameData: saved }, /* REPLACE=embedURL */'http://localhost:3001'/* END */);
+    // Use JSON.stringify to force json conversion. Otherwise it
+    // gets mad that we're trying to pass functions through.
+    gameFrameWindow.postMessage(
+        JSON.parse(JSON.stringify({ type: 'gameData', gameData: saved })),
+        /* REPLACE=embedURL */'http://localhost:3001'/* END */
+    );
 });
 
 const stopGame = () => {
