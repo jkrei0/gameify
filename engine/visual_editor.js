@@ -550,6 +550,7 @@ const editTilesetCollisions = (tileset) => {
 
     let currentNodes = [];
     let draggingNode = false;
+    const nodeDragDistance = 15;
 
     const editScene = new gameify.Scene(editorScreen);
     editorScreen.setScene(editScene);
@@ -562,7 +563,6 @@ const editTilesetCollisions = (tileset) => {
 
         currentNodes = [];
         const createNode = (pos, callback) => {
-            const nodeDragDistance = 15;
             const handleShape = new gameify.shapes.Circle(pos.x, pos.y, nodeDragDistance);
             handleShape.strokeColor = '#000f';
             const node = {
@@ -633,6 +633,27 @@ const editTilesetCollisions = (tileset) => {
                 createNode(point, (pos) => {
                     shape.points[index] = pos;
                 });
+            }
+
+            if (editorScreen.mouse.eventJustHappened("doubleclick")) {
+                const shapeMousePos = mousePos.multiply(1/canvasZoomFactor);
+
+                editorScreen.mouse.clearRecentEvents();
+                let nearestIndex = 0;
+                let nearestDistance = Infinity;
+                for (const point of shape.points) {
+                    const distance = shapeMousePos.distanceTo(point);
+                    if (distance < nearestDistance) {
+                        nearestIndex = shape.points.indexOf(point);
+                        nearestDistance = distance;
+                    }
+                }
+                if (nearestDistance*canvasZoomFactor < nodeDragDistance) {
+                    shape.points.splice(nearestIndex, 1);
+                    console.log(shape.points);
+                } else {
+                    shape.points.splice(nearestIndex, 0, shapeMousePos);
+                }
             }
         }
     });
