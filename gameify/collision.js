@@ -45,6 +45,13 @@ class Shape {
 
     }
 
+    /** Create a copy of the shape */
+    copy = () => {
+        // Use toJSON, not __toJSON, because we want to store the
+        // actual shape data.
+        return Shape.fromJSON(this.toJSON());
+    }
+
     /** Convert the object to JSON. Not available on the base Shape, only on inherited classes
      * @method
      * @alias gameify.shapes.Shape#toJSON
@@ -110,6 +117,14 @@ class Shape {
      */
     draw = (canvas) => {
         throw new Error("shape.draw is not available in the base Shape class. It must be implemented by each specific shape type");
+    }
+
+    /** Scale the shape by a factor
+     * @method
+     * @arg {Number} scale - The scale factor
+     */
+    scale(scale) {
+        this.position = this.position.multiply(scale);
     }
 
 }
@@ -198,6 +213,15 @@ class Circle extends Shape {
                         this.radius, 0, 2 * Math.PI );
         context.stroke();
         context.fill();
+    }
+
+    /** Scale the shape by a factor
+     * @method
+     * @arg {Number} scale - The scale factor
+     */
+    scale = (scale) => {
+        super.scale(scale);
+        this.radius *= scale;
     }
 }
 /** A rectangle shape
@@ -334,6 +358,15 @@ class Rectangle extends Shape {
         context.stroke();
         context.fill();
     }
+
+    /** Scale the shape by a factor
+     * @method
+     * @arg {Number} scale - The scale factor
+     */
+    scale = (scale) => {
+        super.scale(scale);
+        this.size = this.size.multiply(scale);
+    }
 }
 
 /** A polygon shape
@@ -388,6 +421,10 @@ class Polygon extends Shape {
             },
             set: (target, name, value) => {
                 this.#segmentsUpdated = false;
+                if (name === "length") {
+                    target.length = value;
+                    return true;
+                }
                 target[name] = new vectors.Vector2d(value);
                 return target[name];
             }
@@ -531,6 +568,19 @@ class Polygon extends Shape {
         context.closePath();
         context.stroke();
         context.fill();
+    }
+
+    /** Scale the shape by a factor
+     * @method
+     * @arg {Number} scale - The scale factor
+     */
+    scale = (scale) => {
+        super.scale(scale);
+
+        for (const point of this.#points) {
+            point.x *= scale;
+            point.y *= scale;
+        }   
     }
 }
 

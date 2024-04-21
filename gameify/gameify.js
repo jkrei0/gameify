@@ -853,7 +853,7 @@ export let gameify = {
             }
 
             const obj = new gameify.Tileset(data.path, data.twidth, data.theight);
-            for (const tile of data.collisionShapes) {
+            for (const tile of data.collisionShapes || []) {
                 obj.setCollisionShape(shapes.Shape.fromJSON(tile.shape), tile.x, tile.y);
             }
             return obj;
@@ -979,14 +979,21 @@ export let gameify = {
      * @arg {Number} [rotation=0] - The rotation of the tile
      * @arg {Number} [width=1] - The width (in tiles) of the tile
      * @arg {Number} [height=1] - The height (in tiles) of the tile
+     * @arg {Number} [twidth=1] - The width (in pixels) of the tile on the tilemap
      */
     Tile: class {
-        constructor (x, y, sx, sy, image, r = 0, width = 1, height = 1) {
+        constructor (x, y, sx, sy, image, r = 0, width = 1, height = 1, twidth = 1) {
             this.image = image;
             this.position = new gameify.Vector2d(x, y);
             this.source = new gameify.Vector2d(sx, sy);
             this.size = new gameify.Vector2d(width, height);
             this.rotation = r;
+            this.#shape = image.tileData?.collisionShape?.copy();
+            if (this.#shape) {
+                // This will not work if the size ratios of the tileset and map are different
+                this.#shape.scale(twidth/image.tileData.tileset.twidth);
+                this.#shape.position = this.#shape.position.add(this.position.multiply(twidth));
+            }
         }
 
         /** Creates a Tile from JSON data
@@ -1033,10 +1040,22 @@ export let gameify = {
          * @type {gameify.Vector2d}
          */
         source;
+        /** The tile's size (in tiles)
+         * @type {gameify.Vector2d}
+         */
+        size;
         /** The tile's rotation
          * @type {Number}
          */
         rotation;
+
+        #shape;
+
+        /** The tile's collision shape
+         * @type {gameify.shapes.Shape}
+         * @readonly
+         */
+        get shape() { return this.#shape; }
     },
 
     /** Class representing a Tilemap of rectangular tiles
@@ -1271,7 +1290,8 @@ export let gameify = {
                 originx, originy,   // source position
                 this.tiles[tileCacheString], // gameify.Image
                 rotation || 0,      // rotation
-                width, height       // size
+                width, height ,     // size
+                this.twidth // tilemap size
             )
         }
 
