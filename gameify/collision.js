@@ -20,6 +20,44 @@ class Shape {
         this.position = new vectors.Vector2d(x, y);
     }
 
+    /** Creates a object from JSON data
+     * @method
+     * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+     * @returns {gameify.Tileset}
+    */
+    static fromJSON = (data) => {
+        let newShape;
+        switch (data.type) {
+            case "Shape":
+                newShape = new Shape(data.type, data.position.x, data.position.y); break;
+            case "Circle":
+                newShape = new Circle(data.position.x, data.position.y, data.radius); break;
+            case "Rectangle":
+                newShape = new Rectangle(data.position.x, data.position.y, data.size.x, data.size.y); break;
+            case "Polygon":
+                newShape = new Polygon(data.position.x, data.position.y, data.points); break;
+            default:
+                throw new Error("Unknown shape type: " + data.type);
+        }
+        newShape.strokeColor = data.strokeColor;
+        newShape.fillColor = data.fillColor;
+        return newShape;
+
+    }
+
+    /** Convert the object to JSON. Not available on the base Shape, only on inherited classes
+     * @method
+     * @alias gameify.shapes.Shape#toJSON
+     */
+    __toJSON = (key) => {
+        return {
+            type: this.#type,
+            position: this.position.toJSON(),
+            strokeColor: this.strokeColor,
+            fillColor: this.fillColor
+        }
+    }
+
     #type;
 
     /** A string represeting the type of shape, eg "Circle"
@@ -92,6 +130,15 @@ class Circle extends Shape {
         }
 
         this.radius = radius;
+    }
+
+    /** Convert the object to JSON
+     * @method
+     */
+    toJSON(key) {
+        const data = this.__toJSON(key);
+        data.radius = this.radius;
+        return data;
     }
 
     #radius;
@@ -175,6 +222,15 @@ class Rectangle extends Shape {
         }
 
         this.size = new vectors.Vector2d(width, height);
+    }
+
+    /** Convert the object to JSON
+     * @method
+     */
+    toJSON(key) {
+        const data = this.__toJSON(key);
+        data.size = this.#size.toJSON();
+        return data;
     }
 
     #size;
@@ -280,6 +336,14 @@ class Rectangle extends Shape {
     }
 }
 
+/** A polygon shape
+ * @constructor
+ * @alias gameify.shapes.Polygon
+ * @extends gameify.shapes.Shape
+ * @param {number} x - The x position
+ * @param {number} y - The y position
+ * @param {gameify.Vector2d[]} points - The points of the polygon, relative to the position of the polygon
+ */
 class Polygon extends Shape {
     constructor(x, y, points) {
         super("Polygon", x, y);
@@ -289,6 +353,15 @@ class Polygon extends Shape {
         for (const v in points) {
             this.#points[v] = new vectors.Vector2d(points[v]);
         }
+    }
+    
+    /** Convert the object to JSON
+     * @method
+     */
+    toJSON(key) {
+        const data = this.__toJSON(key);
+        data.points = this.#points;
+        return data;
     }
 
     #points = [];
@@ -316,6 +389,7 @@ class Polygon extends Shape {
             set: (target, name, value) => {
                 this.#segmentsUpdated = false;
                 target[name] = new vectors.Vector2d(value);
+                return target[name];
             }
         });
     }

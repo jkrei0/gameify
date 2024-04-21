@@ -844,6 +844,9 @@ export let gameify = {
             }
 
             const obj = new gameify.Tileset(data.path, data.twidth, data.theight);
+            for (const tile of data.collisionShapes) {
+                obj.setCollisionShape(shapes.Shape.fromJSON(tile.shape), tile.x, tile.y);
+            }
             return obj;
         }
         
@@ -854,11 +857,65 @@ export let gameify = {
          * @returns {Object}
          */
         toJSON = (key, ref) => {
+            const colShapes = [];
+            for (const tilex in this.#collisionShapes) {
+                for (const tiley in this.#collisionShapes[tilex]) {
+                    if (!this.#collisionShapes[tilex][tiley]) continue;
+
+                    colShapes.push({
+                        x: Number(tilex),
+                        y: Number(tiley),
+                        shape: this.#collisionShapes[tilex][tiley].toJSON()
+                    });
+                }
+            }
             return {
                 path: this.path,
                 twidth: this.twidth,
-                theight: this.theight
+                theight: this.theight,
+                collisionShapes: colShapes
             };
+        }
+
+        #collisionShapes = {};
+
+        /** Add a collision shape to the tileset
+         * @method
+         * @arg {gameify.shapes.Shape} shape
+         * @arg {Number} tilex
+         * @arg {Number} tiley
+         *//** Add a collision shape to the tileset
+         * @method
+         * @arg {gameify.shapes.Shape} shape
+         * @arg {gameify.Vector2d} tilepos
+         */
+        setCollisionShape = (shape, tilex, tiley) => {
+            if (tiley === undefined) {
+                tiley = tilex.y;
+                tilex = tilex.x;
+            }
+            if (!this.#collisionShapes[tilex]) {
+                this.#collisionShapes[tilex] = {};
+            }
+            this.#collisionShapes[tilex][tiley] = shape;
+        }
+
+        /** Remove a collision shape from the tileset
+         * @method
+         * @arg {Number} tilex
+         * @arg {Number} tiley
+         *//** Remove a collision shape from the tileset
+         * @method
+         * @arg {gameify.Vector2d} tilepos
+         */
+        removeCollisionShape = (tilex, tiley) => {
+            if (tiley === undefined) {
+                tiley = tilex.y;
+                tilex = tilex.x;
+            }
+            if (this.#collisionShapes[tilex] && this.#collisionShapes[tilex][tiley]) {
+                delete this.#collisionShapes[tilex][tiley];
+            }
         }
 
         /** Get a tile (or section of tiles) from the tileset. Returns a new Image object each time, so if you're getting
@@ -874,8 +931,9 @@ export let gameify = {
             const tile = new gameify.Image();
             tile.tileData = {
                 tileset: this,
-                position: { x: x, y: y },
-                size: { x: width, y: height }
+                position: new vectors.Vector2d(x, y),
+                size: new vectors.Vector2d(width, height),
+                collisionShape: this.#collisionShapes[x]?.[y]
             }
             tile.texture = this.texture;
             tile.crop(x * this.twidth, y * this.theight, this.twidth*width, this.theight*height);
