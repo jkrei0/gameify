@@ -837,6 +837,21 @@ h3 button:not(:first-of-type) {
 .editor-controls .tile-list .tile {
   background: repeating-conic-gradient(rgba(0, 0, 0, 0) 0% 25%, rgba(255, 255, 255, 0.0666666667) 0% 50%) 50%/80px 80px;
 }
+.editor-controls .tile-list .tile-container {
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+.editor-controls .tile-list .tile-container.has-collision-shape::before {
+  content: "";
+  position: absolute;
+  bottom: 5%;
+  right: 5%;
+  width: 25%;
+  height: 25%;
+  background: rgba(85, 136, 204, 0.2);
+  border: 2px solid rgba(34, 85, 170, 0.8);
+}
 .editor-controls .tile-list .tile.selected {
   outline: 2px solid #ebe;
 }

@@ -134,6 +134,8 @@ const createTileList = (tileset) => {
 
     for (let ty = 0; ty < tileset.texture.height/tileset.theight; ty++) {
         for (let tx = 0; tx < tileset.texture.width/tileset.twidth; tx++) {
+            const canvasContainer = document.createElement('span');
+            canvasContainer.classList.add('tile-container');
             const tileCanvas = document.createElement('canvas');
             const context = tileCanvas.getContext('2d');
 
@@ -152,7 +154,11 @@ const createTileList = (tileset) => {
                 selTile = {x: tx, y: ty, r: 0};
             }
             const tile = tileset.getTile(tx, ty);
-            tileListElement.appendChild(tileCanvas);
+            if (tile.tileData.collisionShape) {
+                canvasContainer.classList.add('has-collision-shape');
+            }
+            canvasContainer.appendChild(tileCanvas);
+            tileListElement.appendChild(canvasContainer);
 
             context.imageSmoothingEnabled = editorScreen.getAntialiasing();
             tile.draw(context, 0, 0, tileCellSize, tileCellSize, 0);
@@ -189,6 +195,14 @@ const createTileList = (tileset) => {
             }
             doBreakTileRows = !doBreakTileRows;
         },
+        addCollisionShapeIcon(tilepos) {
+            tileListElement.querySelector(`.tile-${tilepos.x}-${tilepos.y}`)
+                .parentElement.classList.add("has-collision-shape");
+        },
+        removeCollisionShapeIcon(tilepos) {
+            tileListElement.querySelector(`.tile-${tilepos.x}-${tilepos.y}`)
+                .parentElement.classList.remove("has-collision-shape");
+        },
         selectTile(tile) {
             selTile = tile.source;
             selTile.r = tile.rotation;
@@ -203,6 +217,7 @@ const createTileList = (tileset) => {
     }
 }
 
+// Setup the visual editor before editing something
 const setupOpenEditor = (object) => {
     clearVisualEditor();
     engineEvents.emit('show window', 'visual');
@@ -228,29 +243,29 @@ const editTileMap = (map) => {
     const controls = document.createElement('div');
     controls.classList.add('editor-controls');
     controls.classList.add('visual');
-    const tileList = createTileList(map.getTileset());
-
     controls.innerHTML = `
-    <div class="legend">
-        <span aria-label="Drag to place tiles, Control-drag to pan/move"><img src="images/mouse_left.svg">Place</span>
-        <span aria-label="Shift-drag or Right-drag to erase tiles"><img src="images/mouse_right.svg">Delete</span>
-        <span aria-label="Alt-click or Middle-click to pick tiles"><img src="images/mouse_middle.svg">Pick</span>
-        <span aria-label="Scroll to rotate the current tile."><img src="images/arrows_scroll.svg">Rotate</span>
-        <button id="vi-stop-editing" class="right"><img src="images/check_done.svg">Preview</button>
-        <button id="vi-switch-layout"><img src="images/tiles_layout.svg">Wrap</button>
-        <button id="vi-zoom-out"><img src="images/zoom_out.svg">Smaller</button>
-        <button id="vi-zoom-in"><img src="images/zoom_in.svg">Larger</button>
-    </div>
-    <div class="legend tool-selector">
-        <button class="squish-right active" data-tool="brush" aria-label="3x3 Brush: Draw/erase tiles"><img src="images/draw-point.svg">Brush</button>
-        <input  data-tool="brush" type="number" id="vi-brush-size" min="1" max="15" value="1" aria-label="Brush radius">
-        <button data-tool="line" aria-label="Line: Draw/erase lines"><img src="images/draw-line.svg">Line</button>
-        <button data-tool="rectangle" aria-label="Rectangle: Draw/erase rectangles"><img src="images/draw-grid.svg">Rectangle</button>
+        <div class="legend">
+            <span aria-label="Drag to place tiles, Control-drag to pan/move"><img src="images/mouse_left.svg">Place</span>
+            <span aria-label="Shift-drag or Right-drag to erase tiles"><img src="images/mouse_right.svg">Delete</span>
+            <span aria-label="Alt-click or Middle-click to pick tiles"><img src="images/mouse_middle.svg">Pick</span>
+            <span aria-label="Scroll to rotate the current tile."><img src="images/arrows_scroll.svg">Rotate</span>
+            <button id="vi-stop-editing" class="right"><img src="images/check_done.svg">Preview</button>
+            <button id="vi-switch-layout"><img src="images/tiles_layout.svg">Wrap</button>
+            <button id="vi-zoom-out"><img src="images/zoom_out.svg">Smaller</button>
+            <button id="vi-zoom-in"><img src="images/zoom_in.svg">Larger</button>
+        </div>
+        <div class="legend tool-selector">
+            <button class="squish-right active" data-tool="brush" aria-label="3x3 Brush: Draw/erase tiles"><img src="images/draw-point.svg">Brush</button>
+            <input  data-tool="brush" type="number" id="vi-brush-size" min="1" max="15" value="1" aria-label="Brush radius">
+            <button data-tool="line" aria-label="Line: Draw/erase lines"><img src="images/draw-line.svg">Line</button>
+            <button data-tool="rectangle" aria-label="Rectangle: Draw/erase rectangles"><img src="images/draw-grid.svg">Rectangle</button>
 
-        <button id="vi-edit-undo" aria-label="Undo up to 25 actions (Ctrl+Z)" class="right"><img src="images/undo.svg">Undo</button>
-        <button id="vi-edit-redo" aria-label="Redo your last undone action (Ctrl+Y or Ctrl+Shift+Z)"><img src="images/redo.svg">Redo</button>
-    </div>
-    `;
+            <button id="vi-edit-undo" aria-label="Undo up to 25 actions (Ctrl+Z)" class="right"><img src="images/undo.svg">Undo</button>
+            <button id="vi-edit-redo" aria-label="Redo your last undone action (Ctrl+Y or Ctrl+Shift+Z)"><img src="images/redo.svg">Redo</button>
+        </div>
+    `
+
+    const tileList = createTileList(map.getTileset());
 
     controls.querySelector('#vi-zoom-out').onclick = () => {
         tileList.zoomTilesRelative(-10);
@@ -444,6 +459,204 @@ const editTileMap = (map) => {
     });
 }
 engineEvents.listen('edit tilemap', (_event, map) => editTileMap(map));
+
+const editTilesetCollisions = (tileset) => {
+    setupOpenEditor(tileset);
+
+    const controls = document.createElement('div');
+    controls.classList.add('editor-controls');
+    controls.classList.add('visual');
+    editorCanvas.parentElement.after(controls);
+    controls.innerHTML = `
+        <div class="legend">
+            <button id="vi-clear-shape">Clear Shape</button>
+            <button id="vi-set-rectangle">Rectangle</button>
+            <button id="vi-set-polygon">Polygon</button>
+            <button id="vi-set-circle">Circle</button>
+
+            <button id="vi-stop-editing" class="right"><img src="images/check_done.svg">Done</button>
+            <button id="vi-switch-layout"><img src="images/tiles_layout.svg">Wrap</button>
+            <button id="vi-zoom-out" aria-label="Zoom out"><img src="images/zoom_out.svg"></button>
+            <button id="vi-zoom-in" aria-label="Zoom in"><img src="images/zoom_in.svg"></button>
+        </div>
+    `;
+
+    const tileList = createTileList(tileset);
+    controls.appendChild(tileList.element);
+
+    controls.querySelector('#vi-zoom-out').onclick = () => {
+        tileList.zoomTilesRelative(-10);
+    }
+    controls.querySelector('#vi-zoom-in').onclick = () => {
+        tileList.zoomTilesRelative(10);
+    }
+    controls.querySelector('#vi-switch-layout').onclick = () => {
+        tileList.toggleWrap();
+    }
+    controls.querySelector('#vi-stop-editing').onclick = () => {
+        tileset.__engine_editing = false;
+        engineEvents.emit('refresh objects list');
+        showPreviewOrderControls();
+    }
+
+    controls.querySelector('#vi-clear-shape').onclick = () => {
+        tileset.removeCollisionShape(tileList.selectedTile());
+        tileList.removeCollisionShapeIcon(tileList.selectedTile());
+    }
+    controls.querySelector('#vi-set-rectangle').onclick = () => {
+        tileList.addCollisionShapeIcon(tileList.selectedTile());
+        tileset.setCollisionShape(
+            // Full tile rectangle
+            new gameify.shapes.Rectangle(0, 0, tileset.twidth, tileset.theight),
+            tileList.selectedTile()
+        );
+    }
+    controls.querySelector('#vi-set-polygon').onclick = () => {
+        tileList.addCollisionShapeIcon(tileList.selectedTile());
+        tileset.setCollisionShape(
+            // Diamond shape
+            new gameify.shapes.Polygon(0, 0, [
+                {x: tileset.twidth/2, y: 0},
+                {x: tileset.twidth, y: tileset.theight/2},
+                {x: tileset.twidth/2, y: tileset.theight},
+                {x: 0, y: tileset.theight/2},
+            ]),
+            tileList.selectedTile()
+        );
+    }
+    controls.querySelector('#vi-set-circle').onclick = () => {
+        tileList.addCollisionShapeIcon(tileList.selectedTile());
+        tileset.setCollisionShape(
+            // Full tile circle
+            new gameify.shapes.Circle(tileset.twidth/2, tileset.twidth/2, tileset.twidth/2),
+            tileList.selectedTile()
+        );
+    }
+
+    // Canvas is 400x400, tile is drawn 200x200, 
+    // with 100px on each side, in case you want your shape
+    // to be outside of the tile by a bit
+    const canvasZoomFactor = 200/tileset.twidth;
+    const tileAspectRatio = tileset.twidth/tileset.theight;
+
+    const previewSprite = new gameify.Sprite(0, 0, tileset.getTile(0, 0));
+    previewSprite.scale = canvasZoomFactor;
+    editorScreen.add(previewSprite);
+
+    editorScreen.setSize(200+(200*tileAspectRatio), 400);
+    editorScreen.camera.setSpeed(1);
+    editorScreen.camera.translateAbsolute(100, 100);
+    editorScreen.setAntialiasing(false);
+
+    let currentNodes = [];
+    let draggingNode = false;
+
+    const editScene = new gameify.Scene(editorScreen);
+    editorScreen.setScene(editScene);
+    editScene.onUpdate(() => {
+        const selTilePos = tileList.selectedTile();
+        const previewTile = tileset.getTile(selTilePos.x, selTilePos.y);
+        const shape = previewTile.tileData.collisionShape;
+
+        const mousePos = editorScreen.mouse.worldPosition();
+
+        currentNodes = [];
+        const createNode = (pos, callback) => {
+            const nodeDragDistance = 15;
+            const handleShape = new gameify.shapes.Circle(pos.x, pos.y, nodeDragDistance);
+            handleShape.strokeColor = '#000f';
+            const node = {
+                handleShape,
+                position: pos.multiply(canvasZoomFactor),
+                update() {
+                    const mousePos = editorScreen.mouse.worldPosition();
+                    const mouseDown = editorScreen.mouse.buttonIsPressed("left");
+
+                    this.closeToMouse = mousePos.distanceTo(this.position) < nodeDragDistance;
+
+                    if (draggingNode === this) {
+                        this.position = mousePos;
+                        const shapePosition = mousePos.multiply(1/canvasZoomFactor);
+                        callback(shapePosition.rounded()); // snap to nearest pixel
+                        if (!mouseDown) draggingNode = false; // stop dragging on mouse up
+
+                    } else if (mouseDown && !draggingNode && this.closeToMouse) {
+                        draggingNode = this;
+                    }
+
+                    this.handleShape.position = this.position;
+                },
+                draw() {
+                    if (this.closeToMouse) {
+                        this.handleShape.fillColor = '#58cf';
+                    } else {
+                        this.handleShape.fillColor = '#58c8';
+                    }
+                    this.handleShape.draw(editorScreen.getContext());
+                }
+            };
+            node.update();
+            currentNodes.push(node);
+        }
+
+        if (draggingNode) {
+            draggingNode.update();
+
+        } else if (shape?.type === 'Rectangle') {
+            // Top left corner
+            const originalBR = shape.position.add(shape.size);
+            createNode(shape.position, (pos) => {
+                shape.position = pos;
+                shape.size = originalBR.subtract(pos);
+            });
+            // Bottom right corner
+            createNode(shape.position.add(shape.size), (pos) => {
+                shape.size = pos.subtract(shape.position);
+            });
+            // Center
+            createNode(shape.position.add(shape.size.multiply(1/2)), (pos) => {
+                shape.position = pos.subtract(shape.size.multiply(1/2));
+            });
+        } else if (shape?.type === 'Circle') {
+            // Center
+            createNode(shape.position, (pos) => {
+                shape.position = pos;
+            });
+            // Radius
+            createNode(shape.position.add({x: shape.radius, y: 0}), (pos) => {
+                shape.radius = Math.max(1, pos.subtract(shape.position).x);
+            });
+        } else if (shape?.type === 'Polygon') {
+            // Vertices
+            for (const point of shape.points) {
+                const index = shape.points.indexOf(point);
+                createNode(point, (pos) => {
+                    shape.points[index] = pos;
+                });
+            }
+        }
+    });
+    editScene.onDraw(() => {
+        editorScreen.clear();
+        const selTilePos = tileList.selectedTile();
+        const previewTile = tileset.getTile(selTilePos.x, selTilePos.y);
+        previewSprite.setImage(previewTile);
+        previewSprite.draw();
+
+        const shape = previewTile.tileData.collisionShape;
+        const ctx = editorScreen.getContext();
+        if (shape) {
+            ctx.scale(canvasZoomFactor, canvasZoomFactor);
+            shape.draw(ctx);
+            ctx.scale(1/canvasZoomFactor, 1/canvasZoomFactor);
+        }
+
+        for (const node of currentNodes) {
+            node.draw();
+        };
+    });
+}
+engineEvents.listen('edit tileset collisions', (_event, tileset) => editTilesetCollisions(tileset));
 
 const editAnimation = (anim) => {
     setupOpenEditor(anim);
@@ -1020,10 +1233,15 @@ const clearVisualEditor = () => {
     for (const controls of allControls) {
         controls.remove();
     }
-    for (const mn in engineState.objects['Tilemap']) {
-        engineState.objects['Tilemap'][mn].__engine_editing = false;
+    for (const objName of engineTypes.list(engineState.objects, ['Tilemap', 'Tileset', 'Animation'])) {
+        const type = objName.split('::')[0];
+        const name = objName.split('::')[1];
+        console.log(type, name);
+        engineState.objects[type][name].__engine_editing = false;
     }
     engineEvents.emit('refresh objects list');
+    const defaultScreen = Object.values(engineState.objects['Screen'])[0];
+    editorScreen.setSize(defaultScreen.getSize());
     editorScreen.setScene(previewScene);
 }
 engineEvents.listen('clear visual editor', () => clearVisualEditor());
