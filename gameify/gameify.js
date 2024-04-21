@@ -336,6 +336,13 @@ export let gameify = {
             this.pressedButtons.push(this.getButtonName(event.button));
         }
 
+        /** Called when a mouse button is pressed down
+         * @private
+         */
+        this.onDoubleClick = (event) => {
+            this.eventsJustHappened.push([0, "dblclick", "doubleclick"]);
+        }
+
         /** Called when a key is released
          * @private
          */
@@ -449,6 +456,7 @@ export let gameify = {
         this.setup = () => {
             this.captureScope.setAttribute("tabindex", 1);
             this.captureScope.addEventListener("mousedown", this.onMouseDown);
+            this.captureScope.addEventListener("dblclick", this.onDoubleClick);
             this.captureScope.addEventListener("mouseup", this.onMouseUp);
             this.captureScope.addEventListener("mouseout", this.onMouseOut);
             this.captureScope.addEventListener("mousemove", this.onMouseMove);
@@ -460,6 +468,7 @@ export let gameify = {
         */
         this.destruct = () => {
             this.captureScope.removeEventListener("mousedown", this.onMouseDown);
+            this.captureScope.removeEventListener("dblclick", this.onDoubleClick);
             this.captureScope.removeEventListener("mouseup", this.onMouseUp);
             this.captureScope.removeEventListener("mouseout", this.onMouseOut);
             this.captureScope.removeEventListener("mousemove", this.onMouseMove);
@@ -1606,6 +1615,7 @@ export let gameify = {
  * "wheelup"
  * "wheeldown"
  * "wheel"
+ * "doubleclick"
  * @example // ----------------
  * //  Keyboard Buttons
  * // ----------------
