@@ -226,8 +226,8 @@ const populateObjectsList = () => {
             delButton.classList.add('property');
             delButton.classList.add('small');
             delButton.innerHTML = 'Delete';
-            delButton.onclick = () => {
-                if (!confirm('Delete ' + obj.__engine_name + '? You can\'t undo this!')) return;
+            delButton.onclick = async () => {
+                if (!await popup.confirm('Delete File?', 'Delete ' + obj.__engine_name + '? You can\'t undo this!')) return;
                 delete set[objName];
                 visualLog(`Deleted object '${setName}::${objName}'`, 'warn', 'objects editor');
                 populateObjectsList();
@@ -313,8 +313,8 @@ const populateObjectsList = () => {
                         }
                         populateObjectsList();
                     },
-                    'Delete': () => {
-                        if (!confirm('Delete folder? Your objects will not be deleted.')) {
+                    'Delete': async () => {
+                        if (!await popup.confirm('Delete folder?', 'Any objects in this folder will not be deleted.')) {
                             return;
                         }
                         for (const child of folder.__engine_objects) {
@@ -628,7 +628,9 @@ const saveProject = async (asName) => {
 
     let overwrite = false;
     if (savedList.includes(name) && name !== engineState.projectFilename) {
-        if (!confirm(`Overwrite save '${name}'?`)) return;
+        if (!await popup.confirm('Overwrite save?',
+            `There is already a save named '${newName}'. Are you sure you want to overwrite it?`
+        )) return;
         overwrite = true;
     } else if (savedList.includes(name)) {
         overwrite = true;
@@ -915,8 +917,8 @@ const listFiles = async (data) => {
                 visualLog(`Renamed file '${file}' to '${name}'`, 'log', 'filesystem');
                 listFiles();
             },
-            'Delete': () => { 
-                if (confirm('Delete ' + file + '?')) {
+            'Delete': async () => { 
+                if (await popup.confirm('Delete ' + file + '?')) {
                     delete engineState.files[file];
                     visualLog(`Deleted file '${file}'`, 'warn', 'filesystem');
                     listFiles();
@@ -994,9 +996,13 @@ const openProject = (data) => {
     return true;
 }
 
-const deleteCloudSave = (save) => {
+const deleteCloudSave = async (save) => {
     const cloudAccountName = localStorage.getItem('accountName');
-    if (!confirm(`Delete cloud save '${cloudAccountName}/${save}'?`)) return;
+    if (!await popup.confirm('Delete cloud save',
+        `Delete '${cloudAccountName}/${save}' from the cloud? <br> This will not delete your local copy.`
+    )) {
+        return;
+    }
 
     visualLog(`Deleting '${cloudAccountName}/${save}' from the cloud.`, 'warn', 'cloud save');
 
@@ -1220,9 +1226,9 @@ const listSaves = () => {
         }
         button.innerText = name;
         const delButton = document.createElement('button');
-        delButton.onclick = (event, bypass) => {
+        delButton.onclick = async (event, bypass) => {
             event?.stopPropagation();
-            if (!bypass && !confirm(`Delete save ${name}?`)) { return; }
+            if (!bypass && !await popup.confirm('Delete save?', `Delete ${name}? you can't undo this`)) { return; }
 
             localStorage.removeItem('savedObjects:' + name);
 
@@ -1240,7 +1246,10 @@ const listSaves = () => {
         listElem.appendChild(button);
 
         button.__engine_menu = {
-            'Overwrite': () => {
+            'Overwrite': async () => {
+                if (!await popup.confirm('Overwrite save?',
+                    `This will save the currently open project as '${name}', overwriting it.`
+                )) return;
                 saveProject(name);
             },
             'Load': () => {
@@ -1252,16 +1261,26 @@ const listSaves = () => {
             'Rename': async () => {
                 let newName = await popup.prompt('Rename this save', '', name);
                 if (!newName) return;
-                if (localStorage.getItem('savedObjects:' + newName)) {
-                    if (!confirm(`Overwrite save ${newName}?`)) return;
+
+                // Check if the name already exists
+                const savedList = localStorage.getItem('saveNames')?.split(',') || [];
+                if (savedList.includes(newName)) {
+                    // Don't prompt if the name is the same
+                    if (name !== newName && !await popup.confirm('Overwrite save?',
+                        `There is already a save named '${newName}'. Are you sure you want to overwrite it?`
+                    )) return;
+                    // Don't push the name into the list, it's already there
+                } else {
+                    savedList.push(newName);
                 }
+
                 // Copy the save over
                 localStorage.setItem(
                     'savedObjects:' + newName,
                     localStorage.getItem('savedObjects:' + name)
                 );
-                const savedList = localStorage.getItem('saveNames')?.split(',') || [];
-                savedList.splice(savedList.indexOf(name), 1, newName);
+                savedList.splice(savedList.indexOf(name), 1);
+
                 localStorage.setItem('saveNames', savedList.join(','));
                 // Delete the old save
                 localStorage.removeItem('savedObjects:' + name);
