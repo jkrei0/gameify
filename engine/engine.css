@@ -731,6 +731,10 @@ h3 button:not(:first-of-type) {
 .editor-controls .legend .squish-right {
   margin-right: 0;
 }
+.editor-controls .legend span {
+  margin-block: 0;
+  padding-block: 0;
+}
 .editor-controls.visual {
   overflow-x: auto;
 }
@@ -844,6 +848,7 @@ h3 button:not(:first-of-type) {
 }
 .editor-controls .tile-list .tile-container.has-collision-shape::before {
   content: "";
+  pointer-events: none;
   position: absolute;
   bottom: 5%;
   right: 5%;

@@ -126,7 +126,7 @@ editorScreen.startGame();
 let doBreakTileRows = false;
 let tileCellSize = 50;
 
-const createTileList = (tileset) => {
+const createTileList = (tileset, selectionChangeCallback = ()=>{}) => {
     const tileListElement = document.createElement('div');
     tileListElement.classList.add('tile-list');
 
@@ -152,6 +152,7 @@ const createTileList = (tileset) => {
                 tileListElement.querySelectorAll('.tile.selected').forEach(t => t.classList.remove('selected'));
                 tileCanvas.classList.add('selected');
                 selTile = {x: tx, y: ty, r: 0};
+                selectionChangeCallback();
             }
             const tile = tileset.getTile(tx, ty);
             if (tile.tileData.collisionShape) {
@@ -479,9 +480,44 @@ const editTilesetCollisions = (tileset) => {
             <button id="vi-zoom-out" aria-label="Zoom out"><img src="images/zoom_out.svg"></button>
             <button id="vi-zoom-in" aria-label="Zoom in"><img src="images/zoom_in.svg"></button>
         </div>
+        <div class="legend">
+            <span id="vi-tag-list">
+                No Tags
+                <button class="remove-tag" aria-label="Remove tag">My Tag <img src="images/x-cancel.svg"></button>
+            </span>
+
+            <select id="vi-add-recent-tag" class="right">
+                <option selected disabled value="__no_tag1">Add Recent Tag</option>
+            </select>
+            <input data-tool="brush" type="text" id="vi-tag-input" aria-label="Tag name" placeholder="Tag name">
+            <button id="vi-add-tag">Add Tag</button>
+        </div>
     `;
 
-    const tileList = createTileList(tileset);
+    const updateTagsList = () => {
+        const selTile = tileList.selectedTile();
+        const tags = tileset.getTile(selTile.x, selTile.y).tileData.tags || [];
+
+        const tagList = document.querySelector('#vi-tag-list');
+        tagList.innerHTML = '';
+        for (const tag of tags) {
+            const button = document.createElement('button');
+            button.setAttribute('aria-label', `Remove tag ${tag}`);
+            button.innerHTML = tag + ' <img src="images/x-cancel.svg">';
+            button.onclick = () => {
+                tileset.removeTag(tag, tileList.selectedTile());
+                updateTagsList();
+            }
+            tagList.appendChild(button);
+            addAriaTooltip(button);
+        }
+        if (tagList.innerHTML === '') {
+            tagList.innerHTML = 'No Tags';
+        }
+    }
+
+    const tileList = createTileList(tileset, updateTagsList);
+    updateTagsList();
     controls.appendChild(tileList.element);
 
     controls.querySelector('#vi-zoom-out').onclick = () => {
@@ -532,6 +568,38 @@ const editTilesetCollisions = (tileset) => {
             tileList.selectedTile()
         );
     }
+
+    const addTag = (tag) => {
+        const input = controls.querySelector('#vi-tag-input');
+        const select = document.querySelector('#vi-add-recent-tag');
+        if (!tag) {
+            tag = input.value;
+            input.value = '';
+        }
+        if (!tag) return;
+
+        tileset.addTag(tag, tileList.selectedTile());
+        select.value = '__no_tag1';
+
+        if (!select.querySelector(`[value="${tag}"]`)) {
+            const option = document.createElement('option');
+            option.value = tag;
+            option.textContent = tag;
+            select.appendChild(option);
+        }
+
+        updateTagsList();
+    };
+
+    controls.querySelector('#vi-add-tag').addEventListener('click', ()=>addTag());
+    controls.querySelector('#vi-tag-input').addEventListener('keydown', (evt) => {
+        if (evt.key === 'Enter') {
+            addTag();
+        }
+    });
+    document.querySelector('#vi-add-recent-tag').addEventListener('change', (evt) => {
+        addTag(evt.target.value);
+    });
 
     // Canvas is 400x400, tile is drawn 200x200, 
     // with 100px on each side, in case you want your shape

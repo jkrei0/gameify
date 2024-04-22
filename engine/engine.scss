@@ -868,6 +868,11 @@ h3 {
         .squish-right {
             margin-right: 0;
         }
+
+        span {
+            margin-block: 0;
+            padding-block: 0;
+        }
     }
 
     &.visual {
@@ -1007,6 +1012,7 @@ h3 {
 
         .tile-container.has-collision-shape::before {
             content: "";
+            pointer-events: none;
             position: absolute;
             bottom: 5%;
             right: 5%;
