@@ -853,6 +853,7 @@ export let gameify = {
             }
 
             const obj = new gameify.Tileset(data.path, data.twidth, data.theight);
+            obj.#setAllTags(data.tags || {});
             for (const tile of data.collisionShapes || []) {
                 obj.setCollisionShape(shapes.Shape.fromJSON(tile.shape), tile.x, tile.y);
             }
@@ -882,11 +883,13 @@ export let gameify = {
                 path: this.path,
                 twidth: this.twidth,
                 theight: this.theight,
-                collisionShapes: colShapes
+                collisionShapes: colShapes,
+                tags: this.#tags
             };
         }
 
         #collisionShapes = {};
+        #tags = {};
 
         /** Add a collision shape to the tileset
          * @method
@@ -927,6 +930,63 @@ export let gameify = {
             }
         }
 
+        /** Add a tag to a tile in the tileset
+         * @method
+         * @arg {String} tag
+         * @arg {Number} tilex
+         * @arg {Number} tiley
+         *//** Add a tag to a tile in the tileset
+         * @method
+         * @arg {String} tag
+         * @arg {gameify.Vector2d} tilepos
+         */
+        addTag(tag, tilex, tiley) {
+            if (tiley === undefined) {
+                tiley = tilex.y;
+                tilex = tilex.x;
+            }
+            if (!this.#tags[tilex]) {
+                this.#tags[tilex] = {};
+            }
+            if (!this.#tags[tilex][tiley]) {
+                this.#tags[tilex][tiley] = [];
+            }
+
+            // Don't add a tag twice
+            if (this.#tags[tilex][tiley].includes(tag)) return;
+
+            this.#tags[tilex][tiley].push(tag);
+        }
+
+        /** Set the entire tags object for the tileset
+         * @method
+         * @arg {Object} tags
+         * @private
+         */
+        #setAllTags = (tags) => {
+            this.#tags = tags;
+        }
+
+        /** Remove a tag from a tile in the tileset
+         * @method
+         * @arg {String} tag
+         * @arg {Number} tilex
+         * @arg {Number} tiley
+         *//** Remove a tag from a tile in the tileset
+         * @method
+         * @arg {String} tag
+         * @arg {gameify.Vector2d} tilepos
+         */
+        removeTag(tag, tilex, tiley) {
+            if (tiley === undefined) {
+                tiley = tilex.y;
+                tilex = tilex.x;
+            }
+            if (this.#tags[tilex] && this.#tags[tilex][tiley]) {
+                this.#tags[tilex][tiley] = this.#tags[tilex][tiley].filter(t => t !== tag);
+            }
+        }
+
         /** Get a tile (or section of tiles) from the tileset. Returns a new Image object each time, so if you're getting
          * the same tile a lot you might want to save it to a variable
          * @method
@@ -942,7 +1002,8 @@ export let gameify = {
                 tileset: this,
                 position: new vectors.Vector2d(x, y),
                 size: new vectors.Vector2d(width, height),
-                collisionShape: this.#collisionShapes[x]?.[y]
+                collisionShape: this.#collisionShapes[x]?.[y],
+                tags: this.#tags[x]?.[y]
             }
             tile.texture = this.texture;
             tile.crop(x * this.twidth, y * this.theight, this.twidth*width, this.theight*height);
@@ -988,6 +1049,7 @@ export let gameify = {
             this.source = new gameify.Vector2d(sx, sy);
             this.size = new gameify.Vector2d(width, height);
             this.rotation = r;
+            this.tags = image.tileData?.tags || [];
             this.#shape = image.tileData?.collisionShape?.copy();
             if (this.#shape) {
                 // This will not work if the size ratios of the tileset and map are different
@@ -1025,6 +1087,7 @@ export let gameify = {
                 position: this.position.toJSON(),
                 source: this.source.toJSON(),
                 rotation: this.rotation
+                // tags and collisionshape are stored in the image
             };
         }
         
@@ -1048,6 +1111,17 @@ export let gameify = {
          * @type {Number}
          */
         rotation;
+        /** Any tags that the tile has
+         * @type {String[]}
+         */
+        tags;
+
+        /** Check if the tile has a tag
+         * @method
+         * @arg {String} tag - The tag to check for
+         * @returns {boolean}
+         */
+        hasTag = (tag) => { return this.tags.includes(tag); }
 
         #shape;
 
