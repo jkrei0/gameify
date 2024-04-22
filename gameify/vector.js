@@ -324,6 +324,18 @@ export let vectors = {
         multiply = (value) => {
             return new vectors.Vector2d(this.x * value, this.y * value);
         }
+        /** Multiplies the components of this and another vector, and returns the result as a new vector
+         * @example let vectorA = new gameify.Vector2d(3, 2);
+         * let vectorB = new gameify.Vector2d(4, -8)
+         * let vectorC = vectorA.multiplyComponents(vectorB); // vectorC = <12, -16>
+         * @method
+         * @arg {gameify.Vector2d} vector - The vector to multiply
+         * @returns {gameify.Vector2d}
+         */
+        multiplyComponents = (vectorB) => {
+            if (!vectors.Vector2d.assertIsCompatibleVector(vectorB)) return;
+            return new vectors.Vector2d(this.x * vectorB.x, this.y * vectorB.y);
+        }
         /** Find the angle from the vector (in radians)
          * @method
          * @returns {Number}

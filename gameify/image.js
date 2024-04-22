@@ -63,6 +63,8 @@ export let images = {
          *     tileset: Tileset,
          *     position: { x: Number, y: Number }
          *     size: { x: Number, y: Number }
+         *     collisionShape: gameify.shapes.Shape OR undefined,
+         *     tags: [ String ]
          * }
          * @type {Object}
          */
@@ -111,8 +113,9 @@ export let images = {
                     tileset: ref(this.tileData.tileset),
                     position: this.tileData.position,
                     size: this.tileData.size
+                    // We don't need to save the collision shape,
+                    // It's saved as part of the tileset
                 }
-                console.log('SVT', tileData, this.tileData);
             }
             return {
                 path: this.path,

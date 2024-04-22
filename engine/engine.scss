@@ -868,6 +868,11 @@ h3 {
         .squish-right {
             margin-right: 0;
         }
+
+        span {
+            margin-block: 0;
+            padding-block: 0;
+        }
     }
 
     &.visual {
@@ -997,6 +1002,24 @@ h3 {
         .tile {
             background: repeating-conic-gradient(#0000 0% 25%, #fff1 0% 50%)
                 50% / 80px 80px;
+        }
+
+        .tile-container {
+            padding: 0;
+            margin: 0;
+            position: relative;
+        }
+
+        .tile-container.has-collision-shape::before {
+            content: "";
+            pointer-events: none;
+            position: absolute;
+            bottom: 5%;
+            right: 5%;
+            width: 25%;
+            height: 25%;
+            background: #58c3;
+            border: 2px solid #25ac;
         }
 
         .tile.selected {

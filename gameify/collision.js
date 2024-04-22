@@ -20,6 +20,51 @@ class Shape {
         this.position = new vectors.Vector2d(x, y);
     }
 
+    /** Creates a object from JSON data
+     * @method
+     * @arg {Object|Array} data - Serialized object data (from object.toJSON)
+     * @returns {gameify.Tileset}
+    */
+    static fromJSON = (data) => {
+        let newShape;
+        switch (data.type) {
+            case "Shape":
+                newShape = new Shape(data.type, data.position.x, data.position.y); break;
+            case "Circle":
+                newShape = new Circle(data.position.x, data.position.y, data.radius); break;
+            case "Rectangle":
+                newShape = new Rectangle(data.position.x, data.position.y, data.size.x, data.size.y); break;
+            case "Polygon":
+                newShape = new Polygon(data.position.x, data.position.y, data.points); break;
+            default:
+                throw new Error("Unknown shape type: " + data.type);
+        }
+        newShape.strokeColor = data.strokeColor;
+        newShape.fillColor = data.fillColor;
+        return newShape;
+
+    }
+
+    /** Create a copy of the shape */
+    copy = () => {
+        // Use toJSON, not __toJSON, because we want to store the
+        // actual shape data.
+        return Shape.fromJSON(this.toJSON());
+    }
+
+    /** Convert the object to JSON. Not available on the base Shape, only on inherited classes
+     * @method
+     * @alias gameify.shapes.Shape#toJSON
+     */
+    __toJSON = (key) => {
+        return {
+            type: this.#type,
+            position: this.position.toJSON(),
+            strokeColor: this.strokeColor,
+            fillColor: this.fillColor
+        }
+    }
+
     #type;
 
     /** A string represeting the type of shape, eg "Circle"
@@ -74,6 +119,14 @@ class Shape {
         throw new Error("shape.draw is not available in the base Shape class. It must be implemented by each specific shape type");
     }
 
+    /** Scale the shape by a factor
+     * @method
+     * @arg {Number} scale - The scale factor
+     */
+    scale(scale) {
+        this.position = this.position.multiply(scale);
+    }
+
 }
 /** A circle shape
  * @constructor
@@ -92,6 +145,15 @@ class Circle extends Shape {
         }
 
         this.radius = radius;
+    }
+
+    /** Convert the object to JSON
+     * @method
+     */
+    toJSON(key) {
+        const data = this.__toJSON(key);
+        data.radius = this.radius;
+        return data;
     }
 
     #radius;
@@ -152,6 +214,15 @@ class Circle extends Shape {
         context.stroke();
         context.fill();
     }
+
+    /** Scale the shape by a factor
+     * @method
+     * @arg {Number} scale - The scale factor
+     */
+    scale = (scale) => {
+        super.scale(scale);
+        this.radius *= scale;
+    }
 }
 /** A rectangle shape
  * @constructor
@@ -175,6 +246,15 @@ class Rectangle extends Shape {
         }
 
         this.size = new vectors.Vector2d(width, height);
+    }
+
+    /** Convert the object to JSON
+     * @method
+     */
+    toJSON(key) {
+        const data = this.__toJSON(key);
+        data.size = this.#size.toJSON();
+        return data;
     }
 
     #size;
@@ -278,8 +358,25 @@ class Rectangle extends Shape {
         context.stroke();
         context.fill();
     }
+
+    /** Scale the shape by a factor
+     * @method
+     * @arg {Number} scale - The scale factor
+     */
+    scale = (scale) => {
+        super.scale(scale);
+        this.size = this.size.multiply(scale);
+    }
 }
 
+/** A polygon shape
+ * @constructor
+ * @alias gameify.shapes.Polygon
+ * @extends gameify.shapes.Shape
+ * @param {number} x - The x position
+ * @param {number} y - The y position
+ * @param {gameify.Vector2d[]} points - The points of the polygon, relative to the position of the polygon
+ */
 class Polygon extends Shape {
     constructor(x, y, points) {
         super("Polygon", x, y);
@@ -289,6 +386,15 @@ class Polygon extends Shape {
         for (const v in points) {
             this.#points[v] = new vectors.Vector2d(points[v]);
         }
+    }
+    
+    /** Convert the object to JSON
+     * @method
+     */
+    toJSON(key) {
+        const data = this.__toJSON(key);
+        data.points = this.#points;
+        return data;
     }
 
     #points = [];
@@ -315,7 +421,12 @@ class Polygon extends Shape {
             },
             set: (target, name, value) => {
                 this.#segmentsUpdated = false;
+                if (name === "length") {
+                    target.length = value;
+                    return true;
+                }
                 target[name] = new vectors.Vector2d(value);
+                return target[name];
             }
         });
     }
@@ -373,7 +484,6 @@ class Polygon extends Shape {
             if (int) {
                 intersections++;
             }
-            console.log(seg.a.toString(), seg.b.toString(), int, intersections);
         }
 
         return intersections % 2 === 1;
@@ -457,6 +567,19 @@ class Polygon extends Shape {
         context.closePath();
         context.stroke();
         context.fill();
+    }
+
+    /** Scale the shape by a factor
+     * @method
+     * @arg {Number} scale - The scale factor
+     */
+    scale = (scale) => {
+        super.scale(scale);
+
+        for (const point of this.#points) {
+            point.x *= scale;
+            point.y *= scale;
+        }   
     }
 }
 
