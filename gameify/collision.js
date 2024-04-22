@@ -484,7 +484,6 @@ class Polygon extends Shape {
             if (int) {
                 intersections++;
             }
-            console.log(seg.a.toString(), seg.b.toString(), int, intersections);
         }
 
         return intersections % 2 === 1;
