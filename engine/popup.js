@@ -7,7 +7,7 @@ export const popup = {
      * @param {object} buttons - Buttons { text => function(button, inputValue, selectValue) }
      * @param {string} [inputPlaceholder] - Input placeholder text. Input is hidden if undefined
      * @param {string} [inputText=""] - Initial input text
-     * @param {string} [selOptions] - Select options, as HTML
+     * @param {string} [selOptions] - Select options, as HTML, an array, or an object {value: displayText}
      */
     show: (titleText, descText, buttons, inputPlaceholder, inputText, selOptions) => {
         const container = document.querySelector('#popup');
@@ -20,23 +20,41 @@ export const popup = {
         input.placeholder = inputPlaceholder || 'Input text';
         input.value = inputText || '';
         const select = popupContent.querySelector('select');
-        select.innerHTML = selOptions;
+
+        if (typeof options === 'string') {
+            select.innerHTML = selOptions;
+        } else if (Array.isArray(selOptions)) {
+            select.innerHTML = '';
+            select.innerHTML += `<option disabled selected>Select an option</option>`;
+            for (const option of selOptions) {
+                select.innerHTML += `<option>${option}</option>`;
+            }
+        } else if (typeof selOptions === 'object') {
+            select.innerHTML = '';
+            select.innerHTML += `<option disabled selected>Select an option</option>`;
+            for (const option in selOptions) {
+                select.innerHTML += `<option value="${option}">${selOptions[option]}></option>`;
+            }
+        }
 
         if (inputPlaceholder === undefined) {
             input.style.display = 'none';
         } else {
             input.style.display = 'block';
+            input.focus();
         }
 
         if (!selOptions) {
             select.style.display = 'none';
         } else {
             select.style.display = 'block';
+            input.focus();
         }
 
         const buttonRow = container.querySelector('.button-row');
         buttonRow.innerHTML = '';
 
+        let lastButton = undefined;
         for (const btnText in buttons) {
             const button = document.createElement('button');
             button.innerHTML = btnText;
@@ -45,7 +63,17 @@ export const popup = {
                 buttons[btnText](btnText, input.value, select.value);
             } 
             buttonRow.appendChild(button);
+            lastButton = button;
         }
+        if (!selOptions && !inputPlaceholder) {
+            lastButton.focus();
+        }
+
+        input.addEventListener('keyup', (evt) => {
+            if (evt.key === 'Enter') {
+                lastButton.focus();
+            }
+        });
     },
     /** Force the popup to close. The popup is always automatically closed when any button is pressed. */
     close: () => {
