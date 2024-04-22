@@ -93,7 +93,7 @@ export let images = {
                 // you would want the image to reflect changes to the tileset,
                 // not the specific crop it was originally created with.
                 const pos = data.tileData.position;
-                const size = data.tileData.size;
+                const size = data.tileData.size || { x: 1, y: 1 };
                 return tileset.getTile(pos.x, pos.y, size.x, size.y);
             } else {
                 return new images.Image(data.path, data.cropData);
