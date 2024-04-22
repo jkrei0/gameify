@@ -206,8 +206,9 @@ export let sprites = {
         /** Update the Sprite
          * @method
          * @param {Number} [delta] - The time, in miliseconds, since the last frame
+         * @param {Boolean} [updateAnimator] - Whether or not to update the animator
         */
-        update = (delta) => {
+        update = (delta, updateAnimator = true) => {
             if (delta === undefined) {
                 delta = 1000;
                 if (!this.#deltaWarned) {
@@ -217,7 +218,9 @@ This way speeds and physics are the same regardless of FPS or how good your comp
                 }
             }
             
-            this.animator.update(delta);
+            if (updateAnimator) {
+                this.animator.update(delta);
+            }
 
             // make the velocity dependant on the update speed
             this.position = this.position.add(this.velocity.multiply(delta/1000));
