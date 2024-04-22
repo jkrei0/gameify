@@ -86,8 +86,14 @@ export let animation = {
          */
         parent;
         
-        /** The animation that is currently playing (or undefined if not playing). Use Animator.play() to change the current animation being played. */
+        /** The animation that is currently playing (or undefined if not playing). Use Animator.play() to change the current animation being played.
+         * @readonly
+        */
         currentAnimation = undefined;
+        /** The name of the current animation (or undefined if not). Use Animator.play() to change the current animation being played.
+         * @readonly
+        */
+        currentAnimationName = undefined;
 
         /** If an animation is currently playing */
         playing = false;
@@ -143,11 +149,12 @@ export let animation = {
             if (!this.animations[name]) {
                 throw new Error(`Animation '${name}' not found or was not added to this animator.`);
             }
-            if (!this.currentAnimation) {
+            if (this.currentAnimation !== this.animations[name]) {
                 this.currentAnimation = this.animations[name];
+                this.currentAnimationName = name;
                 this.animationProgress = 0;
+                this.playing = true;
             }
-            this.playing = true;
         }
 
         /** Stop & reset the animation
@@ -156,6 +163,7 @@ export let animation = {
         stop = () => {
             this.playing = false;
             this.currentAnimation = undefined;
+            this.currentAnimationName = undefined;
             this.animationProgress = 0;
         }
 
@@ -182,7 +190,7 @@ export let animation = {
          */
         update = (delta) => {
             if (!this.playing) return;
-            if (this.currentAnimation.isAfterCompletion()) {
+            if (this.currentAnimation.isAfterCompletion(this.animationProgress)) {
                 this.stop();
                 return;
             }
