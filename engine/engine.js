@@ -305,8 +305,8 @@ const populateObjectsList = () => {
                 objList.prepend(folder);
 
                 folderSummary.__engine_menu = {
-                    'Rename': () => {
-                        const new_name = prompt('Enter a new folder name', obj.__engine_folder);
+                    'Rename': async () => {
+                        const new_name = await popup.prompt('Rename folder', '', obj.__engine_folder);
                         if (!new_name) return;
                         for (const child of folder.__engine_objects) {
                             child.__engine_folder = new_name;
@@ -331,8 +331,24 @@ const populateObjectsList = () => {
                 'Copy JavaScript': () => {
                     navigator.clipboard.writeText(`$get('${obj.__engine_name}')`)
                 },
-                'Add to folder': () => {
-                    obj.__engine_folder = prompt('Enter a folder name', 'MyFolder');
+                'Add to folder': async () => {
+
+                    const existingFolders = Object.keys(folderEls);
+                    const rmText = '(no folder/remove from folder)';
+                    existingFolders.push(rmText);
+                    const folder = await popup.selectPrompt(
+                        'Select a folder', '',  // title, text
+                        existingFolders, // dropdown options
+                        '', 'Or type a new folder name', // input default, placeholder
+                        'Select', 'Cancel'
+                    );
+                    if (folder) {
+                        obj.__engine_folder = folder;
+
+                        if (folder === rmText) {
+                            obj.__engine_folder = undefined;
+                        }
+                    }
                     populateObjectsList();
                 },
                 'Delete': () => {
@@ -592,7 +608,7 @@ engineFetch.setSessionFunction(() => {
 });
 engineFetch.setLogFunction(visualLog);
 
-const saveProject = (asName) => {
+const saveProject = async (asName) => {
     if (!engineState.projectFilename) {
         return;
     }
@@ -600,10 +616,11 @@ const saveProject = (asName) => {
 
     let name = asName || engineState.projectFilename;
     if (engineState.projectFilename.startsWith('(template)')) {
-        name = prompt('Name this save')?.replaceAll(',', '_')
+        name = await popup.prompt('Name this save', '');
     } else if (asName === false) {
-        name = prompt('Name this save', engineState.projectFilename)?.replaceAll(',', '_')
+        name = await popup.prompt('Name this save', '', engineState.projectFilename);
     }
+    name = name?.replaceAll(',', '_')
 
     if (!name) {
         return;
@@ -629,7 +646,15 @@ const saveProject = (asName) => {
         success = true;
     } catch (e) {
         console.error(e);
-        alert('Your project could not be saved locally (likely because your files are too large)');
+        popup.confirm('Error saving project',
+            `Your project could not be saved locally
+            (likely because your files are too large)`,
+            'Download instead', 'Cancel'
+        ).then((result) => {
+            if (result) {
+                downloadProjectGpj();
+            }
+        });
         visualLog(`Failed to save project, an error occurred!`, 'error', 'local save');
     }
 
@@ -761,6 +786,17 @@ OBJECTS:objects.gpj
     URL.revokeObjectURL(link.href);
 }
 
+const downloadProjectGpj = () => {
+    const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
+
+    var link = document.createElement("a");
+    link.setAttribute('download',  engineState.sanitizedFilename() + '.gpj');
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(saved)]));
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
 document.querySelector('#save-button').addEventListener('click', () => { saveProject(false) });
 document.querySelector('#github-push-button').addEventListener('click', () => { githubIntegration.pushProject() });
 document.querySelector('#github-diff-button').addEventListener('click', () => { githubIntegration.diffProject() });
@@ -800,17 +836,7 @@ document.addEventListener('keydown', e => {
     }
 });
 
-document.querySelector('#download-button').addEventListener('click', () => {
-    const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
-
-    var link = document.createElement("a");
-    link.setAttribute('download',  engineState.sanitizedFilename() + '.gpj');
-    link.href = URL.createObjectURL(new Blob([JSON.stringify(saved)]));
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-});
+document.querySelector('#download-button').addEventListener('click', () => { downloadProjectGpj() });
 
 const fetchTemplate = async (name) => {
     return await fetch(`/engine/templates/${name}.gpj`).then(engineFetch.toJson);
@@ -876,11 +902,11 @@ const listFiles = async (data) => {
             'Open': () => {
                 button.click();
             },
-            'Rename': () => {
-                let name = prompt('Enter a new name', file);
+            'Rename': async () => {
+                let name = await popup.prompt('Rename File', '', file);
                 if (!name || name === file) return;
                 while (engineState.files[name]) {
-                    name = prompt('That file already exists! Enter a new name', file);
+                    name = await popup.prompt('Rename File', 'That file already exists! Enter a new name', file);
                     if (!name || name === file) return;
                 }
                 const temp = engineState.files[file];
@@ -921,11 +947,11 @@ const listFiles = async (data) => {
             <path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5z"/>
             <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
         </svg> New file`;
-    newFileButton.onclick = () => {
-        let name = prompt('Enter a name', 'unnamed.js');
+    newFileButton.onclick = async () => {
+        let name = await popup.prompt('Create File', '', 'unnamed.js');
         if (!name) return;
         while (engineState.files[name]) {
-            name = prompt('That file already exists! Enter a name', 'unnamed.js');
+            name = await popup.prompt('Create File', 'That file already exists! Enter a different name.', 'unnamed.js');
             if (!name) return;
         }
         engineState.files[name] = ace.createEditSession(`// ${name}\n`);
@@ -1223,8 +1249,8 @@ const listSaves = () => {
             'Delete': () => {
                 delButton.click();
             },
-            'Rename': () => {
-                let newName = prompt('Rename this save', name);
+            'Rename': async () => {
+                let newName = await popup.prompt('Rename this save', '', name);
                 if (!newName) return;
                 if (localStorage.getItem('savedObjects:' + newName)) {
                     if (!confirm(`Overwrite save ${newName}?`)) return;
