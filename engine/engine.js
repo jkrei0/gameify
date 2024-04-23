@@ -620,11 +620,12 @@ const saveProject = async (asName) => {
     } else if (asName === false) {
         name = await popup.prompt('Name this save', '', engineState.projectFilename);
     }
-    name = name?.replaceAll(',', '_')
 
     if (!name) {
         return;
     }
+
+    name = name.replaceAll(',', '_')
 
     let overwrite = false;
     if (savedList.includes(name) && name !== engineState.projectFilename) {
@@ -1261,6 +1262,7 @@ const listSaves = () => {
             'Rename': async () => {
                 let newName = await popup.prompt('Rename this save', '', name);
                 if (!newName) return;
+                newName = replaceAll(',', '_');
 
                 // Check if the name already exists
                 const savedList = localStorage.getItem('saveNames')?.split(',') || [];
