@@ -1,6 +1,7 @@
 import { gameify } from '/gameify/gameify.js';
 import { engineUI } from '/engine/engine_ui.js';
 import { engineEvents } from '/engine/engine_events.js';
+import { popup } from '/engine/popup.js';
 
 export const engineTypes = {
     /** List all objects of a type
@@ -191,9 +192,9 @@ export const engineTypes = {
                     path = '[Uploaded file]';
                 }
 
-                parent.appendChild(engineUI.inputItem('Path', path, 'text', (v) => {
+                parent.appendChild(engineUI.inputItem('Path', path, 'text', async (v) => {
                     // Prevent accidental changes to uploaded files
-                    if (path !== obj.path && !confirm(`Overwrite uploaded file? You can't undo this!`)) {
+                    if (path !== obj.path && !await popup.confirm('Overwrite File?', `Overwrite uploaded file? You can't undo this!`)) {
                         engineEvents.emit('refresh objects list');
                         return;
                     }
@@ -246,9 +247,9 @@ export const engineTypes = {
                     path = '[Uploaded file]';
                 }
 
-                parent.appendChild(engineUI.inputItem('Path', path, 'text', (v) => {
+                parent.appendChild(engineUI.inputItem('Path', path, 'text', async (v) => {
                     // Prevent accidental changes to uploaded files
-                    if (path !== obj.path && !confirm(`Overwrite uploaded file? You can't undo this!`)) {
+                    if (path !== obj.path && !await popup.confirm('Overwrite File?', `Overwrite uploaded file? You can't undo this!`)) {
                         engineEvents.emit('refresh objects list');
                         return;
                     }

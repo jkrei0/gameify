@@ -15,7 +15,7 @@ export const popup = {
 
         const popupContent = container.querySelector('.popup-content');
         popupContent.querySelector('h3').innerHTML = titleText;
-        popupContent.querySelector('p').innerHTML = descText;
+        popupContent.querySelector('p').innerHTML = descText || '';
         const input = popupContent.querySelector('input');
         input.placeholder = inputPlaceholder || 'Input text';
         input.value = inputText || '';
