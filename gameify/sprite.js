@@ -92,7 +92,7 @@ export let sprites = {
             const obj = new sprites.Sprite(data.position?.x || 0, data.position?.y || 0, undefined);
             if (data.rotation) obj.rotation = data.rotation;    // Set rotation
             if (data.scale) obj.scale = data.scale;             // Set scale
-            if (data.image.parent) {
+            if (data.image?.parent) {
                 // Set image from tileset
                 const set = find(data.image.parent);
                 if (!set) {
@@ -126,9 +126,9 @@ export let sprites = {
                 rotation: this.rotation,
                 image: {
                     name: ref(this.image),
-                    parent: ref(this.image.tileData?.tileset),
-                    position: this.image.tileData?.position,
-                    size: this.image.tileData?.size
+                    parent: ref(this.image?.tileData?.tileset),
+                    position: this.image?.tileData?.position,
+                    size: this.image?.tileData?.size
                 },
                 shape: ref(this.shape),
                 parent: ref(this.parent)
