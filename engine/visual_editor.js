@@ -327,6 +327,7 @@ const editTileMap = (map) => {
     let dragStart = false;
     let originalOffset = null;
     let previewTilePositions = [];
+    let tilesetNotLoadedError = false;
 
     let lastMouseAction = 'draw';
 
@@ -448,6 +449,14 @@ const editTileMap = (map) => {
                 ctx.globalAlpha = 1;
             }
         });
+
+        if (!map.tileset.loaded) {
+            if (!tilesetNotLoadedError) {
+                tilesetNotLoadedError = true;
+                visualLog(`Tileset ${map.tileset.__engine_name} is not loaded or it's image is broken.`, 'error', 'tilemap editor');
+            }
+            return;
+        }
 
         ctx.globalAlpha = 0.75;
         for (const tilePos of previewTilePositions) {
@@ -1095,7 +1104,7 @@ const editAnimation = (anim) => {
         <button id="vi-stop-anim"><img src="images/stop.svg" aria-label="Stop"></button>
         <button id="vi-step-anim-back"><img src="images/step-left.svg" aria-label="Step back 1 frame"></button>
         <button id="vi-play-anim"><img src="images/play.svg" aria-label="Play"></button>
-        <button id="vi-pause-anim"><img src="images/pause.svg" aria-label="Pause"></button>
+        <button id="vi-pause-anim" style="display:none;"><img src="images/pause.svg" aria-label="Pause"></button>
         <button id="vi-step-anim-forward"><img src="images/step-right.svg" aria-label="Step foreward 1 frame"></button>
         <span id="vi-frames-count">${anim.frames.length} frames</span>
         <span class="right">Preview:</span>
@@ -1131,10 +1140,16 @@ const editAnimation = (anim) => {
         previewAnimator = new gameify.Animator(previewEl);
         previewAnimator.set('preview', anim);
         visualLog(`Previewing animation on ${type}::${oName}`, 'info', 'animation editor');
+
+        stopButton.click();
     });
 
-    document.querySelector('#vi-play-anim').addEventListener('click', () => {
+    const playButton = controls.querySelector('#vi-play-anim');
+    playButton.addEventListener('click', () => {
         if (previewEl) previewAnimator.play('preview');
+        else {
+            visualLog('Please select an object to preview.', 'warn', 'animation editor');
+        }
         if (anim.options.duration < 5) {
             visualLog(`Animation frame duration is very short (${anim.options.duration}ms).`, 'warn', 'animation editor');
         }
@@ -1145,21 +1160,42 @@ const editAnimation = (anim) => {
         previewAnimator.pause();
     });
     document.querySelector('#vi-step-anim-back').addEventListener('click', () => {
+        if (!previewAnimator.currentAnimation) {
+            // Prevent 'no animation playing' error
+            playButton.click();
+        }
+        if (previewAnimator.animationProgress === anim.options.duration) {
+            // Prevent double-step after looping back to the end
+            // Normally, this wouldn't happen, but since we're stepping
+            // by the exact frame duration, it does.
+            // previewAnimator.animationProgress -= anim.options.frameDuration;
+        }
         previewAnimator.animationProgress -= anim.options.frameDuration;
-        // Trick it into updating
+        // Trick it into updating without advancing the animation
         previewAnimator.resume();
         previewAnimator.update(0);
         previewAnimator.pause();
     });
     document.querySelector('#vi-step-anim-forward').addEventListener('click', () => {
-        previewAnimator.animationProgress += anim.options.frameDuration;
+        if (!previewAnimator.currentAnimation) {
+            stopButton.click();
+        } else {
+            previewAnimator.animationProgress += anim.options.frameDuration;
+        }
         previewAnimator.resume();
         previewAnimator.update(0);
         previewAnimator.pause();
+        if (!previewAnimator.currentAnimation) {
+            // loop back to the beginning
+            stopButton.click();
+        }
     });
-    document.querySelector('#vi-stop-anim').addEventListener('click', () => {
-        previewAnimator.animationProgress = 0;
-        // Don't actually stop, so the buttons still work
+    const stopButton = document.querySelector('#vi-stop-anim');
+    stopButton.addEventListener('click', () => {
+        previewAnimator.stop();
+        playButton.click();
+        // This nonsense, so that stopping resets it to the first frame
+        // rather than actually stopping it.
         previewAnimator.resume();
         previewAnimator.update(0);
         previewAnimator.pause();
@@ -1186,11 +1222,22 @@ const editAnimation = (anim) => {
         if (previewEl && previewActive) {
             try {
                 previewAnimator.update(delta);
-                const time = previewAnimator.animationProgress;
-                const frame = anim.getFrameNumberAt(time);
-                lastActiveFrameEl?.classList.remove('active')
-                lastActiveFrameEl = frameListEls.headerRow.querySelector(`th:nth-child(${frame + 3})`);
-                lastActiveFrameEl?.classList.add('active');
+
+                if (previewAnimator.currentAnimation) {
+                    const time = previewAnimator.animationProgress;
+                    const frame = anim.getFrameNumberAt(time);
+                    lastActiveFrameEl?.classList.remove('active')
+                    lastActiveFrameEl = frameListEls.headerRow.querySelector(`th:nth-child(${frame + 3})`);
+                    lastActiveFrameEl?.classList.add('active');
+                }
+
+                if (previewAnimator.playing) {
+                    document.querySelector('#vi-play-anim').style.display = 'none';
+                    document.querySelector('#vi-pause-anim').style.display = '';
+                } else {
+                    document.querySelector('#vi-play-anim').style.display = '';
+                    document.querySelector('#vi-pause-anim').style.display = 'none';
+                }
             } catch (e) {
                 console.error(e);
                 dealWithPreviewError(e);
