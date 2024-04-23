@@ -1028,7 +1028,7 @@ const deleteCloudSave = async (save) => {
     });
 }
 
-const listSaves = () => {
+const listSaves = async () => {
     const listElem = document.querySelector('#load-save-list');
     listElem.innerHTML = '';
 
