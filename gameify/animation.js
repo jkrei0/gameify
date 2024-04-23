@@ -141,7 +141,9 @@ export let animation = {
             this.animations[name] = animation;
         }
 
-        /** Play an animation
+        /** Play an animation, or resume it if it's paused.
+         * If the animation is paused or already playing, this function does not reset the animation
+         * (use Animator.stop() to reset the animation).
          * @method
          * @param {String} name - The name of the animation
          */
@@ -149,10 +151,14 @@ export let animation = {
             if (!this.animations[name]) {
                 throw new Error(`Animation '${name}' not found or was not added to this animator.`);
             }
-            if (this.currentAnimation !== this.animations[name]) {
+
+            if (this.currentAnimation !== this.animations[name] || this.playing === false) {
                 this.currentAnimation = this.animations[name];
                 this.currentAnimationName = name;
-                this.animationProgress = 0;
+                if(this.currentAnimation !== this.animations[name]) {
+                    // New animation, reset the timer
+                    this.animationProgress = 0;
+                }
                 this.playing = true;
             }
         }
@@ -190,14 +196,22 @@ export let animation = {
          */
         update = (delta) => {
             if (!this.playing) return;
+
+            this.animationProgress += delta;
             if (this.currentAnimation.isAfterCompletion(this.animationProgress)) {
                 this.stop();
                 return;
             }
+
+            // ignore looping; we would've stopped anyway
+            // because of isAfterCompletion.
             if (this.animationProgress < 0) {
-                this.animationProgress = this.currentAnimation.options.duration;
+                this.animationProgress += this.currentAnimation.options.duration;
             }
-            this.animationProgress += delta;
+            if (this.animationProgress > this.currentAnimation.options.duration) {
+                this.animationProgress -= this.currentAnimation.options.duration;
+            }
+
             this.currentAnimation.applyTo(this.parent, this.animationProgress);
         }
     },
