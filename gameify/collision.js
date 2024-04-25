@@ -507,16 +507,20 @@ class Polygon extends Shape {
                     adjPosA, adjPosB, obj.position, obj.position.add(obj.size.xComponent())
                 );
                 const intBottom = vectors.Vector2d.segmentsIntersect(
-                    adjPosA, adjPosB, obj.position.add(obj.size.yComponent()), obj.position.add(obj.size.xComponent())
+                    adjPosA, adjPosB, obj.position.add(obj.size.yComponent()), obj.position.add(obj.size)
                 )
                 const intLeft = vectors.Vector2d.segmentsIntersect(
                     adjPosA, adjPosB, obj.position, obj.position.add(obj.size.yComponent())
                 );
                 const intRight = vectors.Vector2d.segmentsIntersect(
-                    adjPosA, adjPosB, obj.position.add(obj.size.xComponent()), obj.position.add(obj.size.yComponent())
+                    adjPosA, adjPosB, obj.position.add(obj.size.xComponent()), obj.position.add(obj.size)
                 );
 
                 if (intTop || intBottom || intLeft || intRight) {
+                    return true;
+                }
+
+                if (obj.contains(adjPosA)) {
                     return true;
                 }
             }
