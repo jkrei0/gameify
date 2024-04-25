@@ -752,7 +752,8 @@ export let gameify = {
                 if (!this.#lastUpdate) {
                     this.#lastUpdate = time;
                 }
-                const delta = time - this.#lastUpdate;
+                // max delta of 1000/5 = 200ms (5 fps)
+                const delta = Math.min(200, time - this.#lastUpdate);
                 this.#lastUpdate = time;
                 // if delta is zero, pass one instead (bc of div-by-zero errors)
                 this.currentScene.update(delta || 1);
