@@ -608,11 +608,22 @@ engineFetch.setSessionFunction(() => {
 });
 engineFetch.setLogFunction(visualLog);
 
+const listSaveNames = () => {
+    // local files
+    const savedList = Object.entries(localStorage).filter(([key, value]) => {
+        if (key.startsWith('savedObjects:')) {
+            return true;
+        }
+        return false;
+    }).map(([key, value]) => key.replace('savedObjects:', ''));
+
+    return savedList;
+}
+
 const saveProject = async (asName) => {
     if (!engineState.projectFilename) {
         return;
     }
-    const savedList = localStorage.getItem('saveNames')?.split(',') || [];
 
     let name = asName || engineState.projectFilename;
     if (engineState.projectFilename.startsWith('(template)')) {
@@ -625,8 +636,7 @@ const saveProject = async (asName) => {
         return;
     }
 
-    name = name.replaceAll(',', '_')
-
+    const savedList = listSaveNames();
     let overwrite = false;
     if (savedList.includes(name) && name !== engineState.projectFilename) {
         if (!await popup.confirm('Overwrite save?',
@@ -636,10 +646,6 @@ const saveProject = async (asName) => {
     } else if (savedList.includes(name)) {
         overwrite = true;
     }
-
-    // If overwriting, the name is already in the list
-    if (!overwrite) savedList.push(name);
-    localStorage.setItem('saveNames', savedList.join(','))
 
     const saved = engineSerialize.projectData(engineState.objects, engineState.files, engineIntegrations.getIntegrations());
 
@@ -1196,8 +1202,8 @@ const listSaves = async () => {
     }
 
     // local files
+    const savedList = listSaveNames();
 
-    const savedList = localStorage.getItem('saveNames')?.split(',') || [];
     if (!savedList) {
         const message = document.createElement('span');
         message.classList.add('list-item');
@@ -1210,16 +1216,12 @@ const listSaves = async () => {
         const button = document.createElement('button');
         button.classList.add('list-item');
         button.setAttribute('data-local-save-name', name);
-
-        if (!localStorage.getItem('savedObjects:' + name)) {
-            button.setAttribute('title', 'This save is missing');
-            button.setAttribute('disabled', 'True');
-            console.warn('Missing save');
-        }
-
         button.onclick = () => {
             const loaded = localStorage.getItem('savedObjects:' + name);
-            if (!loaded) return;
+            if (!loaded) {
+                popup.alert(`Save error`, `The save "${name}" was not found!`);
+                return;
+            }
             engineState.projectFilename = name;
             openProject(JSON.parse(loaded));
 
@@ -1232,11 +1234,6 @@ const listSaves = async () => {
             if (!bypass && !await popup.confirm('Delete save?', `Delete ${name}? you can't undo this`)) { return; }
 
             localStorage.removeItem('savedObjects:' + name);
-
-            const savedList = localStorage.getItem('saveNames')?.split(',');
-            savedList.splice(savedList.indexOf(name), 1)
-            localStorage.setItem('saveNames', savedList.join(','))
-            if (savedList.length < 1) localStorage.removeItem('saveNames');
 
             visualLog(`Deleted save '${name}'`, 'warn', 'local save');
             listSaves();
@@ -1262,10 +1259,9 @@ const listSaves = async () => {
             'Rename': async () => {
                 let newName = await popup.prompt('Rename this save', '', name);
                 if (!newName) return;
-                newName = replaceAll(',', '_');
 
                 // Check if the name already exists
-                const savedList = localStorage.getItem('saveNames')?.split(',') || [];
+                const savedList = listSaveNames();
                 if (savedList.includes(newName)) {
                     // Don't prompt if the name is the same
                     if (name !== newName && !await popup.confirm('Overwrite save?',
@@ -1281,9 +1277,7 @@ const listSaves = async () => {
                     'savedObjects:' + newName,
                     localStorage.getItem('savedObjects:' + name)
                 );
-                savedList.splice(savedList.indexOf(name), 1);
 
-                localStorage.setItem('saveNames', savedList.join(','));
                 // Delete the old save
                 localStorage.removeItem('savedObjects:' + name);
                 visualLog(`Renamed save '${name}' to '${newName}'`, 'log', 'local save');
