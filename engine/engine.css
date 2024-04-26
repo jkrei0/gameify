@@ -696,6 +696,9 @@ h3 button:not(:first-of-type) {
 .popup .popup-content .button-row .secondary:hover {
   background: #648;
 }
+.popup .popup-content .good {
+  color: #8f8;
+}
 .popup .popup-content h3 {
   padding: 0;
   background: transparent;

@@ -1005,8 +1005,12 @@ const openProject = (data) => {
 
 const deleteCloudSave = async (save) => {
     const cloudAccountName = localStorage.getItem('accountName');
+    const localSaveText = localStorage.getItem('savedObjects:' + save)
+        ? `This will not delete your local copy.`
+        : `You do not have a copy on this computer!`;
+
     if (!await popup.confirm('Delete cloud save',
-        `Delete '${cloudAccountName}/${save}' from the cloud? <br> This will not delete your local copy.`
+        `Delete '${cloudAccountName}/${save}' from the cloud? <br> ${localSaveText}`
     )) {
         return;
     }
@@ -1079,32 +1083,26 @@ const listSaves = async () => {
 
                 button.onclick = async () => {
                     let loadAsName = name;
-                    if (timestampDifference !== 0) {
+                    if (timestampDifference !== 0 && localSaveData) {
                         const loadCloud = await popup.confirm(`Save mismatch`,
                             `<b>The local and cloud versions of this save may be different.</b><br>
-                            Cloud saved at ${new Date(game.data.timestamp).toLocaleString()}<br>
-                            Local saved at ${new Date(localSaveData.timestamp).toLocaleString()}`,
-                            'Load a copy', 'Cancel', 'Overwrite local'
+                            <span class="${timestampDifference > 0 ? 'good' : 'bad'}">
+                                Cloud saved at ${new Date(game.data.timestamp).toLocaleString()}
+                            </span><br>
+                            <span class="${timestampDifference < 0 ? 'good' : 'bad'}">
+                                Local saved at ${new Date(localSaveData.timestamp).toLocaleString()}
+                            </span>`,
+                            'Load cloud', 'Cancel', 'Load local'
                         );
                         if (loadCloud === false) {
-                            // cancel
+                            // Cancel
                             return;
                         } else if (loadCloud === true) {
-                            // make a copy
-                            const newName = await popup.prompt(
-                                'Name your copy', // title text
-                                `This will create a copy of the cloud save '${name}' and load it.`, // p text
-                                `Copy of ${name}`, // default input value
-                                `Enter a name` // placeholder
-                            );
-
-                            if (!newName) return;
-                            loadAsName = newName;
+                            // Load cloud, do nothing that's what we're doing already
                         } else {
-                            // overwrite local
-                            if (!await popup.confirm(`Are you sure?`,
-                                `This will overwrite the local save '${name}' with the cloud save.`
-                            )) return;
+                            // Load local
+                            lsButton.click();
+                            return;
                         }
                     }
 
@@ -1178,7 +1176,6 @@ const listSaves = async () => {
                         button.click();
                     },
                     'Delete From Cloud': () => {
-                        button.style.color = '#ff8';
                         deleteCloudSave(name);
                     }
                 }

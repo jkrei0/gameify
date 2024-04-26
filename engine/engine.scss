@@ -32,7 +32,8 @@ $font: Poppins, sans-serif;
 $labeltext: Lato, sans-serif;
 $monospace: 'Roboto Mono';
 
-$warn: #ff8;
+$warntext: #ff8;
+$greentext: #8f8;
 
 $transition: 0.1s;
 
@@ -204,10 +205,10 @@ $transition: 0.1s;
                 color: #bbf;
             }
             &.warn .message {
-                color: $warn;
+                color: $warntext;
             }
             &.debug .message {
-                color: #8f8;
+                color: $greentext;
             }
             &.error {
                 font-weight: bold;
@@ -450,7 +451,7 @@ h3 {
             margin-right: 12px;
 
             &.warn {
-                color: $warn;
+                color: $warntext;
             }
             &.check {
                 color: #8f8;
@@ -825,6 +826,10 @@ h3 {
                     background: $highlight;
                 }
             }
+        }
+
+        .good {
+            color: $greentext;
         }
 
         h3 {
