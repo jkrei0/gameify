@@ -1,5 +1,7 @@
 
 
+const popupQueue = [];
+
 export const popup = {
     /** Show a popup
      * @param {string} titleText - The title of the popup
@@ -9,8 +11,14 @@ export const popup = {
      * @param {string} [inputText=""] - Initial input text
      * @param {string} [selOptions] - Select options, as HTML, an array, or an object {value: displayText}
      */
-    show: (titleText, descText, buttons, inputPlaceholder, inputText, selOptions) => {
+    show: async (titleText, descText, buttons, inputPlaceholder, inputText, selOptions) => {
         const container = document.querySelector('#popup');
+        if (container.classList.contains('visible')) {
+            // only open one popup at a time
+            await new Promise((resolve) => {
+                popupQueue.push(resolve);
+            });
+        }
         container.classList.add('visible');
 
         const popupContent = container.querySelector('.popup-content');
@@ -59,7 +67,7 @@ export const popup = {
             const button = document.createElement('button');
             button.innerHTML = btnText;
             button.onclick = () => {
-                container.classList.remove('visible');
+                popup.close();
                 buttons[btnText](btnText, input.value, select.value);
             } 
             buttonRow.appendChild(button);
@@ -75,10 +83,21 @@ export const popup = {
             }
         });
     },
+    showNext: () => {
+        if (container.classList.contains('visible')) {
+            console.warn('Attempting to showNext while a popup is visible! Canceled.');
+            return;
+        }
+        if (popupQueue.length > 0) {
+            const next = popupQueue.shift();
+            next();
+        }
+    },
     /** Force the popup to close. The popup is always automatically closed when any button is pressed. */
     close: () => {
         const container = document.querySelector('#popup');
         container.classList.remove('visible');
+        popup.showNext();
     },
     alert: (title, text, btnText = 'OK') => { 
         return new Promise((resolve, reject) => {
