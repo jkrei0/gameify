@@ -84,6 +84,7 @@ export const popup = {
         });
     },
     showNext: () => {
+        const container = document.querySelector('#popup');
         if (container.classList.contains('visible')) {
             console.warn('Attempting to showNext while a popup is visible! Canceled.');
             return;
