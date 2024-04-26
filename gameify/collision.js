@@ -47,9 +47,13 @@ class Shape {
 
     /** Create a copy of the shape */
     copy = () => {
-        // Use toJSON, not __toJSON, because we want to store the
-        // actual shape data.
-        return Shape.fromJSON(this.toJSON());
+        // Use inherited toJSON function if available
+        let toJSON = this.toJSON;
+        if (typeof toJSON !== "function") {
+            console.warn("Shape.toJSON is not available! Why are you using the base Shape? using __toJSON instead.");
+            toJSON = this.__toJSON;
+        }
+        return Shape.fromJSON(toJSON());
     }
 
     /** Convert the object to JSON. Not available on the base Shape, only on inherited classes
@@ -119,12 +123,27 @@ class Shape {
         throw new Error("shape.draw is not available in the base Shape class. It must be implemented by each specific shape type");
     }
 
-    /** Scale the shape by a factor
+    /** Create a copy of this shape, scaled by a factor.
      * @method
      * @arg {Number} scale - The scale factor
+     * @returns {gameify.shapes.Shape}
      */
-    scale(scale) {
-        this.position = this.position.multiply(scale);
+    scaled(scale) {
+        const newShape = this.copy();
+        newShape.position = newShape.position.multiply(scale);
+        return newShape;
+    }
+
+    /** Create a copy of this shape, rotated around a point, in radians (counterclockwise)
+     * @method
+     * @arg {Number} angle - The angle to rotate by, in radians
+     * @arg {gameify.Vector2d} [point=<0, 0>] - The point to rotate around
+     * @returns {gameify.shapes.Shape}
+     */
+    rotated(angle, point=new vectors.Vector2d(0, 0)) {
+        const newShape = this.copy();
+        newShape.position = newShape.position.rotatedAbout(angle, point);
+        return newShape;
     }
 
 }
@@ -150,7 +169,7 @@ class Circle extends Shape {
     /** Convert the object to JSON
      * @method
      */
-    toJSON(key) {
+    toJSON = (key) => {
         const data = this.__toJSON(key);
         data.radius = this.radius;
         return data;
@@ -215,14 +234,28 @@ class Circle extends Shape {
         context.fill();
     }
 
-    /** Scale the shape by a factor
+    /** Create a copy of this shape, scaled by a factor
      * @method
      * @arg {Number} scale - The scale factor
+     * @returns {gameify.shapes.Circle}
      */
-    scale = (scale) => {
-        super.scale(scale);
-        this.radius *= scale;
+    scaled = (scale) => {
+        const newShape = super.scaled(scale);
+        newShape.radius *= scale;
+        return newShape;
     }
+
+    /** Create a copy of this shape, rotated around a point, in radians (counterclockwise)
+     * @method
+     * @arg {Number} angle - The angle to rotate by, in radians
+     * @arg {gameify.Vector2d} [point=<0, 0>] - The point to rotate around
+     * @returns {gameify.shapes.Circle}
+     */
+    rotated(angle, point) {
+        // Circles are round, no need to move anything but the centerpoint
+        return super.rotated(angle, point);
+    }
+
 }
 /** A rectangle shape
  * @constructor
@@ -251,7 +284,7 @@ class Rectangle extends Shape {
     /** Convert the object to JSON
      * @method
      */
-    toJSON(key) {
+    toJSON = (key) => {
         const data = this.__toJSON(key);
         data.size = this.#size.toJSON();
         return data;
@@ -359,13 +392,34 @@ class Rectangle extends Shape {
         context.fill();
     }
 
-    /** Scale the shape by a factor
+    /** Create a copy of this shape, scaled by a factor
      * @method
      * @arg {Number} scale - The scale factor
+     * @returns {gameify.shapes.Rectangle}
      */
-    scale = (scale) => {
-        super.scale(scale);
-        this.size = this.size.multiply(scale);
+    scaled = (scale) => {
+        const newShape = super.scaled(scale);
+        newShape.size = newShape.size.multiply(scale);
+        return newShape;
+    }
+
+    /** Create a copy of this shape, rotated around a point, in radians (counterclockwise)
+     * @method
+     * @arg {Number} angle - The angle to rotate by, in radians
+     * @arg {gameify.Vector2d} [point=<0, 0>] - The point to rotate around
+     * @returns {gameify.shapes.Polygon} Because Rectangles must be axis-aligned
+     */
+    rotated(angle, point) {
+        if (angle === 0) {
+            return this.copy();
+        }
+        const newShape = new shapes.Polygon(this.position.x, this.position.y, [
+            this.position.copy(),
+            this.position.add(new vectors.Vector2d(this.size.x, 0)),
+            this.position.add(this.size),
+            this.position.add(new vectors.Vector2d(0, this.size.y))
+        ]);
+        return newShape.rotated(angle, point);
     }
 }
 
@@ -391,7 +445,7 @@ class Polygon extends Shape {
     /** Convert the object to JSON
      * @method
      */
-    toJSON(key) {
+    toJSON = (key) => {
         const data = this.__toJSON(key);
         data.points = this.#points;
         return data;
@@ -573,17 +627,34 @@ class Polygon extends Shape {
         context.fill();
     }
 
-    /** Scale the shape by a factor
+    /** Create a copy of this shape, scaled by a factor
      * @method
      * @arg {Number} scale - The scale factor
+     * @returns {gameify.shapes.Polygon}
      */
-    scale = (scale) => {
-        super.scale(scale);
-
-        for (const point of this.#points) {
+    scaled = (scale) => {
+        const newShape = super.scaled(scale);
+        for (const point of newShape.#points) {
             point.x *= scale;
             point.y *= scale;
-        }   
+        }
+        return newShape;
+    }
+
+    /** Create a copy of this shape, rotated around a point, in radians (counterclockwise)
+     * @method
+     * @arg {Number} angle - The angle to rotate by, in radians
+     * @arg {gameify.Vector2d} [point=<0, 0>] - The point to rotate around
+     * @returns {gameify.shapes.Polygon}
+     */
+    rotated(angle, point) {
+        const newShape = this.copy();
+        newShape.position = newShape.position.rotatedAbout(angle, point);
+        for (const i in newShape.points) {
+            // points are relative to position, which we already rotated
+            newShape.points[i] = newShape.points[i].rotated(angle);
+        }
+        return newShape;
     }
 }
 

@@ -362,6 +362,9 @@ export let vectors = {
          * @returns {gameify.Vector2d}
          */
         rotated = (angle) => {
+            if (typeof angle !== "number") {
+                throw new TypeError("Rotation angle must be a number");
+            }
             return new vectors.Vector2d(
                 (this.x * Math.cos(angle)) - (this.y * Math.sin(angle)),
                 (this.x * Math.sin(angle)) + (this.y * Math.cos(angle))
@@ -376,6 +379,17 @@ export let vectors = {
          */
         rotatedDegrees = (angle) => {
             return this.rotated(angle * (Math.PI / 180));
+        }
+        /** Returns a copy of this vector, rotated around a point by an angle, in radians (counterclockwise)
+         * @method
+         * @arg {Number} angle - The angle to rotate by, in radians
+         * @arg {gameify.Vector2d} point - The point to rotate around
+         * @returns {gameify.Vector2d}
+         */
+        rotatedAbout = (angle, point) => {
+            if (!vectors.Vector2d.assertIsCompatibleVector(point)) return;
+            // subtract, rotate about origin, add back
+            return this.subtract(point).rotated(angle).add(point);
         }
         /** Linear interpolation from this vector to another
          * @example let vectorA = new gameify.Vector2d(3, 2);
