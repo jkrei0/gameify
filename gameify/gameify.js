@@ -1038,7 +1038,7 @@ export let gameify = {
      * @arg {Number} sourcex - The source x coordinate of the tile
      * @arg {Number} sourcey - The source y coordinate of the tile
      * @arg {gameify.Image} image - The tile's Image (reference)
-     * @arg {Number} [rotation=0] - The rotation of the tile
+     * @arg {Number} [rotation=0] - The rotation of the tile, in degrees
      * @arg {Number} [width=1] - The width (in tiles) of the tile
      * @arg {Number} [height=1] - The height (in tiles) of the tile
      * @arg {Number} [twidth=1] - The width (in pixels) of the tile on the tilemap
@@ -1051,10 +1051,20 @@ export let gameify = {
             this.size = new gameify.Vector2d(width, height);
             this.rotation = r;
             this.tags = image.tileData?.tags || [];
-            this.#shape = image.tileData?.collisionShape?.copy();
+            this.#shape = image.tileData?.collisionShape;
             if (this.#shape) {
+                const tilesetSize = new vectors.Vector2d(
+                    image.tileData.tileset.twidth,
+                    image.tileData.tileset.theight
+                );
+                const tileCenter = tilesetSize.multiply(0.5);
+                const oldType = this.#shape.type;
+                this.#shape = this.#shape.rotated(this.rotation*(Math.PI/180), tileCenter);
+                if (oldType !== this.#shape.type) {
+                    console.log(this.#shape, this.rotation, this.rotation*(Math.PI/180))
+                }
+                this.#shape = this.#shape.scaled(twidth/image.tileData.tileset.twidth);
                 // This will not work if the size ratios of the tileset and map are different
-                this.#shape.scale(twidth/image.tileData.tileset.twidth);
                 this.#shape.position = this.#shape.position.add(this.position.multiply(twidth));
             }
         }
