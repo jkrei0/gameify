@@ -73,6 +73,13 @@ if (accountName !== null) {
             engineFetch.checkSessionErrors(result);
         }
 
+        if (!result.games || result.games.length === 0) {
+            const message = document.createElement('span');
+            message.classList.add('list-item');
+            message.innerText = 'No saved projects';
+            listElem.appendChild(message);
+        }
+
         for (const game of result.games) {
             const name = game.title
             const button = document.createElement('button');
@@ -98,12 +105,22 @@ if (accountName !== null) {
     document.querySelectorAll('.account-list-item').forEach(el => el.style.display = 'none');
 
     const loginButton = document.querySelector('#login-button');
+    const usernameEl = document.querySelector('#username');
+    const passwordEl = document.querySelector('#password');
+
+    usernameEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') passwordEl.focus();
+    })
+    passwordEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') loginButton.click();
+    })
+
     loginButton.onclick = () => {
 
         loginButton.innerHTML = 'Authenticating...';
 
-        const username = document.querySelector('#username').value;
-        const password = document.querySelector('#password').value;
+        const username = usernameEl.value;
+        const password = passwordEl.value;
 
         fetch('/api/games-store/login', {
             method: 'POST',

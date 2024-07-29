@@ -1201,10 +1201,10 @@ const listSaves = async () => {
     // local files
     const savedList = listSaveNames();
 
-    if (!savedList) {
+    if (!savedList || savedList.length === 0) {
         const message = document.createElement('span');
         message.classList.add('list-item');
-        message.innerText = 'No saves';
+        message.innerText = 'No saved projects';
         listElem.appendChild(message);
     }
 
