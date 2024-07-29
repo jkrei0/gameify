@@ -9,9 +9,15 @@ const gameTitle = window.location.hash.split('/')[1]?.replaceAll('%20', ' ');
 
 const originURL = /* REPLACE=originURL */'http://localhost:3000'/* END */;
 
+/** Show the message in the box in the center of the screen and set it's text */
+const setMessageBoxText = (title, message) => {
+    document.querySelector('#loading-indicator').style.display = '';
+    document.querySelector('#loading-text-short').innerText = title;
+    document.querySelector('#loading-text-long').innerHTML = message;
+}
+
 if (!accountName || !gameTitle) {
-    document.querySelector('#loading-text-short').innerText = 'Invalid link';
-    document.querySelector('#loading-text-long').innerHTML = `Missing project or account name.`;
+    setMessageBoxText('Invalid Link', `Missing project or account name.`);
 }
 
 window.addEventListener('hashchange', () => {
@@ -37,51 +43,65 @@ const setGameData = (data) => {
         files[file] = replaceImportPaths(files[file]);
     }
 
-    window.addEventListener('message', (event) => {
+    /* Register serviceworker from within the iframe */
+
+    if (!("serviceWorker" in frameWindow.navigator)) {
+        console.warn('Browser does not support serviceworker!');
+        setMessageBoxText(
+            'Unsupported Browser',
+            `Y U still using Internet Explorer? Update your browser.<br>
+            (navigator.serviceWorker not found)`
+        );
+        return;
+    }
+
+    /* Check if the serviceworker is activated, and start the game once it's good. */
+    const checkWorker = (worker) => {
+        if (worker.state !== 'activated') return;
+
+        // ALWAYS send data BEFORE reloading the page
+        worker.postMessage(JSON.stringify({
+            randomId: windowRandomId,
+            files: files
+        }));
+
+        frameWindow.location.href = '/_gamefiles/' + windowRandomId + '/index.html';
+        document.querySelector('#loading-indicator').style.display = 'none';
+    }
+
+    /*  */
+    frameWindow.navigator.serviceWorker.addEventListener('message', (event) => {
+        console.log('sw message:', event.data);
         if (!event.data.type === 'message') return;
 
-        if (event.data.message === 'ready for files') {
-            frameWindow.location.href = '/_gamefiles/' + windowRandomId + '/index.html';
-            document.querySelector('#loading-indicator').style.display = 'none';
-        } else if (event.data.message === 'serviceworker error') {
-            document.querySelector('#loading-text-short').innerText = 'Loading error';
-            document.querySelector('#loading-text-long').innerText = 'Failed to register serviceworker.<br>Please reload or stop/restart the game';
-        } else if (event.data.message === 'sw missing gameData') {
-            document.querySelector('#loading-indicator').style.display = '';
-            document.querySelector('#loading-text-short').innerText = 'Loading error';
-            document.querySelector('#loading-text-long').innerText = 'Gamedata error (out-of-order).<br>Please reload or stop/restart the game';
+        if (event.data.message === 'sw missing gameData') {
+            console.error('No gameData!');
+            setMessageBoxText('Loading Error', 'Gamedata error (out-of-order).<br>Please reload or stop/restart the game');
         }
     });
 
-    const workerScript = document.createElement('script');
-    workerScript.innerHTML = `
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register('serviceworker.js').then(function(reg){
-                if (reg.active) {
-                    reg.active.postMessage(JSON.stringify({
-                        randomId: ${windowRandomId},
-                        files: ${JSON.stringify(files)}
-                    }));
-                    navigator.serviceWorker.addEventListener("message", (event) => {
-                        // foreward messages
-                        parent.postMessage(event.data, '*');
-                    });
-                    parent.postMessage({'type': 'message', message: 'ready for files'}, '*');
-                } else {
-                    parent.postMessage({'type': 'message', message: 'serviceworker error'}, '*');
-                    console.log(reg);
-                }
-            })
-            .catch(function(err){
-                parent.postMessage({'type': 'message', message: 'serviceworker error'}, '*');
-                console.log('registration failed: ' + err);
-            });
-        } else {
-            parent.postMessage({'type': 'message', message: 'serviceworker error'}, '*');
-            console.log('no serviceworker');
+    frameWindow.navigator.serviceWorker.register('serviceworker.js').then((reg) => {
+        let serviceWorker;
+        // Because I can't just *have* the serviceworker  :/
+        // So we look for it.
+        if (reg.installing) {
+            serviceWorker = reg.installing;
+        } else if (reg.waiting) {
+            serviceWorker = reg.waiting;
+        } else if (reg.active) {
+            serviceWorker = reg.active;
         }
-    `;
-    frameWindow.document.body.appendChild(workerScript);
+        if (serviceWorker) {
+            checkWorker(serviceWorker);
+            serviceWorker.addEventListener("statechange", (_e) => {
+                checkWorker(serviceWorker);
+            });
+        }
+    
+    }).catch(function(err){
+        console.error('ServiceWorker registration failed!', err);
+        setMessageBoxText('Loading Error', 'Failed to register serviceworker.<br>Please reload or stop/restart the game');
+    });
 
 }
 
