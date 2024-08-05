@@ -716,20 +716,34 @@ const editTilesetCollisions = (tileset) => {
                 const shapeMousePos = mousePos.multiply(1/canvasZoomFactor);
 
                 editorScreen.mouse.clearRecentEvents();
-                let nearestIndex = 0;
-                let nearestDistance = Infinity;
+                let nearestPointIndex = 0;
+                let nearestPointDistance = Infinity;
                 for (const point of shape.points) {
                     const distance = shapeMousePos.distanceTo(point);
-                    if (distance < nearestDistance) {
-                        nearestIndex = shape.points.indexOf(point);
-                        nearestDistance = distance;
+                    if (distance < nearestPointDistance) {
+                        nearestPointIndex = shape.points.indexOf(point);
+                        nearestPointDistance = distance;
                     }
                 }
-                if (nearestDistance*canvasZoomFactor < nodeDragDistance) {
-                    shape.points.splice(nearestIndex, 1);
+                // If the cursor is hovering over the point
+                // then remove the point
+                if (nearestPointDistance*canvasZoomFactor < nodeDragDistance) {
+                    shape.points.splice(nearestPointIndex, 1);
                     console.log(shape.points);
                 } else {
-                    shape.points.splice(nearestIndex, 0, shapeMousePos);
+                    // If not hovering a point, add another point
+                    // on the nearest segment
+                    let nearestSegmentIndex = 0;
+                    let nearestSegmentDistance = Infinity;
+                    for (const segment of shape.segments) {
+                        const distance = shapeMousePos.distanceTo(segment.a, segment.b);
+                        if (distance < nearestSegmentDistance) {
+                            nearestSegmentIndex = shape.segments.indexOf(segment);
+                            nearestSegmentDistance = distance;
+                        }
+                    }
+                    console.log(shape.points, shape.segments, nearestPointIndex, nearestSegmentIndex);
+                    shape.points.splice(nearestSegmentIndex+1, 0, shapeMousePos);
                 }
             }
         }
