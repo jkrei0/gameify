@@ -1,5 +1,29 @@
 
+const beforeUnloadListener = (event) => {
+    event.preventDefault();
+    
+    // Legacy support for older browsers.
+    // Not that we support anything this old, anyway
+    // but the chrome dev page suggested it
+    return (event.returnValue = true);
+};
+let haveUnsavedChanges = false;
+  
 export const engineState = {
+    /** Mark changes, so the user is warned if they try to leave without saving them */
+    markUnsavedChange: () => {
+        haveUnsavedChanges = true;
+        window.addEventListener('beforeunload', beforeUnloadListener);
+    },
+    /** Mark everything as saved, to prevent useless warnings */
+    markChangesSaved: () => {
+        haveUnsavedChanges = false;
+        window.removeEventListener('beforeunload', beforeUnloadListener);
+    },
+    /** Check if there are unsaved changes */
+    haveUnsavedChanges: () => {
+        return haveUnsavedChanges;
+    },
     // The list of objects in the project
     // accessed as engineState.objects[type][name]
     objects: {},
