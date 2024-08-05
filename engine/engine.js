@@ -464,8 +464,6 @@ const loadObjectsList = (data) => {
     engineEvents.emit('refresh objects list', /*madeChanges=*/false);
 }
 
-// Populate list after editor setup
-// populateObjectsList();
 document.querySelector('#refresh-objects').addEventListener('click', populateObjectsList);
 
 /* Game preview */
@@ -998,7 +996,7 @@ const openProject = async (data, filename) => {
 
     if (!filename) console.warn('No filename passed to openProject! You should do this, instead of setting it yourself.');
 
-    if (engineEvents.haveUnsavedChanges()) {
+    if (engineState.haveUnsavedChanges()) {
         const openAnyway = await popup.confirm(
             'You Have Unsaved Changes',
             `You will lose any unsaved changes in ${engineState.projectFilename}. Are you sure you want to continue?`,

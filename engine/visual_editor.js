@@ -84,7 +84,7 @@ let _defaultScreen = new gameify.Screen(editorCanvas, 1400, 800);
 
 previewScene.onUpdate(() => {
     // Resize based on game screen size
-    const defaultScreen = Object.values(engineState.objects['Screen'])[0] || _defaultScreen;
+    const defaultScreen = Object.values(engineState.objects?.['Screen'] || {})[0] || _defaultScreen;
     editorScreen.setSize(defaultScreen.getSize());
     editorScreen.setAntialiasing(defaultScreen.getAntialiasing());
 
