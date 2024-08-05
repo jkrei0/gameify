@@ -602,9 +602,15 @@ document.querySelector('#visual-button').addEventListener('click', () => {
 
 /* Save and load */
 
-engineFetch.setSessionFunction(() => {
+engineFetch.setSessionFunction((expired) => {
     document.querySelector('#login-link').innerHTML = 'Log In';
-    visualLog(`Session expired. Please <a href="./auth.html" target="_blank">log out/in</a> to refresh.`, 'error', 'account');
+    if (expired) {
+        popup.alert(
+            'Session Expired',
+            'Changes will only be saved locally until you <a href="./auth.html" target="_blank">log in again</a>'
+        );
+    }
+    visualLog(`Session ended. Please <a href="./auth.html" target="_blank">log in</a> again.`, 'error', 'account');
 });
 engineFetch.setLogFunction(visualLog);
 
@@ -683,7 +689,7 @@ const saveProject = async (asName) => {
         .then(engineFetch.toJson)
         .then(result => {
             if (result.error) {
-                visualLog(`Failed to upload to cloud.`, 'error', 'cloud save');
+                visualLog(`Failed to upload '${name}' to cloud - ${result.error}.`, 'error', 'cloud save');
                 engineFetch.checkSessionErrors(result);
             } else {
                 visualLog(`Uploaded '${cloudAccountName}/${name}'`, 'info', 'cloud progress');
@@ -1029,7 +1035,7 @@ const deleteCloudSave = async (save) => {
     .then(engineFetch.toJson)
     .then(result => {
         if (result.error) {
-            visualLog(`Failed to delete '${save}' from the cloud.`, 'error', 'cloud save');
+            visualLog(`Failed to delete '${save}' from the cloud - ${result.error}.`, 'error', 'cloud save');
             engineFetch.checkSessionErrors(result);
         } else {
             visualLog(`Deleted '${cloudAccountName}/${save}' from the cloud.`, 'warn', 'cloud save');
@@ -1066,7 +1072,7 @@ const listSaves = async () => {
             cloudLoadingIndicator.remove();
 
             if (result.error) {
-                visualLog(`Failed to list cloud saves.`, 'warn', 'cloud save');
+                visualLog(`Failed to list cloud saves - ${result.error}.`, 'warn', 'cloud save');
                 engineFetch.checkSessionErrors(result);
                 return;
             }

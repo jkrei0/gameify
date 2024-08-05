@@ -1,12 +1,21 @@
 let logFunction = () => {};
-let notifySessionExpired = () => {};
+let notifySessionEnded = (expired) => {};
+
+let lastAccountName = localStorage.getItem('accountName');
+window.addEventListener('visibilitychange', () => {
+    let acctNameCheck = localStorage.getItem('accountName');
+    if (lastAccountName && !acctNameCheck) {
+        notifySessionEnded(/*expired=*/false);
+    }
+    lastAccountName = acctNameCheck;
+});
 
 export const engineFetch = {
     setLogFunction: (fn) => {
         logFunction = fn;
     },
     setSessionFunction: (fn) => {
-        notifySessionExpired = fn;
+        notifySessionEnded = fn;
     },
     checkGithubErrors: (result, repo) => {
         if (result.error === 'github unauthorized') {
@@ -33,7 +42,7 @@ export const engineFetch = {
         ) {
             localStorage.removeItem('accountName');
             localStorage.removeItem('accountSessionKey');
-            notifySessionExpired();
+            notifySessionEnded(/*expired=*/true);
             return true;
         }
         return false;
