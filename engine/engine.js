@@ -410,7 +410,7 @@ const populateObjectsList = () => {
     objList.appendChild(details);
 
 }
-engineEvents.listen('refresh objects list', (madeChanges) => {
+engineEvents.listen('refresh objects list', (_event, madeChanges) => {
     if (madeChanges) engineState.markUnsavedChange();
     populateObjectsList()
 });
@@ -1027,15 +1027,15 @@ const openProject = async (data, filename) => {
     // Load editor objects
     loadObjectsList(data.objects);
 
-    // Clear the visual editor
-    // and show map controls
+    // Clear the visual editor, and show map controls
     engineEvents.emit('show visual editor preview');
-    showWindow('visual');
 
+    // The filename variable should almost always be here
+    if (filename) engineState.projectFilename = filename;
     visualLog(`Loaded '${engineState.projectFilename || 'Template Project'}'`, 'log', 'project');
 
-    // This should almost always be here
-    if (filename) engineState.projectFilename = filename;
+    // Set filename first, so that the visual window will show
+    showWindow('visual');
 
     return true;
 }
