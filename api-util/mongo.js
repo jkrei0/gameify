@@ -4,7 +4,7 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
-const uri = `mongodb+srv://${process.env.MONGO_NAME}:${process.env.MONGO_PASSWORD}@gameify.xr6hrtj.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.MONGO_NAME}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_URL}`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {

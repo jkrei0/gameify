@@ -14,15 +14,16 @@ import {gameify} from "https://gameify.vercel.app/gameify/gameify.js";
 
 ## Run it yourself
 
-To use the visual engine, start a static http server (eg `http-server` from npm) from the project root, and open `/engine/engine.html`.
-Accounts functionality and cloud saved will be disabled.
+To host the library files yourself, simply place the `/gameify/` folder on a simple web server.
 
-To generate tutorials and documentation from source, run `npm install` to install the JSDoc theme, then run `jsdoc -c jsdoc.json` and open `/out/index.html`.
+Read [the engine readme](https://github.com/jkrei0/gameify/blob/main/engine/README.md) to run the engine yourself.
 
 ## Develop
 
 ### Develop the library
-Gameify (the library)'s source code is in `/gameify/`. See above for generating docs.
+Gameify (the library)'s source code is in `/gameify/`.
+
+To generate tutorials and documentation from source, run `npm install` to install the JSDoc theme, then run `jsdoc -c jsdoc.json` and open `/out/index.html`.
 
 ### Write tutorials
  Add a file to the `tutorials` folder, and register it in `tutorials.json`.

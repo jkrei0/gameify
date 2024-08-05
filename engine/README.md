@@ -1,7 +1,7 @@
 # Gameify Engine
 This is a browser-based game engine built on top of the Gameify game library.
 
-## Development
+## Run it yourself
 
 Most of the visual engine works when run in a simple http server (e.g the `http-server` npm package).
 To run gameify without any integrations or cloud functionality:
@@ -13,9 +13,17 @@ http-server . --port=3000
 http-server ./engine/embed --port=3001
 ```
 
+If you'd really like to host it, you probably want to add a custom config in vars.mjs with the public-facing IP or URL.
+If you're hosting with vercel (see below) it might be easier to just edit the default development environment.
+
+If you're better at this than I am and would like to suggest a better configuration system than this, please let me know.
+
+# Development
+
 To develop the visual engine with accounts and cloud saves enabled:
-- Install the Vercel CLI
+- Install the Vercel CLI, and run `vercel dev` for first-time setup
 - Run `npm install`
+- The first time, run `vercel env set VERCEL_ENV`, and enter `development` when prompted
 - Run `npm run serve` to set variables, generate docs, and start http-server and the vercel CLI
 - Open `http://localhost:3000/engine/engine.html` in your browser to check everything works
 
@@ -29,6 +37,7 @@ Make sure to add the follwing to your `.env.local` file:
 # Accounts and cloud saves (If left blank, offline will still work but cloud will appear to be broken)
 MONGO_NAME="your_mongodb_username"
 MONGO_PASSWORD="your_mongodb_username"
+MONGO_URL="mongodb.your_app.com/" # do not include the protocol (mongodb+srv://)
 
 # Send email notifications (i.e. account requests. If left blank, account requests will appear to be broken)
 # Send and receive addresses can be the same
