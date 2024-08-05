@@ -877,18 +877,23 @@ const listFiles = async (data) => {
         data['index.html'] = (await fetchTemplate('scribble_dungeon')).files['index.html'];
         visualLog('Index.html not found, using index.html from template', 'warn', 'filesystem');
     }
-    
-    const setAceMode = (file) => {
-        if (file.endsWith('.js')) engineState.files[file].setMode("ace/mode/javascript");
-        else if (file.endsWith('.css')) engineState.files[file].setMode("ace/mode/css");
-        else if (file.endsWith('.html')) engineState.files[file].setMode("ace/mode/html");
+
+    const createAceEditor = (filename, contents) => {
+        engineState.files[filename] = ace.createEditSession(contents);
+        engineState.files[filename].on('change', (_delta) => {
+            // Mark text file changes, so you don't lose work.
+            engineState.markUnsavedChange();
+        });
+
+        const modelist = ace.require("ace/ext/modelist");
+        const mode = modelist.getModeForPath(filename).mode;
+        engineState.files[filename].setMode(mode);
     }
 
     // Load new files
     for (const file in data) {
         if (reloadEditors || !engineState.files[file] || typeof engineState.files[file] === 'string') {
-            engineState.files[file] = ace.createEditSession(data[file]);
-            setAceMode(file);
+            createAceEditor(file, data[file]);
         }
 
         const button = document.createElement('button');
@@ -975,8 +980,8 @@ const listFiles = async (data) => {
             name = await popup.prompt('Create File', 'That file already exists! Enter a different name.', 'unnamed.js');
             if (!name) return;
         }
-        engineState.files[name] = ace.createEditSession(`// ${name}\n`);
-        setAceMode(name);
+
+        createAceEditor(name, `// ${name}\n`);
         visualLog(`Created file '${name}'`, 'log', 'filesystem');
         listFiles();
         // Make sure the new file is opened
