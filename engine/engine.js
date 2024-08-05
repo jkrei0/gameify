@@ -193,6 +193,7 @@ const populateObjectsList = () => {
 
             /* Property Items */
 
+            // Rename object input
             const [nameElem, selName] = engineUI.inputItem('Name', objName, 'text', (newName) => {
                 newName = newName.replaceAll('::', '_');
                 if (set[newName]) {
@@ -202,7 +203,7 @@ const populateObjectsList = () => {
                 set[newName] = obj;
                 set[objName] = undefined;
                 delete set[objName];
-                populateObjectsList();
+                engineEvents.emit('refresh objects list', /*madeChanges=*/true);
             });
             // Don't allow changing the name of locked items
             if (!obj.__engine_locked) details.appendChild(nameElem);
@@ -230,7 +231,7 @@ const populateObjectsList = () => {
                 if (!await popup.confirm('Delete File?', 'Delete ' + obj.__engine_name + '? You can\'t undo this!')) return;
                 delete set[objName];
                 visualLog(`Deleted object '${setName}::${objName}'`, 'warn', 'objects editor');
-                populateObjectsList();
+                engineEvents.emit('refresh objects list', /*madeChanges=*/true);
             }
             // Don't allow deleting locked items
             if (!obj.__engine_locked) details.appendChild(delButton);
@@ -289,7 +290,8 @@ const populateObjectsList = () => {
                             child.__engine_visible = true;
                         }
                     }
-                    populateObjectsList();
+                    // Hidden/visible state IS saved, and can effect game behavior
+                    engineEvents.emit('refresh objects list', /*madeChanges=*/true);
                 }
 
                 const folderSummary = document.createElement('summary');
@@ -311,7 +313,7 @@ const populateObjectsList = () => {
                         for (const child of folder.__engine_objects) {
                             child.__engine_folder = new_name;
                         }
-                        populateObjectsList();
+                        engineEvents.emit('refresh objects list', /*madeChanges=*/true);
                     },
                     'Delete': async () => {
                         if (!await popup.confirm('Delete folder?', 'Any objects in this folder will not be deleted.')) {
@@ -319,6 +321,7 @@ const populateObjectsList = () => {
                         }
                         for (const child of folder.__engine_objects) {
                             child.__engine_folder = undefined;
+                            engineEvents.emit('refresh objects list', /*madeChanges=*/true);
                         }
                     }
                 }
@@ -349,7 +352,7 @@ const populateObjectsList = () => {
                             obj.__engine_folder = undefined;
                         }
                     }
-                    populateObjectsList();
+                    engineEvents.emit('refresh objects list', /*madeChanges=*/true);
                 },
                 'Delete': () => {
                     delButton.click();
@@ -400,14 +403,17 @@ const populateObjectsList = () => {
         }
 
         visualLog(`Created new object '${type}::${name}'`, 'log', 'objects editor');
-        populateObjectsList();
+        engineEvents.emit('refresh objects list', /*madeChanges=*/true);
     }
     details.appendChild(addButton);
 
     objList.appendChild(details);
 
 }
-engineEvents.listen('refresh objects list', () => populateObjectsList());
+engineEvents.listen('refresh objects list', (madeChanges) => {
+    if (madeChanges) engineState.markUnsavedChange();
+    populateObjectsList()
+});
 
 const loadObjectsList = (data) => {
     const loadObject = (query) => {
@@ -454,11 +460,12 @@ const loadObjectsList = (data) => {
             loadObject(type + '::' + name);
         }
     }
-    populateObjectsList();
+    // No changes, just loading!
+    engineEvents.emit('refresh objects list', /*madeChanges=*/false);
 }
 
 // Populate list after editor setup
-populateObjectsList();
+// populateObjectsList();
 document.querySelector('#refresh-objects').addEventListener('click', populateObjectsList);
 
 /* Game preview */
@@ -703,6 +710,7 @@ const saveProject = async (asName) => {
         visualLog(`Saved locally as '${name}'${overwrite ? ' (overwrote)' : ''}.${
             cloudAccountName ? '' : ' <a href="./auth.html" target="_blank">Log in</a> to save to cloud.'
         }`, 'info', 'local save');
+        engineState.markChangesSaved();
     }
     listSaves();
 
@@ -980,14 +988,31 @@ const listFiles = async (data) => {
     editorFileList.appendChild(newFileButton);
 }
 
-const openProject = (data) => {
+/** Open a project in the editor
+ * @async
+ * @param {Object} data - File data object - { files:{}, objects:{}, integrations:{} }
+ * @param {String} filename - The name to open the project as (the name of the openened project)
+ * @returns {Boolean} true on success, false otherwise (on failure, or user cancelled)
+ */
+const openProject = async (data, filename) => {
+
+    if (!filename) console.warn('No filename passed to openProject! You should do this, instead of setting it yourself.');
+
+    if (engineEvents.haveUnsavedChanges()) {
+        const openAnyway = await popup.confirm(
+            'You Have Unsaved Changes',
+            `You will lose any unsaved changes in ${engineState.projectFilename}. Are you sure you want to continue?`,
+            /*confirmText=*/'Open Anyway', /*cancelText=*/'Cancel'
+        );
+        if (!openAnyway) return false;
+    }
+
     // Sidebar is hidden before a project is loaded
     if (document.querySelector('.sidebar.hidden')) {
         document.querySelector('.sidebar').classList.remove('hidden');
     }
 
     engineIntegrations.setIntegrations(data.integrations);
-    console.log(data);
     if (data.integrations?.github) {
         document.querySelector('#github-save-integration').style.display = '';
     } else {
@@ -1005,6 +1030,9 @@ const openProject = (data) => {
     showWindow('visual');
 
     visualLog(`Loaded '${engineState.projectFilename || 'Template Project'}'`, 'log', 'project');
+
+    // This should almost always be here
+    if (filename) engineState.projectFilename = filename;
 
     return true;
 }
@@ -1130,9 +1158,9 @@ const listSaves = async () => {
                             return;
                         }
 
-                        engineState.projectFilename = loadAsName;
-                        openProject(result.data);
-                        visualLog(`Loaded cloud save '${loadAsName}'`, 'info', 'cloud save');
+                        openProject(result.data, loadAsName).then(() => {
+                            visualLog(`Loaded cloud save '${loadAsName}'`, 'info', 'cloud save');
+                        });
                     });
                 }
                 
@@ -1225,10 +1253,11 @@ const listSaves = async () => {
                 popup.alert(`Save error`, `The save "${name}" was not found!`);
                 return;
             }
-            engineState.projectFilename = name;
-            openProject(JSON.parse(loaded));
 
-            visualLog(`Loaded save '${name}'`, 'info', 'local save');
+            openProject(JSON.parse(loaded), name).then(() => {
+                visualLog(`Loaded save '${name}'`, 'info', 'local save');
+            });
+
         }
         button.innerText = name;
         const delButton = document.createElement('button');
@@ -1300,17 +1329,16 @@ document.querySelector('#upload-gpj-input').addEventListener('change', (event) =
     reader.onload = (event) => {
         const fileContents = event.target.result;
         visualLog(`Loaded project file '${file.name}'`, 'info', 'local save');
-        engineState.projectFilename = file.name;
-        openProject(JSON.parse(fileContents));
+        openProject(JSON.parse(fileContents), file.name);
     };
 });
 
 document.querySelectorAll('button.template').forEach((button) => {
     button.addEventListener('click', async (event) => {
         const name = button.getAttribute('data-template');
-        engineState.projectFilename = '(template) ' + name;
-        openProject(await fetchTemplate(name));
-        visualLog(`Loaded template '${name}'`, 'info', 'local save');
+        openProject(await fetchTemplate(name), /*filename=*/'(template) ' + name).then(() => {
+            visualLog(`Loaded template '${name}'`, 'info', 'local save');
+        });
     });
 });
 
@@ -1325,9 +1353,9 @@ const loadFromHash = () => {
         visualLog(`Loading 'github:${repo}' ...`, 'info', 'github progress');
 
         githubIntegration.loadRepo(repo, (result) => {
-            engineState.projectFilename = 'github:' + repoName;
-            openProject(result.data);
-            visualLog(`Loaded github repository: '${repo}'`, 'info', 'github');
+            openProject(result.data, 'github:' + repoName).then(() => {
+                visualLog(`Loaded github repository: '${repo}'`, 'info', 'github');
+            });
         }, () => {});
 
     } else {
@@ -1352,10 +1380,9 @@ const loadFromHash = () => {
                 engineFetch.checkSessionErrors(result);
                 return;
             }
-    
-            engineState.projectFilename = game;
-            openProject(result.data);
-            visualLog(`Loaded cloud save '${game}'`, 'info', 'cloud save');
+            openProject(result.data, /*filename=*/game).then(() => {
+                visualLog(`Loaded cloud save '${game}'`, 'info', 'cloud save');
+            });
         });
     }
 }
