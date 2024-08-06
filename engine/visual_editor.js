@@ -44,6 +44,8 @@ const drawTileMapsInOrder = (beforeDraw) => {
  * @param {number} [delay=500] - The delay to show the tooltip for
  */
 const addAriaTooltip = (el, delay = 500) => {
+    if (!el.getAttribute('aria-label')) return;
+
     const tooltip = document.createElement('span');
     tooltip.innerHTML = el.getAttribute('aria-label');
     tooltip.classList.add('tooltip');
@@ -51,19 +53,26 @@ const addAriaTooltip = (el, delay = 500) => {
     tooltip.classList.add('aria-hidden', true);
 
     el.addEventListener('mouseenter', () => {
+        tooltip.style.opacity = 0;
         document.body.appendChild(tooltip);
-        window.setTimeout(() => {
+
+        const checkEl = () => {
             if (el.matches(':hover')) {
                 const box = el.getBoundingClientRect();
                 tooltip.style.top = box.bottom + 'px';
                 tooltip.style.left = box.left + 'px';
                 tooltip.style.opacity = 1;
+                // check again after a couple seconds, 
+                // so it doesn't get stuck.
+                window.setTimeout(checkEl, 3000);
+            } else {
+                tooltip.remove();
             }
-            
-        }, delay);
+        }
+        window.setTimeout(checkEl, delay);
+
     });
     el.addEventListener('mouseleave', () => {
-        tooltip.style.opacity = 0;
         // there won't be a fade-out transition,
         // oh well. Removing this with a delay causes
         // problems when the mouse leaves and re-enters quickly
@@ -484,6 +493,9 @@ const editTilesetCollisions = (tileset) => {
             <button id="vi-set-polygon">Polygon</button>
             <button id="vi-set-circle">Circle</button>
 
+            <button id="vi-copy-shape" aria-label="Copy shape"><img src="images/copy.svg"></button>
+            <button id="vi-paste-shape" aria-label="Paste shape"><img src="images/clipboard-paste.svg"></button>
+
             <button id="vi-stop-editing" class="right"><img src="images/check_done.svg">Done</button>
             <button id="vi-switch-layout"><img src="images/tiles_layout.svg">Wrap</button>
             <button id="vi-zoom-out" aria-label="Zoom out"><img src="images/zoom_out.svg"></button>
@@ -502,6 +514,11 @@ const editTilesetCollisions = (tileset) => {
             <button id="vi-add-tag">Add Tag</button>
         </div>
     `;
+
+    // Add tooltips to each element, if applicable
+    controls.querySelector('.legend').querySelectorAll('button').forEach((el) => {
+        addAriaTooltip(el);
+    });
 
     const updateTagsList = () => {
         const selTile = tileList.selectedTile();
@@ -542,6 +559,24 @@ const editTilesetCollisions = (tileset) => {
         tileset.__engine_editing = false;
         engineEvents.emit('refresh objects list');
         showPreviewOrderControls();
+    }
+
+    let currentlyCopiedShape;
+    controls.querySelector('#vi-copy-shape').onclick = () => {
+        const selTilePos = tileList.selectedTile();
+        const previewTile = tileset.getTile(selTilePos.x, selTilePos.y);
+        // Call .copy to avoid references
+        currentlyCopiedShape = previewTile.tileData.collisionShape.copy();
+    }
+    controls.querySelector('#vi-paste-shape').onclick = () => {
+        if (!currentlyCopiedShape) return;
+        tileList.addCollisionShapeIcon(tileList.selectedTile());
+        // Set copied tile to the current shape
+        tileset.setCollisionShape(
+            // Call .copy to avoid references
+            currentlyCopiedShape.copy(),
+            tileList.selectedTile()
+        );
     }
 
     controls.querySelector('#vi-clear-shape').onclick = () => {
