@@ -612,7 +612,7 @@ engineFetch.setSessionFunction((expired) => {
     if (expired) {
         popup.alert(
             'Session Expired',
-            'Changes will only be saved locally until you <a href="./auth.html" target="_blank">log in again</a>'
+            'Changes will only be saved locally until you log in again.'
         );
     }
     visualLog(`Session ended. Please <a href="./auth.html" target="_blank">log in</a> again.`, 'error', 'account');
@@ -874,7 +874,7 @@ const listFiles = async (data) => {
     editorFileList.innerHTML = '';
 
     if (!data['index.html']) {
-        data['index.html'] = (await fetchTemplate('scribble_dungeon')).files['index.html'];
+        data['index.html'] = (await fetchTemplate('empty_logo')).files['index.html'];
         visualLog('Index.html not found, using index.html from template', 'warn', 'filesystem');
     }
 
