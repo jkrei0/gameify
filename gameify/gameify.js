@@ -1051,6 +1051,9 @@ export let gameify = {
             this.size = new gameify.Vector2d(width, height);
             this.rotation = r;
             this.tags = image.tileData?.tags || [];
+            // Be smart and extract the collision shape
+            // from the image tiledata
+            // TODO image.tileData really is a bad pattern and needs to go.
             this.#shape = image.tileData?.collisionShape;
             if (this.#shape) {
                 const tilesetSize = new vectors.Vector2d(
@@ -1060,9 +1063,6 @@ export let gameify = {
                 const tileCenter = tilesetSize.multiply(0.5);
                 const oldType = this.#shape.type;
                 this.#shape = this.#shape.rotated(this.rotation*(Math.PI/180), tileCenter);
-                if (oldType !== this.#shape.type) {
-                    console.log(this.#shape, this.rotation, this.rotation*(Math.PI/180))
-                }
                 this.#shape = this.#shape.scaled(twidth/image.tileData.tileset.twidth);
                 // This will not work if the size ratios of the tileset and map are different
                 this.#shape.position = this.#shape.position.add(this.position.multiply(twidth));
@@ -1138,6 +1138,7 @@ export let gameify = {
 
         /** The tile's collision shape
          * @type {gameify.shapes.Shape}
+         * @name gameify.Tile.shape
          * @readonly
          */
         get shape() { return this.#shape; }
@@ -1321,17 +1322,17 @@ export let gameify = {
             return this.worldToMap(screenx, screeny);
         }
 
-        /** Convert map coordinates to screen coordinates
+        /** Convert map coordinates to world coordinates
          * @method
          * @param {Number} mapx - The map x coordinate
          * @param {Number} [mapy] - The map y coordinate
          * @returns {Object} {gameify.Vector2d} A vector representing the calculated position
-         *//** Convert map coordinates to screen coordinates
+         *//** Convert map coordinates to world coordinates
          * @method
          * @param {Object | gameify.Vector2d} position - A vector OR an object containing both x any y coordinates
          * @returns {gameify.Vector2d} A vector representing the calculated position
          */
-        mapToScreen = (mapx, mapy) => {
+        mapToWorld = (mapx, mapy) => {
             // loose comparison because we don't want any null values
             if (mapx.x != undefined && mapx.y != undefined) {
                 mapy = mapx.y;
@@ -1341,6 +1342,16 @@ export let gameify = {
                 (mapx * this.twidth) + this.offset.x,
                 (mapy * this.theight) + this.offset.y
             );
+        }
+
+        /** Converts map coordinates to world coordinates. Use mapToWorld instead
+         * @method
+         * @deprecated
+         * @alias gameify.Tilemap.mapToWorld
+         */
+        mapToScreen = (mapx, mapy) => {
+            console.warn('mapToScreen is deprecated, use mapToWorld instead.');
+            return this.mapToWorld(screenx, screeny);
         }
 
         /** Place a tile on the tilemap
@@ -1391,6 +1402,24 @@ export let gameify = {
                 return this.tiles.placed[x][y];
 
             } else return undefined;
+        }
+
+        /** Get all tiles within x tiles (square, not radius) of the given tile
+         * @param {Number} x - X coordinate of the center tile
+         * @param {Number} y - Y coordinate of the center tile
+         * @param {Number} distance - radius of the square of tiles
+         * @returns {gameify.Tile[]}
+         */
+        getTilesNear = (targetx, targety, distance) => {
+            let arr = [];
+            for (let x = targetx-distance; x < targetx+distance; x++) {
+                for (let y = targety-distance; y < targety+distance; y++) {
+                    const tile = this.get(x, y);
+                    // Only return tiles that exist
+                    if (tile) arr.push(tile);
+                }
+            }
+            return arr;
         }
 
         /** Get an array of all the tiles in the map
