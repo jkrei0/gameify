@@ -1441,8 +1441,24 @@ export let gameify = {
          * @method
          * @param {Number} x - The x coord of the tile to remove
          * @param {Number} y - The y coord of the tile to remove
+         *//** Remove a tile from the tilemap
+         * @method
+         * @param {gameify.Tile} tile - The tile to remove
+         *//** Remove a tile from the tilemap
+         * @method
+         * @param {gameify.Vector2d} position - The position (map coordinate) of the tile to remove
          */
         remove = (x, y) => {
+            if (x.position) {
+                // Tile
+                // (technically also works on other things with a position property, oh well.)
+                y = x.position.y;
+                x = x.position.x;
+            } else if (x.x && x.y) {
+                // Vector2d
+                y = x.y;
+                x = x.x;
+            }
             if (this.tiles.placed[x] && this.tiles.placed[x][y]) {
                 delete this.tiles.placed[x][y];
             }
