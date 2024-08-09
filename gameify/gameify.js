@@ -1405,6 +1405,7 @@ export let gameify = {
         }
 
         /** Get all tiles within x tiles (square, not radius) of the given tile
+         * @method
          * @param {Number} x - X coordinate of the center tile
          * @param {Number} y - Y coordinate of the center tile
          * @param {Number} distance - radius of the square of tiles
