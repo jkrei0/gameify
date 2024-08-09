@@ -57,6 +57,7 @@ console.log('Building for envionment:', environment);
 
 console.log('Using URLs:', envVars[environment].originURL, envVars[environment].embedURL);
 
+replaceVars('./engine/embed/serviceworker.js', envVars[environment]);
 replaceVars('./engine/embed/embed.js', envVars[environment]);
 replaceVars('./engine/engine.js', envVars[environment]);
 replaceVars('./engine/play.js', envVars[environment]);
